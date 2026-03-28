@@ -15,6 +15,7 @@ import { formatEuro } from "@/lib/scores"
 import { cityJsonLd } from "@/lib/structured-data"
 import CityPageTracker from "@/components/CityPageTracker"
 import { FISBreakdown } from "@/components/FISScore"
+import CityIntelligence from "@/components/CityIntelligence"
 
 export function generateStaticParams() {
   return cities.map((city) => ({ slug: city.slug }))
@@ -94,6 +95,9 @@ export default function CityPage({ params }: { params: { slug: string } }) {
               </div>
               <FISBreakdown city={city} />
             </section>
+
+            {/* Deep Signal Intelligence — only shows for cities with full signals data */}
+            <CityIntelligence city={city} />
 
             {/* Legacy Scores — keep for data depth */}
             <section>
