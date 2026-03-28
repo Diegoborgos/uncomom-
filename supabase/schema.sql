@@ -12,9 +12,24 @@ create table if not exists public.families (
   travel_style text default '',
   bio text default '',
   avatar_url text,
+  parent_work_type text default '',
+  education_approach text default '',
+  languages text[] default '{}',
+  interests text[] default '{}',
+  current_city text default '',
+  onboarding_complete boolean default false,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
+
+-- Migration for existing tables: add new onboarding columns
+-- (Run this if the families table already exists)
+-- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS parent_work_type text default '';
+-- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS education_approach text default '';
+-- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS languages text[] default '{}';
+-- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS interests text[] default '{}';
+-- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS current_city text default '';
+-- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS onboarding_complete boolean default false;
 
 -- Trips table (family visits to cities)
 create table if not exists public.trips (
@@ -24,8 +39,12 @@ create table if not exists public.trips (
   status text check (status in ('here_now', 'been_here')) not null,
   arrived_at timestamptz,
   left_at timestamptz,
+  notes text default '',
   created_at timestamptz default now() not null
 );
+
+-- Migration for existing trips table:
+-- ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS notes text default '';
 
 -- Reviews table (family reviews of cities)
 create table if not exists public.reviews (

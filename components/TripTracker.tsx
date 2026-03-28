@@ -8,8 +8,15 @@ import Link from "next/link"
 
 export default function TripTracker({ citySlug }: { citySlug: string }) {
   const { user, family } = useAuth()
-  const [trip, setTrip] = useState<Trip | null>(null)
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Form state
+  const [status, setStatus] = useState<"here_now" | "been_here">("here_now")
+  const [arrivedAt, setArrivedAt] = useState("")
+  const [leftAt, setLeftAt] = useState("")
+  const [notes, setNotes] = useState("")
 
   useEffect(() => {
     if (family) {
@@ -19,51 +26,54 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
         .eq("family_id", family.id)
         .eq("city_slug", citySlug)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .then(({ data }) => setTrip(data?.[0] ?? null))
+        .then(({ data }) => setTrips(data || []))
     }
   }, [family, citySlug])
 
-  const markTrip = async (status: "here_now" | "been_here") => {
+  const currentTrip = trips.find((t) => t.status === "here_now")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!family) return
     setLoading(true)
 
-    if (trip) {
-      // Update existing trip
-      const { data } = await supabase
-        .from("trips")
-        .update({
-          status,
-          arrived_at: status === "here_now" ? new Date().toISOString() : trip.arrived_at,
-          left_at: status === "been_here" ? new Date().toISOString() : null,
-        })
-        .eq("id", trip.id)
-        .select()
-        .single()
-      setTrip(data)
-    } else {
-      // Create new trip
-      const { data } = await supabase
-        .from("trips")
-        .insert({
-          family_id: family.id,
-          city_slug: citySlug,
-          status,
-          arrived_at: status === "here_now" ? new Date().toISOString() : null,
-          left_at: status === "been_here" ? new Date().toISOString() : null,
-        })
-        .select()
-        .single()
-      setTrip(data)
-    }
+    const { data } = await supabase
+      .from("trips")
+      .insert({
+        family_id: family.id,
+        city_slug: citySlug,
+        status,
+        arrived_at: arrivedAt || null,
+        left_at: status === "been_here" ? (leftAt || null) : null,
+        notes,
+      })
+      .select()
+      .single()
+
+    if (data) setTrips([data, ...trips])
+    setShowForm(false)
+    setArrivedAt("")
+    setLeftAt("")
+    setNotes("")
     setLoading(false)
   }
 
-  const removeTrip = async () => {
-    if (!trip) return
+  const markLeft = async (tripId: string) => {
     setLoading(true)
-    await supabase.from("trips").delete().eq("id", trip.id)
-    setTrip(null)
+    const { data } = await supabase
+      .from("trips")
+      .update({ status: "been_here" as const, left_at: new Date().toISOString() })
+      .eq("id", tripId)
+      .select()
+      .single()
+    if (data) setTrips(trips.map((t) => (t.id === tripId ? data : t)))
+    setLoading(false)
+  }
+
+  const removeTrip = async (tripId: string) => {
+    setLoading(true)
+    await supabase.from("trips").delete().eq("id", tripId)
+    setTrips(trips.filter((t) => t.id !== tripId))
     setLoading(false)
   }
 
@@ -85,40 +95,177 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
-      <h3 className="font-serif text-lg font-bold mb-4">Your Trip Status</h3>
-      <div className="flex flex-wrap gap-3">
-        <button
-          onClick={() => markTrip("here_now")}
-          disabled={loading}
-          className={`flex-1 min-w-[140px] py-2.5 rounded-lg text-sm font-medium transition-all ${
-            trip?.status === "here_now"
-              ? "bg-[var(--accent-green)] text-[var(--bg)]"
-              : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)]"
-          }`}
-        >
-          {trip?.status === "here_now" ? "✓ Here now" : "I'm here now"}
-        </button>
-        <button
-          onClick={() => markTrip("been_here")}
-          disabled={loading}
-          className={`flex-1 min-w-[140px] py-2.5 rounded-lg text-sm font-medium transition-all ${
-            trip?.status === "been_here"
-              ? "bg-[var(--accent-warm)] text-[var(--bg)]"
-              : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-warm)] hover:text-[var(--accent-warm)]"
-          }`}
-        >
-          {trip?.status === "been_here" ? "✓ Been here" : "I've been here"}
-        </button>
-        {trip && (
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-serif text-lg font-bold">Trip Log</h3>
+        {!showForm && (
           <button
-            onClick={removeTrip}
-            disabled={loading}
-            className="py-2.5 px-4 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--score-low)] border border-[var(--border)] hover:border-[var(--score-low)] transition-colors"
+            onClick={() => setShowForm(true)}
+            className="text-sm px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors"
           >
-            Remove
+            + Log a trip
           </button>
         )}
       </div>
+
+      {/* Quick actions */}
+      {!showForm && !currentTrip && trips.length === 0 && (
+        <div className="flex flex-wrap gap-3 mb-4">
+          <button
+            onClick={() => { setStatus("here_now"); setArrivedAt(new Date().toISOString().split("T")[0]); setShowForm(true) }}
+            disabled={loading}
+            className="flex-1 min-w-[140px] py-2.5 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-all"
+          >
+            I&apos;m here now
+          </button>
+          <button
+            onClick={() => { setStatus("been_here"); setShowForm(true) }}
+            disabled={loading}
+            className="flex-1 min-w-[140px] py-2.5 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-warm)] hover:text-[var(--accent-warm)] transition-all"
+          >
+            I&apos;ve been here
+          </button>
+        </div>
+      )}
+
+      {/* Current trip banner */}
+      {currentTrip && (
+        <div className="flex items-center justify-between bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30 rounded-lg px-4 py-3 mb-4">
+          <div>
+            <p className="text-sm font-medium text-[var(--accent-green)]">You&apos;re here now</p>
+            {currentTrip.arrived_at && (
+              <p className="text-xs text-[var(--text-secondary)]">
+                Since {new Date(currentTrip.arrived_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => markLeft(currentTrip.id)}
+            disabled={loading}
+            className="text-xs px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          >
+            Mark as left
+          </button>
+        </div>
+      )}
+
+      {/* Log form */}
+      {showForm && (
+        <form onSubmit={handleSubmit} className="space-y-4 mb-4 border border-[var(--border)] rounded-lg p-4">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setStatus("here_now")}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                status === "here_now"
+                  ? "bg-[var(--accent-green)] text-[var(--bg)]"
+                  : "border border-[var(--border)] text-[var(--text-secondary)]"
+              }`}
+            >
+              Here now
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatus("been_here")}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                status === "been_here"
+                  ? "bg-[var(--accent-warm)] text-[var(--bg)]"
+                  : "border border-[var(--border)] text-[var(--text-secondary)]"
+              }`}
+            >
+              Been here
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Arrived</label>
+              <input
+                type="date"
+                value={arrivedAt}
+                onChange={(e) => setArrivedAt(e.target.value)}
+                className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)]"
+              />
+            </div>
+            {status === "been_here" && (
+              <div>
+                <label className="block text-xs text-[var(--text-secondary)] mb-1">Left</label>
+                <input
+                  type="date"
+                  value={leftAt}
+                  onChange={(e) => setLeftAt(e.target.value)}
+                  className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)]"
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1">Notes (optional)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              placeholder="Best neighbourhood, school used, what you'd recommend..."
+              className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] resize-none"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {loading ? "Saving..." : "Log trip"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="px-4 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Past trips */}
+      {trips.filter((t) => t.status === "been_here").length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-[var(--text-secondary)] font-medium">Past visits</p>
+          {trips
+            .filter((t) => t.status === "been_here")
+            .map((trip) => (
+              <div
+                key={trip.id}
+                className="flex items-start justify-between py-2 border-b border-[var(--border)] last:border-0"
+              >
+                <div>
+                  <p className="text-sm text-[var(--text-primary)]">
+                    {trip.arrived_at
+                      ? new Date(trip.arrived_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+                      : "Unknown date"}
+                    {trip.left_at && (
+                      <span className="text-[var(--text-secondary)]">
+                        {" → "}
+                        {new Date(trip.left_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                      </span>
+                    )}
+                  </p>
+                  {trip.notes && (
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{trip.notes}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => removeTrip(trip.id)}
+                  className="text-[10px] text-[var(--text-secondary)] hover:text-[var(--score-low)] transition-colors shrink-0 ml-2"
+                >
+                  remove
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -12,6 +12,12 @@ export type Database = {
           travel_style: string
           bio: string
           avatar_url: string | null
+          parent_work_type: string
+          education_approach: string
+          languages: string[]
+          interests: string[]
+          current_city: string
+          onboarding_complete: boolean
           created_at: string
           updated_at: string
         }
@@ -25,6 +31,12 @@ export type Database = {
           travel_style?: string
           bio?: string
           avatar_url?: string | null
+          parent_work_type?: string
+          education_approach?: string
+          languages?: string[]
+          interests?: string[]
+          current_city?: string
+          onboarding_complete?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -36,6 +48,12 @@ export type Database = {
           travel_style?: string
           bio?: string
           avatar_url?: string | null
+          parent_work_type?: string
+          education_approach?: string
+          languages?: string[]
+          interests?: string[]
+          current_city?: string
+          onboarding_complete?: boolean
           updated_at?: string
         }
       }
@@ -47,6 +65,7 @@ export type Database = {
           status: "here_now" | "been_here"
           arrived_at: string | null
           left_at: string | null
+          notes: string
           created_at: string
         }
         Insert: {
@@ -56,12 +75,14 @@ export type Database = {
           status: "here_now" | "been_here"
           arrived_at?: string | null
           left_at?: string | null
+          notes?: string
           created_at?: string
         }
         Update: {
           status?: "here_now" | "been_here"
           arrived_at?: string | null
           left_at?: string | null
+          notes?: string
         }
       }
       reviews: {
