@@ -162,9 +162,20 @@ export default function MethodologyPage() {
           The FIS&trade; is a continuously improving system. As more families contribute
           field reports, the scores become more precise and more trustworthy.
         </p>
-        <Link href="/" className="text-sm text-[var(--accent-green)] hover:underline">
-          Explore cities &rarr;
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+          <Link href="/" className="text-sm text-[var(--accent-green)] hover:underline">
+            Explore cities &rarr;
+          </Link>
+          <Link
+            href="/membership"
+            className="text-sm px-5 py-2.5 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+          >
+            Join Uncomun &middot; &euro;179 lifetime
+          </Link>
+        </div>
+        <p className="text-xs text-[var(--text-secondary)]/60 mt-4">
+          One payment. Lifetime access. Your family&apos;s city intelligence layer.
+        </p>
       </div>
     </div>
   )

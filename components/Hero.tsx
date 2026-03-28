@@ -15,10 +15,10 @@ export default function Hero() {
           For families who live differently
         </p>
         <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl font-bold text-[var(--text-primary)] leading-tight max-w-4xl mb-6">
-          Your family belongs<br />everywhere
+          Spent months in a city<br />that failed your family?
         </h1>
         <p className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-xl mb-10">
-          Find your next city, connect with families on the road, and build a life without borders.
+          Great on paper. Wrong school options. No family community. Traffic that made walking with your kids dangerous. That&apos;s what we prevent.
         </p>
 
         {/* CTA buttons */}
@@ -31,13 +31,13 @@ export default function Hero() {
             }}
             className="px-8 py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity text-sm"
           >
-            Explore 45 cities
+            Find your family&apos;s next city
           </Link>
           <Link
             href="/membership"
             className="px-8 py-3.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors text-sm"
           >
-            Join Uncomun · €149 lifetime
+            Join Uncomun · €179 lifetime
           </Link>
         </div>
 

@@ -86,7 +86,12 @@ export default function CityPage({ params }: { params: { slug: string } }) {
           <div className="flex-1 lg:w-2/3 space-y-10">
             {/* FIS Breakdown — FREE */}
             <section>
-              <h2 className="font-serif text-2xl font-bold mb-6">Family Intelligence Score&trade;</h2>
+              <div className="flex items-baseline justify-between mb-6">
+                <h2 className="font-serif text-2xl font-bold">Family Intelligence Score&trade;</h2>
+                <Link href="/methodology" className="text-xs text-[var(--accent-green)] hover:underline shrink-0 ml-4">
+                  How this works &rarr;
+                </Link>
+              </div>
               <FISBreakdown city={city} />
             </section>
 

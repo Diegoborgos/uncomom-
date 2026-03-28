@@ -75,7 +75,7 @@ export default function Header() {
             Uncomun
           </span>
           <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
-            Find your family&apos;s next home
+            City intelligence for traveling families
           </span>
         </Link>
 
@@ -249,7 +249,7 @@ function MobileMenu({
             Uncomun
           </span>
           <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
-            Find your family&apos;s next home
+            City intelligence for traveling families
           </span>
         </Link>
         <button

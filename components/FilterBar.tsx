@@ -33,7 +33,7 @@ const HOMESCHOOL_OPTIONS: { value: string; label: string }[] = [
   { value: "grey", label: "Grey area" },
   { value: "any", label: "Any" },
 ]
-const TAGS = ["surf", "nature", "beach", "mountains", "safe", "expat community", "low cost", "international schools"]
+const TAGS = ["solo parent", "surf", "nature", "beach", "mountains", "safe", "expat community", "low cost", "international schools"]
 
 function toggleInArray<T>(arr: T[], item: T): T[] {
   return arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item]
@@ -225,6 +225,16 @@ export default function FilterBar({
             </FilterSection>
 
             {/* Tags */}
+            {/* Solo parent */}
+            <FilterSection label="Solo parent">
+              <FilterPill
+                label="Solo parent friendly"
+                active={filters.tags.includes("solo parent")}
+                onClick={() => onChange({ ...filters, tags: toggleInArray(filters.tags, "solo parent") })}
+                variant="warm"
+              />
+            </FilterSection>
+
             <FilterSection label="Tags">
               {TAGS.map((t) => (
                 <FilterPill

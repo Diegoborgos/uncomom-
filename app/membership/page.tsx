@@ -25,6 +25,7 @@ const PAID_FEATURES = [
   "Full school + visa data with community notes",
   "Priority access to new features",
   "Lifetime access — one payment, no subscription",
+  "Passport-aware city scores — visa reality filtered for your passport strength",
 ]
 
 export default function MembershipPage() {
@@ -95,9 +96,10 @@ export default function MembershipPage() {
           </span>
           <p className="text-xs text-[var(--accent-warm)] uppercase tracking-wider mb-2">Member</p>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="font-serif text-4xl font-bold">€149</span>
+            <span className="font-serif text-4xl font-bold">€179</span>
           </div>
-          <p className="text-sm text-[var(--text-secondary)] mb-6">One-time · Lifetime access</p>
+          <p className="text-sm text-[var(--text-secondary)] mb-2">One-time · Lifetime access</p>
+          <p className="text-xs text-[var(--text-secondary)]/70 mb-6">One bad city decision costs more than this in wasted rent, wrong school fees, and relocation costs.</p>
 
           <ul className="space-y-3 mb-8">
             {PAID_FEATURES.map((f) => (
@@ -117,7 +119,7 @@ export default function MembershipPage() {
               alert("Stripe checkout coming soon. Contact us at hello@uncomun.com to get early access.")
             }}
           >
-            Get lifetime access · €149
+            Get lifetime access · €179
           </button>
           <p className="text-[10px] text-[var(--text-secondary)] text-center mt-3">
             30-day money-back guarantee. No subscription. No recurring fees.
@@ -128,11 +130,20 @@ export default function MembershipPage() {
       {/* FAQ */}
       <div className="max-w-2xl mx-auto mt-16 space-y-6">
         <h2 className="font-serif text-2xl font-bold text-center mb-8">Common questions</h2>
-        <FAQ q="Is this a subscription?" a="No. One payment of €149, lifetime access. We don't do recurring charges." />
+        <FAQ q="Is this a subscription?" a="No. One payment of €179, lifetime access. We don't do recurring charges." />
         <FAQ q="What if I'm not happy?" a="Full refund within 30 days, no questions asked." />
         <FAQ q="Will the price go up?" a="Yes. Early members lock in the lowest price. As we add features, the price increases for new members." />
         <FAQ q="What do I get that free doesn't?" a="Full city data, trip logging, residence tracker, community features (family finder, meetups, member map), and reviews." />
         <FAQ q="Can my whole family use it?" a="Yes. One membership covers your entire family." />
+      </div>
+
+      <div className="max-w-2xl mx-auto mt-10 text-center">
+        <p className="text-sm text-[var(--text-secondary)]">
+          Wondering how our scores are calculated?{" "}
+          <Link href="/methodology" className="text-[var(--accent-green)] hover:underline">
+            Read the full methodology →
+          </Link>
+        </p>
       </div>
     </div>
   )
