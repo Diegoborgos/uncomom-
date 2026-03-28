@@ -18,9 +18,23 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: { params: { slug: string } }) {
   const city = cities.find((c) => c.slug === params.slug)
   if (!city) return { title: "City not found" }
+  const title = `${city.name}, ${city.country} — Family Travel Guide | Uncomun`
+  const description = `Family Score ${city.scores.family}/100. ${city.description} Estimated family cost: €${city.cost.familyMonthly}/month for a family of 4.`
   return {
-    title: `${city.name}, ${city.country} — Uncomun`,
-    description: city.description,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: city.photo, width: 800, height: 500, alt: `${city.name}, ${city.country}` }],
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [city.photo],
+    },
   }
 }
 
