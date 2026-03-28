@@ -18,6 +18,7 @@ export default function CityMap({ cities }: { cities: City[] }) {
       zoom: 2,
       zoomControl: true,
       scrollWheelZoom: true,
+      attributionControl: false,
     })
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
