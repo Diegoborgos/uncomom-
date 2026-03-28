@@ -600,5 +600,305 @@ export const cities: City[] = [
     },
     tags: ["surf", "beach", "low cost", "nature", "warm", "tropical"],
     description: "Montañita is Ecuador's surf capital — raw, affordable, and adventurous. Best suited for older kids and teens. The cost of living is among the lowest on this list."
+  },
+  {
+    id: "31",
+    slug: "da-nang",
+    name: "Da Nang",
+    country: "Vietnam",
+    countryCode: "VN",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800&h=500&fit=crop",
+    coords: { lat: 16.0544, lng: 108.2022 },
+    scores: { family: 80, childSafety: 75, schoolAccess: 68, nature: 82, internet: 80, healthcare: 65 },
+    cost: { familyMonthly: 1600, rent2br: 500, internationalSchool: 350, localSchool: 40, childcare: 150 },
+    meta: {
+      familiesNow: 20, familiesBeen: 250, returnRate: 58,
+      bestMonths: ["February", "March", "April", "May"],
+      timezone: "Asia/Ho_Chi_Minh", language: ["Vietnamese", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["beach", "low cost", "nature", "warm", "tropical", "expat community"],
+    description: "Da Nang sits on Vietnam's central coast with a long sandy beach, the Marble Mountains behind it, and some of the cheapest family living in Asia. The international school scene is small but growing fast."
+  },
+  {
+    id: "32",
+    slug: "split",
+    name: "Split",
+    country: "Croatia",
+    countryCode: "HR",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1555990793-da11153b2473?w=800&h=500&fit=crop",
+    coords: { lat: 43.5081, lng: 16.4402 },
+    scores: { family: 79, childSafety: 85, schoolAccess: 60, nature: 85, internet: 75, healthcare: 72 },
+    cost: { familyMonthly: 2800, rent2br: 1100, internationalSchool: 500, localSchool: 0, childcare: 300 },
+    meta: {
+      familiesNow: 12, familiesBeen: 150, returnRate: 55,
+      bestMonths: ["May", "June", "September", "October"],
+      timezone: "Europe/Zagreb", language: ["Croatian", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "OK", kidsAgeIdeal: "All ages"
+    },
+    tags: ["beach", "safe", "nature", "mountains", "mediterranean"],
+    description: "Split is a 1,700-year-old Roman palace turned living city on the Adriatic. Crystal-clear water, island-hopping by ferry, and a walkable old town that kids love exploring."
+  },
+  {
+    id: "33",
+    slug: "tulum",
+    name: "Tulum",
+    country: "Mexico",
+    countryCode: "MX",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800&h=500&fit=crop",
+    coords: { lat: 20.2114, lng: -87.4654 },
+    scores: { family: 75, childSafety: 60, schoolAccess: 58, nature: 88, internet: 68, healthcare: 62 },
+    cost: { familyMonthly: 3200, rent2br: 1400, internationalSchool: 500, localSchool: 80, childcare: 250 },
+    meta: {
+      familiesNow: 18, familiesBeen: 220, returnRate: 52,
+      bestMonths: ["November", "December", "January", "February", "March"],
+      timezone: "America/Cancun", language: ["Spanish", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "Young children"
+    },
+    tags: ["beach", "nature", "warm", "tropical", "expat community"],
+    description: "Tulum blends Mayan ruins, cenotes, and Caribbean coastline into one of Mexico's most photogenic family destinations. More expensive than other Mexican towns but the nature is unmatched."
+  },
+  {
+    id: "34",
+    slug: "taipei",
+    name: "Taipei",
+    country: "Taiwan",
+    countryCode: "TW",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1470004914212-05527e49370b?w=800&h=500&fit=crop",
+    coords: { lat: 25.033, lng: 121.5654 },
+    scores: { family: 86, childSafety: 92, schoolAccess: 82, nature: 70, internet: 90, healthcare: 88 },
+    cost: { familyMonthly: 2800, rent2br: 1100, internationalSchool: 650, localSchool: 0, childcare: 350 },
+    meta: {
+      familiesNow: 14, familiesBeen: 180, returnRate: 62,
+      bestMonths: ["March", "April", "October", "November"],
+      timezone: "Asia/Taipei", language: ["Mandarin", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["safe", "international schools", "nature", "mountains", "variable"],
+    description: "Taipei is one of Asia's safest cities with world-class healthcare, blazing internet, and hiking trails accessible by metro. Night markets are a family dinner staple."
+  },
+  {
+    id: "35",
+    slug: "tallinn",
+    name: "Tallinn",
+    country: "Estonia",
+    countryCode: "EE",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1560969184-10fe8719e047?w=800&h=500&fit=crop",
+    coords: { lat: 59.437, lng: 24.7536 },
+    scores: { family: 80, childSafety: 88, schoolAccess: 75, nature: 72, internet: 92, healthcare: 78 },
+    cost: { familyMonthly: 2600, rent2br: 1000, internationalSchool: 550, localSchool: 0, childcare: 300 },
+    meta: {
+      familiesNow: 10, familiesBeen: 130, returnRate: 48,
+      bestMonths: ["May", "June", "July", "August"],
+      timezone: "Europe/Tallinn", language: ["Estonian", "English", "Russian"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "Teens"
+    },
+    tags: ["safe", "international schools", "expat community", "variable"],
+    description: "Tallinn is the world's most digitally advanced city — e-residency, digital nomad visa, and the fastest public internet in Europe. The medieval old town is a fairy tale for kids."
+  },
+  {
+    id: "36",
+    slug: "buenos-aires",
+    name: "Buenos Aires",
+    country: "Argentina",
+    countryCode: "AR",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?w=800&h=500&fit=crop",
+    coords: { lat: -34.6037, lng: -58.3816 },
+    scores: { family: 76, childSafety: 62, schoolAccess: 78, nature: 55, internet: 78, healthcare: 75 },
+    cost: { familyMonthly: 1900, rent2br: 700, internationalSchool: 450, localSchool: 50, childcare: 200 },
+    meta: {
+      familiesNow: 16, familiesBeen: 200, returnRate: 50,
+      bestMonths: ["March", "April", "October", "November"],
+      timezone: "America/Argentina/Buenos_Aires", language: ["Spanish", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "Teens"
+    },
+    tags: ["expat community", "international schools", "low cost", "variable"],
+    description: "Buenos Aires is South America's most cosmopolitan city. Incredible food, strong bilingual schools, tango in the parks, and a cost of living that keeps dropping for families earning in dollars or euros."
+  },
+  {
+    id: "37",
+    slug: "kuala-lumpur",
+    name: "Kuala Lumpur",
+    country: "Malaysia",
+    countryCode: "MY",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800&h=500&fit=crop",
+    coords: { lat: 3.139, lng: 101.6869 },
+    scores: { family: 83, childSafety: 76, schoolAccess: 85, nature: 65, internet: 82, healthcare: 80 },
+    cost: { familyMonthly: 2200, rent2br: 700, internationalSchool: 500, localSchool: 50, childcare: 200 },
+    meta: {
+      familiesNow: 22, familiesBeen: 280, returnRate: 60,
+      bestMonths: ["March", "April", "May", "June"],
+      timezone: "Asia/Kuala_Lumpur", language: ["Malay", "English", "Mandarin"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["international schools", "low cost", "expat community", "tropical", "warm"],
+    description: "KL has the best international school ecosystem in Southeast Asia at a fraction of Singapore's price. English is widely spoken, healthcare is excellent, and the food is legendary."
+  },
+  {
+    id: "38",
+    slug: "dubai",
+    name: "Dubai",
+    country: "UAE",
+    countryCode: "AE",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=500&fit=crop",
+    coords: { lat: 25.2048, lng: 55.2708 },
+    scores: { family: 82, childSafety: 90, schoolAccess: 90, nature: 40, internet: 88, healthcare: 85 },
+    cost: { familyMonthly: 4500, rent2br: 2000, internationalSchool: 1000, localSchool: 200, childcare: 500 },
+    meta: {
+      familiesNow: 25, familiesBeen: 320, returnRate: 65,
+      bestMonths: ["October", "November", "December", "January", "February", "March"],
+      timezone: "Asia/Dubai", language: ["Arabic", "English"],
+      homeschoolLegal: "Restricted", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["safe", "international schools", "warm", "expat community"],
+    description: "Dubai is the premium option — world-class schools, zero crime, tax-free income, and a family infrastructure built for expats. Expensive but families with remote income find the quality of life hard to match."
+  },
+  {
+    id: "39",
+    slug: "auckland",
+    name: "Auckland",
+    country: "New Zealand",
+    countryCode: "NZ",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?w=800&h=500&fit=crop",
+    coords: { lat: -36.8485, lng: 174.7633 },
+    scores: { family: 88, childSafety: 90, schoolAccess: 85, nature: 92, internet: 82, healthcare: 85 },
+    cost: { familyMonthly: 4200, rent2br: 1800, internationalSchool: 800, localSchool: 0, childcare: 500 },
+    meta: {
+      familiesNow: 10, familiesBeen: 140, returnRate: 58,
+      bestMonths: ["December", "January", "February", "March"],
+      timezone: "Pacific/Auckland", language: ["English", "Maori"],
+      homeschoolLegal: "Yes", visaFriendly: "OK", kidsAgeIdeal: "All ages"
+    },
+    tags: ["nature", "safe", "beach", "mountains", "variable"],
+    description: "Auckland offers beaches, rainforest, and volcanoes within 30 minutes of the CBD. New Zealand's homeschool-friendly laws and outdoor culture make it a dream for nature-first families."
+  },
+  {
+    id: "40",
+    slug: "marrakech",
+    name: "Marrakech",
+    country: "Morocco",
+    countryCode: "MA",
+    continent: "Africa",
+    photo: "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=800&h=500&fit=crop",
+    coords: { lat: 31.6295, lng: -7.9811 },
+    scores: { family: 70, childSafety: 62, schoolAccess: 55, nature: 70, internet: 65, healthcare: 55 },
+    cost: { familyMonthly: 1800, rent2br: 600, internationalSchool: 400, localSchool: 80, childcare: 150 },
+    meta: {
+      familiesNow: 8, familiesBeen: 110, returnRate: 42,
+      bestMonths: ["October", "November", "March", "April"],
+      timezone: "Africa/Casablanca", language: ["Arabic", "French", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["low cost", "nature", "warm", "mountains"],
+    description: "Marrakech is sensory overload in the best way — the medina, the Atlas Mountains, the riads. Affordable, warm, and a growing base for adventurous families who want Africa without the logistical hardship."
+  },
+  {
+    id: "41",
+    slug: "prague",
+    name: "Prague",
+    country: "Czech Republic",
+    countryCode: "CZ",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1519677100203-a0e668c92439?w=800&h=500&fit=crop",
+    coords: { lat: 50.0755, lng: 14.4378 },
+    scores: { family: 82, childSafety: 88, schoolAccess: 80, nature: 65, internet: 85, healthcare: 80 },
+    cost: { familyMonthly: 2800, rent2br: 1200, internationalSchool: 550, localSchool: 0, childcare: 300 },
+    meta: {
+      familiesNow: 14, familiesBeen: 190, returnRate: 55,
+      bestMonths: ["April", "May", "June", "September", "October"],
+      timezone: "Europe/Prague", language: ["Czech", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "OK", kidsAgeIdeal: "All ages"
+    },
+    tags: ["safe", "international schools", "expat community", "variable"],
+    description: "Prague is a fairy-tale city that's surprisingly practical for families. Strong international schools, safe streets, excellent public transport, and a central European location for easy weekend trips."
+  },
+  {
+    id: "42",
+    slug: "medellin-envigado",
+    name: "Envigado",
+    country: "Colombia",
+    countryCode: "CO",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1568632234157-ce7aecd03d0d?w=800&h=500&fit=crop",
+    coords: { lat: 6.1714, lng: -75.5879 },
+    scores: { family: 78, childSafety: 72, schoolAccess: 70, nature: 78, internet: 75, healthcare: 72 },
+    cost: { familyMonthly: 1900, rent2br: 650, internationalSchool: 400, localSchool: 80, childcare: 200 },
+    meta: {
+      familiesNow: 12, familiesBeen: 160, returnRate: 55,
+      bestMonths: ["December", "January", "February", "March"],
+      timezone: "America/Bogota", language: ["Spanish", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["mountains", "low cost", "safe", "nature", "warm", "expat community"],
+    description: "Envigado is the quieter, safer suburb south of Medellín where most families actually live. Same eternal spring weather, lower crime, better walkability, and a tight-knit expat parent community."
+  },
+  {
+    id: "43",
+    slug: "crete",
+    name: "Crete",
+    country: "Greece",
+    countryCode: "GR",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&h=500&fit=crop",
+    coords: { lat: 35.2401, lng: 24.4709 },
+    scores: { family: 78, childSafety: 84, schoolAccess: 50, nature: 92, internet: 65, healthcare: 65 },
+    cost: { familyMonthly: 2400, rent2br: 900, internationalSchool: 0, localSchool: 0, childcare: 200 },
+    meta: {
+      familiesNow: 8, familiesBeen: 100, returnRate: 52,
+      bestMonths: ["May", "June", "September", "October"],
+      timezone: "Europe/Athens", language: ["Greek", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "OK", kidsAgeIdeal: "Young children"
+    },
+    tags: ["beach", "nature", "mountains", "safe", "warm", "mediterranean"],
+    description: "Crete is Greece's largest island with mountains, gorges, and beaches that rival the Caribbean. No international schools — this is a homeschool family destination where kids live outdoors."
+  },
+  {
+    id: "44",
+    slug: "ho-chi-minh",
+    name: "Ho Chi Minh City",
+    country: "Vietnam",
+    countryCode: "VN",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=500&fit=crop",
+    coords: { lat: 10.8231, lng: 106.6297 },
+    scores: { family: 77, childSafety: 68, schoolAccess: 78, nature: 50, internet: 82, healthcare: 68 },
+    cost: { familyMonthly: 2000, rent2br: 650, internationalSchool: 500, localSchool: 50, childcare: 180 },
+    meta: {
+      familiesNow: 18, familiesBeen: 230, returnRate: 55,
+      bestMonths: ["December", "January", "February", "March"],
+      timezone: "Asia/Ho_Chi_Minh", language: ["Vietnamese", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["low cost", "international schools", "expat community", "warm", "tropical"],
+    description: "Saigon is Vietnam's economic engine with a massive international school ecosystem and one of the world's best street food scenes. Chaotic but thrilling — families either love it or move to Da Nang."
+  },
+  {
+    id: "45",
+    slug: "funchal",
+    name: "Funchal",
+    country: "Portugal",
+    countryCode: "PT",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=800&h=500&fit=crop",
+    coords: { lat: 32.6669, lng: -16.9241 },
+    scores: { family: 79, childSafety: 86, schoolAccess: 55, nature: 90, internet: 75, healthcare: 72 },
+    cost: { familyMonthly: 2400, rent2br: 1000, internationalSchool: 400, localSchool: 0, childcare: 250 },
+    meta: {
+      familiesNow: 10, familiesBeen: 120, returnRate: 58,
+      bestMonths: ["April", "May", "June", "September", "October"],
+      timezone: "Atlantic/Madeira", language: ["Portuguese", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Excellent", kidsAgeIdeal: "All ages"
+    },
+    tags: ["nature", "mountains", "safe", "warm", "beach", "mediterranean"],
+    description: "Funchal is Madeira's capital — a subtropical island with levada walks, year-round mild weather, and Portuguese visa advantages. Quieter than the mainland, with a growing remote family community."
   }
 ]
