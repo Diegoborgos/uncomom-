@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next"
 import { cities } from "@/data/cities"
+import { generateAllFilterPages } from "@/lib/filter-pages"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://uncomom.vercel.app"
@@ -9,6 +10,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.8,
+  }))
+
+  // Programmatic SEO: filter combination pages
+  const filterPages = generateAllFilterPages().map((page) => ({
+    url: `${baseUrl}/cities/${page.segments.join("/")}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
   }))
 
   const staticPages = [
@@ -33,5 +42,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly" as const,
   }))
 
-  return [...staticPages, ...cityPages]
+  return [...staticPages, ...cityPages, ...filterPages]
 }
