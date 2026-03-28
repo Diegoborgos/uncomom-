@@ -18,6 +18,11 @@ export default function CityCard({ city }: { city: City }) {
             src={city.photo}
             alt={city.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = "none"
+              target.parentElement!.style.background = "linear-gradient(135deg, var(--surface-elevated), var(--surface))"
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 

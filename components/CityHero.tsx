@@ -14,6 +14,11 @@ export default function CityHero({ city }: { city: City }) {
         src={city.photo}
         alt={city.name}
         className="w-full h-full object-cover"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement
+          target.style.display = "none"
+          target.parentElement!.style.background = "linear-gradient(135deg, var(--surface-elevated), var(--surface))"
+        }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-black/40 to-transparent" />
       <div className="absolute bottom-8 left-0 right-0 max-w-5xl mx-auto px-4 flex items-end justify-between">
