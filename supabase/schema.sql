@@ -225,3 +225,90 @@ create policy "Anyone can join waitlist"
 
 create policy "Waitlist is not publicly readable"
   on public.waitlist for select using (false);
+
+-- ============================================================
+-- EVENT TRACKING — The data foundation
+-- Every interaction on the platform goes here.
+-- This is the most important table in the entire database.
+-- ============================================================
+
+create table if not exists public.family_events (
+  id uuid default gen_random_uuid() primary key,
+  family_id uuid references public.families(id) on delete cascade,
+  session_id text not null,
+  event_type text not null,
+  event_data jsonb default '{}',
+  page_url text,
+  referrer text,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_family_events_family_id
+  on public.family_events(family_id, created_at desc);
+
+create index if not exists idx_family_events_type
+  on public.family_events(event_type, created_at desc);
+
+create index if not exists idx_family_events_session
+  on public.family_events(session_id);
+
+alter table public.family_events enable row level security;
+
+-- Anyone can insert events (including anonymous users)
+create policy "Anyone can insert events"
+  on public.family_events for insert with check (true);
+
+-- Only the family can read their own events
+create policy "Families can read their own events"
+  on public.family_events for select using (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+-- Admin can read all (service role bypasses RLS)
+
+-- ============================================================
+-- FAMILY INTELLIGENCE — Derived from events, updated nightly
+-- What the agent knows about each family's real situation
+-- ============================================================
+
+create table if not exists public.family_intelligence (
+  family_id uuid references public.families(id) on delete cascade primary key,
+
+  -- Inferred from behaviour, not stated
+  real_budget_min integer,
+  real_budget_max integer,
+  decision_stage text,
+  primary_anxiety text,
+  secondary_anxiety text,
+
+  -- Destination intelligence
+  top_candidate_cities jsonb,
+  dismissed_cities jsonb,
+  continent_preference text,
+
+  -- Life stage signals
+  departure_horizon text,
+  income_trajectory text,
+  education_identity text,
+  community_need text,
+
+  -- Commercial readiness
+  partner_match_scores jsonb,
+  ready_to_buy jsonb,
+  not_ready_for jsonb,
+
+  -- Engagement
+  platform_engagement text,
+  last_active_at timestamptz,
+  sessions_last_30d integer,
+
+  updated_at timestamptz default now()
+);
+
+alter table public.family_intelligence enable row level security;
+
+-- Families can see their own intelligence (transparency)
+create policy "Families can read their own intelligence"
+  on public.family_intelligence for select using (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );

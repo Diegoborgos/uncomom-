@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useCallback } from "react"
 import Link from "next/link"
 import { Filters, SortOption, CostRange, ClimateTag } from "@/lib/types"
+import { track } from "@/lib/tracking"
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "family", label: "Family Score" },
@@ -53,6 +54,24 @@ export default function FilterBar({
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterCount = activeFilterCount(filters)
+  const searchTimer = useRef<NodeJS.Timeout>()
+
+  const handleSearchChange = useCallback((value: string) => {
+    onChange({ ...filters, search: value })
+    clearTimeout(searchTimer.current)
+    if (value.trim()) {
+      searchTimer.current = setTimeout(() => {
+        track("search_query", { query: value.trim() })
+      }, 1000)
+    }
+  }, [filters, onChange])
+
+  const handleSortChange = useCallback((sort: SortOption) => {
+    track("sort_changed", { sortBy: sort })
+    onChange({ ...filters, sort })
+  }, [filters, onChange])
+
+  // Not using useCallback wrapper — tracking inline in filter pill onClick handlers
 
   return (
     <div className="sticky top-16 z-30 bg-[var(--bg)] border-b border-[var(--border)]">
@@ -92,7 +111,7 @@ export default function FilterBar({
               type="text"
               placeholder="Search or filter..."
               value={filters.search}
-              onChange={(e) => onChange({ ...filters, search: e.target.value })}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-8 pr-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
             />
           </div>
@@ -127,7 +146,7 @@ export default function FilterBar({
           {/* Sort */}
           <select
             value={filters.sort}
-            onChange={(e) => onChange({ ...filters, sort: e.target.value as SortOption })}
+            onChange={(e) => handleSortChange(e.target.value as SortOption)}
             className="bg-transparent border border-[var(--border)] rounded-full px-3 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)] transition-colors shrink-0 cursor-pointer"
           >
             {SORT_OPTIONS.map((o) => (

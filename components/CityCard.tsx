@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { City } from "@/lib/types"
 import { countryCodeToFlag, getScoreColor } from "@/lib/scores"
+import { track } from "@/lib/tracking"
 
 export default function CityCard({ city }: { city: City }) {
   const flag = countryCodeToFlag(city.countryCode)
@@ -32,6 +33,7 @@ export default function CityCard({ city }: { city: City }) {
   }
 
   const handleClick = useCallback((e: React.MouseEvent) => {
+    track("city_card_clicked", { citySlug: city.slug, cityName: city.name })
     if (window.matchMedia("(hover: hover)").matches) {
       router.push(`/cities/${city.slug}`)
       return
@@ -42,7 +44,7 @@ export default function CityCard({ city }: { city: City }) {
     } else {
       router.push(`/cities/${city.slug}`)
     }
-  }, [showPreview, city.slug, router])
+  }, [showPreview, city.slug, city.name, router])
 
   const scores = [
     { label: "Family", value: city.scores.family },

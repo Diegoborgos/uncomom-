@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
+import { track, backfillSession } from "@/lib/tracking"
 
 function GoogleIcon() {
   return (
@@ -50,6 +51,8 @@ export default function LoginPage() {
       setError(error)
       setLoading(false)
     } else {
+      track("session_start", { method: "email", referrer: document.referrer })
+      backfillSession()
       router.push("/dashboard")
     }
   }
