@@ -7,6 +7,7 @@ import { filterCities, filtersToParams, paramsToFilters } from "@/lib/filters"
 import { Filters } from "@/lib/types"
 import FilterBar from "@/components/FilterBar"
 import CityGrid from "@/components/CityGrid"
+import { GridSkeleton } from "@/components/Skeleton"
 
 function HomeContent() {
   const searchParams = useSearchParams()
@@ -38,8 +39,8 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-7xl mx-auto px-4 py-20 text-center text-[var(--text-secondary)]">
-          Loading cities...
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <GridSkeleton />
         </div>
       }
     >

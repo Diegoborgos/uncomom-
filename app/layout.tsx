@@ -5,8 +5,26 @@ import Footer from "@/components/Footer"
 import { AuthProvider } from "@/lib/auth-context"
 
 export const metadata: Metadata = {
-  title: "Uncomun — Family Travel City Directory",
+  title: {
+    default: "Uncomun — Family Travel City Directory",
+    template: "%s | Uncomun",
+  },
   description: "Find your family's next home. A city directory for entrepreneurial families who travel and live globally.",
+  openGraph: {
+    title: "Uncomun — Family Travel City Directory",
+    description: "City scores, costs, schools, and visa guides for families who travel and live globally.",
+    siteName: "Uncomun",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Uncomun — Family Travel City Directory",
+    description: "City scores, costs, schools, and visa guides for families who travel and live globally.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({

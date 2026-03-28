@@ -7,6 +7,8 @@ import FamilyCostPanel from "@/components/FamilyCostPanel"
 import TripTracker from "@/components/TripTracker"
 import CityReviews from "@/components/CityReviews"
 import FamiliesHere from "@/components/FamiliesHere"
+import CityVisas from "@/components/CityVisas"
+import BookmarkButton from "@/components/BookmarkButton"
 import { getVisaBadgeColor, getHomeschoolBadgeColor } from "@/lib/scores"
 
 export function generateStaticParams() {
@@ -31,13 +33,16 @@ export default function CityPage({ params }: { params: { slug: string } }) {
       <CityHero city={city} />
 
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="text-sm text-[var(--accent-green)] hover:underline"
-        >
-          &larr; All cities
-        </Link>
+        {/* Back link + bookmark */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-sm text-[var(--accent-green)] hover:underline"
+          >
+            &larr; All cities
+          </Link>
+          <BookmarkButton citySlug={city.slug} />
+        </div>
 
         {/* Trip tracker */}
         <section>
@@ -111,6 +116,11 @@ export default function CityPage({ params }: { params: { slug: string } }) {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Visas */}
+        <section>
+          <CityVisas citySlug={city.slug} />
         </section>
 
         {/* Description */}

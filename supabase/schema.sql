@@ -101,3 +101,18 @@ create policy "Families can delete their own reviews"
   on public.reviews for delete using (
     family_id in (select id from public.families where user_id = auth.uid())
   );
+
+-- Waitlist table
+create table if not exists public.waitlist (
+  id uuid default gen_random_uuid() primary key,
+  email text not null unique,
+  created_at timestamptz default now() not null
+);
+
+alter table public.waitlist enable row level security;
+
+create policy "Anyone can join waitlist"
+  on public.waitlist for insert with check (true);
+
+create policy "Waitlist is not publicly readable"
+  on public.waitlist for select using (false);
