@@ -12,6 +12,7 @@ import CityCard from "@/components/CityCard"
 import CostPanelGated from "@/components/CostPanelGated"
 import MetaPanelGated from "@/components/MetaPanelGated"
 import { formatEuro } from "@/lib/scores"
+import { cityJsonLd } from "@/lib/structured-data"
 
 export function generateStaticParams() {
   return cities.map((city) => ({ slug: city.slug }))
@@ -48,8 +49,18 @@ export default function CityPage({ params }: { params: { slug: string } }) {
     .filter((c) => c.continent === city.continent && c.slug !== city.slug)
     .slice(0, 3)
 
+  const jsonLd = cityJsonLd(city)
+
   return (
     <div>
+      {/* Invisible structured data for LLMs and search engines */}
+      {jsonLd.map((schema, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
       <CityHero city={city} />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
