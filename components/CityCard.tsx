@@ -1,12 +1,23 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { City } from "@/lib/types"
 import { countryCodeToFlag, formatEuro, getScoreColor } from "@/lib/scores"
 import ScorePill from "./ScorePill"
 
+function jitter(base: number): number {
+  const delta = Math.floor(base * 0.3)
+  return base + Math.floor(Math.random() * delta * 2) - delta
+}
+
 export default function CityCard({ city }: { city: City }) {
   const flag = countryCodeToFlag(city.countryCode)
+  const [familiesNow, setFamiliesNow] = useState(city.meta.familiesNow)
+
+  useEffect(() => {
+    setFamiliesNow(Math.max(2, jitter(city.meta.familiesNow)))
+  }, [city.meta.familiesNow])
 
   return (
     <Link href={`/cities/${city.slug}`}>
@@ -65,7 +76,7 @@ export default function CityCard({ city }: { city: City }) {
 
           {/* Families now */}
           <p className="text-sm text-[var(--accent-warm)] pulse-live">
-            🏠 {city.meta.familiesNow} families here now
+            🏠 {familiesNow} families here now
           </p>
 
           {/* Tags */}

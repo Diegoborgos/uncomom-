@@ -400,5 +400,205 @@ export const cities: City[] = [
     },
     tags: ["low cost", "safe", "expat community", "variable"],
     description: "Belgrade is an underpriced European capital with fast internet, a thriving cafe culture, and a surprisingly family-friendly vibe. The riverfront parks and fortress playground are daily staples for local families."
+  },
+  {
+    id: "21",
+    slug: "ubud",
+    name: "Ubud",
+    country: "Indonesia",
+    countryCode: "ID",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=800&h=500&fit=crop",
+    coords: { lat: -8.5069, lng: 115.2625 },
+    scores: { family: 81, childSafety: 68, schoolAccess: 75, nature: 95, internet: 68, healthcare: 58 },
+    cost: { familyMonthly: 2400, rent2br: 800, internationalSchool: 600, localSchool: 80, childcare: 180 },
+    meta: {
+      familiesNow: 26, familiesBeen: 340, returnRate: 65,
+      bestMonths: ["April", "May", "June", "July", "August", "September"],
+      timezone: "Asia/Makassar", language: ["Indonesian", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["nature", "mountains", "expat community", "tropical", "warm"],
+    description: "Ubud is Bali's spiritual and artistic heart. Surrounded by rice terraces and jungle, it attracts families seeking a slower pace than Canggu with deep wellness and homeschool communities."
+  },
+  {
+    id: "22",
+    slug: "sarajevo",
+    name: "Sarajevo",
+    country: "Bosnia and Herzegovina",
+    countryCode: "BA",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1590080876067-45ced9a42e63?w=800&h=500&fit=crop",
+    coords: { lat: 43.8563, lng: 18.4131 },
+    scores: { family: 70, childSafety: 75, schoolAccess: 60, nature: 78, internet: 72, healthcare: 60 },
+    cost: { familyMonthly: 1500, rent2br: 500, internationalSchool: 300, localSchool: 0, childcare: 150 },
+    meta: {
+      familiesNow: 7, familiesBeen: 90, returnRate: 40,
+      bestMonths: ["May", "June", "September", "October"],
+      timezone: "Europe/Sarajevo", language: ["Bosnian", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "Teens"
+    },
+    tags: ["low cost", "mountains", "safe", "nature", "variable"],
+    description: "Sarajevo is one of Europe's most affordable capitals with a rich cultural tapestry. The surrounding mountains offer year-round outdoor activities, and the city's warmth surprises every family that visits."
+  },
+  {
+    id: "23",
+    slug: "bansko",
+    name: "Bansko",
+    country: "Bulgaria",
+    countryCode: "BG",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=500&fit=crop",
+    coords: { lat: 41.8366, lng: 23.4884 },
+    scores: { family: 73, childSafety: 80, schoolAccess: 55, nature: 85, internet: 80, healthcare: 58 },
+    cost: { familyMonthly: 1400, rent2br: 450, internationalSchool: 250, localSchool: 0, childcare: 120 },
+    meta: {
+      familiesNow: 14, familiesBeen: 170, returnRate: 52,
+      bestMonths: ["June", "July", "August", "September", "December", "January", "February"],
+      timezone: "Europe/Sofia", language: ["Bulgarian", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "OK", kidsAgeIdeal: "All ages"
+    },
+    tags: ["mountains", "low cost", "safe", "nature", "expat community", "variable"],
+    description: "Bansko is a small mountain town that has become a surprise digital nomad hub. Skiing in winter, hiking in summer, and rock-bottom costs make it a practical family base in the EU."
+  },
+  {
+    id: "24",
+    slug: "nazare",
+    name: "Nazaré",
+    country: "Portugal",
+    countryCode: "PT",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=500&fit=crop",
+    coords: { lat: 39.6010, lng: -9.0714 },
+    scores: { family: 75, childSafety: 85, schoolAccess: 55, nature: 88, internet: 70, healthcare: 72 },
+    cost: { familyMonthly: 2200, rent2br: 900, internationalSchool: 450, localSchool: 0, childcare: 250 },
+    meta: {
+      familiesNow: 8, familiesBeen: 95, returnRate: 55,
+      bestMonths: ["May", "June", "July", "August", "September"],
+      timezone: "Europe/Lisbon", language: ["Portuguese", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Excellent", kidsAgeIdeal: "All ages"
+    },
+    tags: ["surf", "beach", "nature", "safe", "mediterranean"],
+    description: "Nazaré is famous for its giant waves but the town itself is a quiet, family-safe beach village. A growing surf family community and proximity to Lisbon make it an appealing base."
+  },
+  {
+    id: "25",
+    slug: "porto-alegre",
+    name: "Porto Alegre",
+    country: "Brazil",
+    countryCode: "BR",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1544989164-31dc3291c398?w=800&h=500&fit=crop",
+    coords: { lat: -30.0346, lng: -51.2177 },
+    scores: { family: 68, childSafety: 55, schoolAccess: 70, nature: 65, internet: 72, healthcare: 68 },
+    cost: { familyMonthly: 1800, rent2br: 600, internationalSchool: 400, localSchool: 60, childcare: 180 },
+    meta: {
+      familiesNow: 8, familiesBeen: 100, returnRate: 38,
+      bestMonths: ["March", "April", "October", "November"],
+      timezone: "America/Sao_Paulo", language: ["Portuguese", "English"],
+      homeschoolLegal: "Restricted", visaFriendly: "Good", kidsAgeIdeal: "Teens"
+    },
+    tags: ["low cost", "nature", "variable"],
+    description: "Porto Alegre is southern Brazil's cultural capital with a European feel, strong schools, and a lower cost of living than São Paulo or Rio. A practical choice for families wanting a Brazilian base."
+  },
+  {
+    id: "26",
+    slug: "santa-teresa",
+    name: "Santa Teresa",
+    country: "Costa Rica",
+    countryCode: "CR",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1500259571355-332da5cb07aa?w=800&h=500&fit=crop",
+    coords: { lat: 9.6402, lng: -85.1631 },
+    scores: { family: 76, childSafety: 70, schoolAccess: 58, nature: 92, internet: 65, healthcare: 60 },
+    cost: { familyMonthly: 2800, rent2br: 1200, internationalSchool: 500, localSchool: 80, childcare: 250 },
+    meta: {
+      familiesNow: 15, familiesBeen: 180, returnRate: 58,
+      bestMonths: ["December", "January", "February", "March", "April"],
+      timezone: "America/Costa_Rica", language: ["Spanish", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "Young children"
+    },
+    tags: ["surf", "beach", "nature", "warm", "tropical", "expat community"],
+    description: "Santa Teresa is a surf town on Costa Rica's Pacific coast with a tight-knit expat family scene. The nature is extraordinary, the kids surf before school, and the pura vida pace is real."
+  },
+  {
+    id: "27",
+    slug: "kotor",
+    name: "Kotor",
+    country: "Montenegro",
+    countryCode: "ME",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1555990538-1a0f5a2b3f58?w=800&h=500&fit=crop",
+    coords: { lat: 42.4247, lng: 18.7712 },
+    scores: { family: 74, childSafety: 82, schoolAccess: 50, nature: 90, internet: 70, healthcare: 58 },
+    cost: { familyMonthly: 2000, rent2br: 800, internationalSchool: 400, localSchool: 0, childcare: 200 },
+    meta: {
+      familiesNow: 9, familiesBeen: 110, returnRate: 48,
+      bestMonths: ["May", "June", "September", "October"],
+      timezone: "Europe/Podgorica", language: ["Montenegrin", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["beach", "mountains", "safe", "nature", "mediterranean"],
+    description: "Kotor is a UNESCO fjord town with dramatic mountains meeting the Adriatic. Small, walkable, and safe — families fall in love with the old town and the bay's swimming spots."
+  },
+  {
+    id: "28",
+    slug: "lefkada",
+    name: "Lefkada",
+    country: "Greece",
+    countryCode: "GR",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&h=500&fit=crop",
+    coords: { lat: 38.8337, lng: 20.7069 },
+    scores: { family: 76, childSafety: 85, schoolAccess: 45, nature: 92, internet: 62, healthcare: 60 },
+    cost: { familyMonthly: 2200, rent2br: 900, internationalSchool: 0, localSchool: 0, childcare: 200 },
+    meta: {
+      familiesNow: 6, familiesBeen: 75, returnRate: 52,
+      bestMonths: ["May", "June", "July", "August", "September"],
+      timezone: "Europe/Athens", language: ["Greek", "English"],
+      homeschoolLegal: "Restricted", visaFriendly: "OK", kidsAgeIdeal: "Young children"
+    },
+    tags: ["beach", "nature", "safe", "warm", "mediterranean"],
+    description: "Lefkada is a Greek island connected by bridge to the mainland — no ferry needed. Turquoise beaches, olive groves, and a slow island life that families with young children find perfect."
+  },
+  {
+    id: "29",
+    slug: "ericeira",
+    name: "Ericeira",
+    country: "Portugal",
+    countryCode: "PT",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1504681869696-d977211a5f4c?w=800&h=500&fit=crop",
+    coords: { lat: 38.9626, lng: -9.4154 },
+    scores: { family: 82, childSafety: 86, schoolAccess: 68, nature: 85, internet: 76, healthcare: 74 },
+    cost: { familyMonthly: 2600, rent2br: 1200, internationalSchool: 500, localSchool: 0, childcare: 300 },
+    meta: {
+      familiesNow: 16, familiesBeen: 210, returnRate: 68,
+      bestMonths: ["May", "June", "July", "August", "September"],
+      timezone: "Europe/Lisbon", language: ["Portuguese", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Excellent", kidsAgeIdeal: "All ages"
+    },
+    tags: ["surf", "beach", "safe", "nature", "expat community", "mediterranean"],
+    description: "Ericeira is Europe's only World Surfing Reserve and has become a magnet for surf families. 30 minutes from Lisbon, it offers village life with city access and a booming family expat scene."
+  },
+  {
+    id: "30",
+    slug: "montanita",
+    name: "Montañita",
+    country: "Ecuador",
+    countryCode: "EC",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&h=500&fit=crop",
+    coords: { lat: -1.8285, lng: -80.7543 },
+    scores: { family: 65, childSafety: 55, schoolAccess: 40, nature: 82, internet: 55, healthcare: 48 },
+    cost: { familyMonthly: 1400, rent2br: 450, internationalSchool: 250, localSchool: 30, childcare: 100 },
+    meta: {
+      familiesNow: 5, familiesBeen: 60, returnRate: 35,
+      bestMonths: ["December", "January", "February", "March", "April"],
+      timezone: "America/Guayaquil", language: ["Spanish", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "Teens"
+    },
+    tags: ["surf", "beach", "low cost", "nature", "warm", "tropical"],
+    description: "Montañita is Ecuador's surf capital — raw, affordable, and adventurous. Best suited for older kids and teens. The cost of living is among the lowest on this list."
   }
 ]

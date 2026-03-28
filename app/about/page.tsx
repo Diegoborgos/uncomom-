@@ -41,10 +41,10 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="flex gap-4 items-start">
-            <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] flex items-center justify-center text-sm font-bold border border-[var(--border)]">3</span>
+            <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--accent-green)] text-[var(--bg)] flex items-center justify-center text-sm font-bold">3</span>
             <div>
               <p className="font-medium text-[var(--text-primary)]">Schools & Visas</p>
-              <p className="text-sm">A searchable school directory and visa dashboard to make the hardest parts of family travel easier.</p>
+              <p className="text-sm">A searchable school directory, visa dashboard, interactive map, and city comparison tool. Live now.</p>
             </div>
           </div>
         </div>

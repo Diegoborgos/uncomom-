@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Filters, SortOption, CostRange } from "@/lib/types"
+import { Filters, SortOption, CostRange, ClimateTag } from "@/lib/types"
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "family", label: "Family Score" },
@@ -19,6 +19,17 @@ const COST_RANGES: { value: CostRange; label: string }[] = [
   { value: "2-3k", label: "€2–3K" },
   { value: "3-4k", label: "€3–4K" },
   { value: "over-4k", label: "Over €4K" },
+]
+const CLIMATES: { value: ClimateTag; label: string }[] = [
+  { value: "warm", label: "Warm" },
+  { value: "tropical", label: "Tropical" },
+  { value: "mediterranean", label: "Mediterranean" },
+  { value: "variable", label: "Variable" },
+]
+const HOMESCHOOL_OPTIONS: { value: string; label: string }[] = [
+  { value: "legal", label: "Legal" },
+  { value: "grey", label: "Grey area" },
+  { value: "any", label: "Any" },
 ]
 const TAGS = ["surf", "nature", "beach", "mountains", "safe", "expat community", "low cost", "international schools"]
 
@@ -96,6 +107,36 @@ export default function FilterBar({
               }`}
             >
               {c.label}
+            </button>
+          ))}
+          <span className="w-px h-5 bg-[var(--border)] self-center" />
+          {/* Climate */}
+          {CLIMATES.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => onChange({ ...filters, climate: toggleInArray(filters.climate, c.value) })}
+              className={`px-3 py-1 rounded-full border transition-colors ${
+                filters.climate.includes(c.value)
+                  ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-[var(--bg)]"
+                  : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+          <span className="w-px h-5 bg-[var(--border)] self-center" />
+          {/* Homeschool */}
+          {HOMESCHOOL_OPTIONS.map((h) => (
+            <button
+              key={h.value}
+              onClick={() => onChange({ ...filters, homeschool: toggleInArray(filters.homeschool, h.value) })}
+              className={`px-3 py-1 rounded-full border transition-colors ${
+                filters.homeschool.includes(h.value)
+                  ? "bg-[var(--accent-warm)] border-[var(--accent-warm)] text-[var(--bg)]"
+                  : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
+              }`}
+            >
+              HS: {h.label}
             </button>
           ))}
           <span className="w-px h-5 bg-[var(--border)] self-center" />
