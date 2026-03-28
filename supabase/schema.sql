@@ -307,8 +307,108 @@ create table if not exists public.family_intelligence (
 
 alter table public.family_intelligence enable row level security;
 
--- Families can see their own intelligence (transparency)
+-- Families can read their own intelligence
 create policy "Families can read their own intelligence"
   on public.family_intelligence for select using (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+-- ============================================================
+-- CITY FIELD REPORTS — Verified family experience data
+-- Only families with a logged trip can submit.
+-- This is what makes the FIS un-replicable.
+-- ============================================================
+
+create table if not exists public.city_field_reports (
+  id uuid default gen_random_uuid() primary key,
+  family_id uuid references public.families(id) on delete cascade not null,
+  city_slug text not null,
+  trip_start date not null,
+  trip_end date not null,
+  kids_ages_during_trip integer[] not null,
+  family_size integer not null,
+
+  -- Safety signals
+  safety_overall integer check (safety_overall between 1 and 5),
+  safety_walking_night text,
+  traffic_dangerous_kids boolean,
+  kids_played_outside_independently boolean,
+
+  -- Education signals
+  schooling_approach text,
+  school_name text,
+  school_curriculum text,
+  school_monthly_fee integer,
+  school_rating integer check (school_rating between 1 and 5),
+  enrollment_difficulty text,
+  homeschool_experience text,
+
+  -- Cost signals
+  actual_monthly_spend integer,
+  housing_cost integer,
+  housing_type text,
+  housing_quality integer check (housing_quality between 1 and 5),
+  cost_vs_expectation text,
+  biggest_unexpected_cost text,
+
+  -- Healthcare signals
+  needed_doctor boolean,
+  doctor_experience text,
+  english_paediatrician_available boolean,
+  appointment_wait_time text,
+
+  -- Nature signals
+  outdoor_life_rating integer check (outdoor_life_rating between 1 and 5),
+  outdoor_months_comfortable integer,
+  playground_quality text,
+
+  -- Community signals
+  found_community text,
+  international_families_count text,
+  local_attitude_to_family text,
+  would_recommend_for_community boolean,
+  where_found_community text,
+
+  -- Remote work signals
+  internet_at_accommodation text,
+  could_work_reliably boolean,
+
+  -- Open fields
+  top_tip text,
+  biggest_challenge text,
+  would_return boolean,
+  overall_rating integer check (overall_rating between 1 and 5),
+
+  -- Metadata
+  stay_duration_days integer,
+  created_at timestamptz default now() not null,
+
+  -- One report per family per city
+  unique(family_id, city_slug)
+);
+
+create index if not exists idx_field_reports_city on public.city_field_reports(city_slug);
+create index if not exists idx_field_reports_family on public.city_field_reports(family_id);
+
+alter table public.city_field_reports enable row level security;
+
+-- Anyone can read field reports (they're public intelligence)
+create policy "Field reports are viewable by everyone"
+  on public.city_field_reports for select using (true);
+
+-- Only families with a matching logged trip can submit
+create policy "Verified trips can submit reports"
+  on public.city_field_reports for insert with check (
+    family_id in (select id from public.families where user_id = auth.uid())
+    and exists (
+      select 1 from public.trips
+      where family_id = city_field_reports.family_id
+      and city_slug = city_field_reports.city_slug
+    )
+  );
+
+-- Families can update their own report
+create policy "Families can update their own report"
+  on public.city_field_reports for update using (
     family_id in (select id from public.families where user_id = auth.uid())
   );

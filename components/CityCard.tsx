@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { City } from "@/lib/types"
 import { countryCodeToFlag, getScoreColor } from "@/lib/scores"
 import { track } from "@/lib/tracking"
+import { calculateDefaultFIS, getFISColor } from "@/lib/fis"
 
 export default function CityCard({ city }: { city: City }) {
   const flag = countryCodeToFlag(city.countryCode)
@@ -74,14 +75,15 @@ export default function CityCard({ city }: { city: City }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-        {/* Family Score pill — always visible */}
-        <div className="absolute top-3 right-3">
+        {/* FIS badge — always visible */}
+        <div className="absolute top-3 right-3 flex flex-col items-center">
           <span
             className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold"
-            style={{ backgroundColor: getScoreColor(city.scores.family) + "dd", color: "#fff" }}
+            style={{ backgroundColor: getFISColor(calculateDefaultFIS(city).score) + "dd", color: "#fff" }}
           >
-            {city.scores.family}
+            {calculateDefaultFIS(city).score}
           </span>
+          <span className="text-[7px] text-white/50 mt-0.5 tracking-widest">FIS&trade;</span>
         </div>
 
         {/* City name + country — always visible */}

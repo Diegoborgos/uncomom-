@@ -14,6 +14,7 @@ import MetaPanelGated from "@/components/MetaPanelGated"
 import { formatEuro } from "@/lib/scores"
 import { cityJsonLd } from "@/lib/structured-data"
 import CityPageTracker from "@/components/CityPageTracker"
+import { FISBreakdown } from "@/components/FISScore"
 
 export function generateStaticParams() {
   return cities.map((city) => ({ slug: city.slug }))
@@ -83,11 +84,16 @@ export default function CityPage({ params }: { params: { slug: string } }) {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* LEFT COLUMN — 2/3 (all free) */}
           <div className="flex-1 lg:w-2/3 space-y-10">
-            {/* Scores — FREE */}
+            {/* FIS Breakdown — FREE */}
             <section>
-              <h2 className="font-serif text-2xl font-bold mb-6">Family Scores</h2>
+              <h2 className="font-serif text-2xl font-bold mb-6">Family Intelligence Score&trade;</h2>
+              <FISBreakdown city={city} />
+            </section>
+
+            {/* Legacy Scores — keep for data depth */}
+            <section>
+              <h2 className="font-serif text-2xl font-bold mb-6">Detailed Scores</h2>
               <div className="space-y-4">
-                <ScoreBar label="Family Score" score={city.scores.family} />
                 <ScoreBar label="Child Safety" score={city.scores.childSafety} />
                 <ScoreBar label="School Access" score={city.scores.schoolAccess} />
                 <ScoreBar label="Nature" score={city.scores.nature} />
