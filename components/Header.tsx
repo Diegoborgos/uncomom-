@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
@@ -195,100 +196,137 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile full-screen overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-[100] md:hidden flex flex-col"
-          style={{ backgroundColor: "rgba(13, 26, 20, 0.99)" }}
-        >
-          {/* Mobile header bar */}
-          <div className="flex items-center justify-between px-4 h-16 shrink-0">
-            <Link href="/" onClick={() => setMobileOpen(false)} className="flex flex-col">
-              <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
-                Uncomun
-              </span>
-              <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
-                Find your family&apos;s next home
-              </span>
-            </Link>
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="w-10 h-10 flex items-center justify-center"
-              aria-label="Close menu"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round">
-                <path d="M4 4l12 12M16 4L4 16" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Nav links */}
-          <nav className="flex flex-col gap-1 px-4 pt-4 flex-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`text-3xl font-serif font-bold py-3 transition-colors ${
-                  isActive(link.href)
-                    ? "text-[var(--accent-green)]"
-                    : "text-[var(--text-primary)]"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Auth section at bottom */}
-          <div className="px-4 pb-8 pt-4 border-t border-[var(--border)] space-y-3">
-            {loading ? null : user ? (
-              <>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-10 h-10 rounded-full bg-[var(--accent-green)] text-[var(--bg)] flex items-center justify-center text-sm font-bold">
-                    {initials}
-                  </span>
-                  <span className="text-[var(--text-primary)]">
-                    {family?.family_name || user.email}
-                  </span>
-                </div>
-                {profileComplete ? (
-                  <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-1">
-                    My Family
-                  </Link>
-                ) : (
-                  <Link href="/onboarding" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--accent-warm)] py-1">
-                    Complete your profile
-                  </Link>
-                )}
-                <button
-                  onClick={() => { signOut(); setMobileOpen(false) }}
-                  className="block text-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-1"
-                >
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/signup"
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-center py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium text-lg hover:opacity-90 transition-opacity"
-                >
-                  Join Families
-                </Link>
-                <Link
-                  href="/login"
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-center py-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                >
-                  Sign in
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <MobileMenu
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        isActive={isActive}
+        user={user}
+        family={family}
+        loading={loading}
+        initials={initials}
+        profileComplete={profileComplete}
+        signOut={signOut}
+      />
     </header>
+  )
+}
+
+function MobileMenu({
+  mobileOpen,
+  setMobileOpen,
+  isActive,
+  user,
+  family,
+  loading,
+  initials,
+  profileComplete,
+  signOut,
+}: {
+  mobileOpen: boolean
+  setMobileOpen: (v: boolean) => void
+  isActive: (href: string) => boolean
+  user: unknown
+  family: { family_name?: string; email?: string } | null
+  loading: boolean
+  initials: string
+  profileComplete: boolean
+  signOut: () => void
+}) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  if (!mounted || !mobileOpen) return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 flex flex-col md:hidden"
+      style={{ backgroundColor: "#0d1a14", zIndex: 99999 }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 h-16 shrink-0">
+        <Link href="/" onClick={() => setMobileOpen(false)} className="flex flex-col">
+          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
+            Uncomun
+          </span>
+          <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
+            Find your family&apos;s next home
+          </span>
+        </Link>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="w-10 h-10 flex items-center justify-center"
+          aria-label="Close menu"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round">
+            <path d="M4 4l12 12M16 4L4 16" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex flex-col gap-1 px-4 pt-4 flex-1">
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            onClick={() => setMobileOpen(false)}
+            className={`text-3xl font-serif font-bold py-3 ${
+              isActive(link.href) ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
+            }`}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Auth */}
+      <div className="px-4 pb-8 pt-4 border-t border-[var(--border)] space-y-3">
+        {loading ? null : user ? (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-10 h-10 rounded-full bg-[var(--accent-green)] text-[var(--bg)] flex items-center justify-center text-sm font-bold">
+                {initials}
+              </span>
+              <span className="text-[var(--text-primary)]">
+                {family?.family_name || "My Family"}
+              </span>
+            </div>
+            {profileComplete ? (
+              <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--text-secondary)] py-1">
+                My Family
+              </Link>
+            ) : (
+              <Link href="/onboarding" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--accent-warm)] py-1">
+                Complete your profile
+              </Link>
+            )}
+            <button
+              onClick={() => { signOut(); setMobileOpen(false) }}
+              className="block text-lg text-[var(--text-secondary)] py-1"
+            >
+              Sign out
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/signup"
+              onClick={() => setMobileOpen(false)}
+              className="block text-center py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium text-lg"
+            >
+              Join Families
+            </Link>
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              className="block text-center py-3 text-[var(--text-secondary)]"
+            >
+              Sign in
+            </Link>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
   )
 }
