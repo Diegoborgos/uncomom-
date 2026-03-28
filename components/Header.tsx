@@ -29,21 +29,24 @@ export default function Header() {
             >
               Cities
             </Link>
-            <span className="text-[var(--text-secondary)] cursor-not-allowed" title="Map view coming soon">
+            <Link
+              href="/map"
+              className="text-[var(--text-primary)] hover:text-[var(--accent-green)] transition-colors"
+            >
               Map
-            </span>
-            <span className="text-[var(--text-secondary)] cursor-not-allowed" title="Coming soon">
-              Community
-              <span className="ml-1 text-[10px] bg-[var(--surface-elevated)] px-1.5 py-0.5 rounded-full">soon</span>
-            </span>
-            <span className="text-[var(--text-secondary)] cursor-not-allowed" title="Coming soon">
+            </Link>
+            <Link
+              href="/schools"
+              className="text-[var(--text-primary)] hover:text-[var(--accent-green)] transition-colors"
+            >
               Schools
-              <span className="ml-1 text-[10px] bg-[var(--surface-elevated)] px-1.5 py-0.5 rounded-full">soon</span>
-            </span>
-            <span className="text-[var(--text-secondary)] cursor-not-allowed" title="Coming soon">
+            </Link>
+            <Link
+              href="/visas"
+              className="text-[var(--text-primary)] hover:text-[var(--accent-green)] transition-colors"
+            >
               Visa Guide
-              <span className="ml-1 text-[10px] bg-[var(--surface-elevated)] px-1.5 py-0.5 rounded-full">soon</span>
-            </span>
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Filters, SortOption, CostRange } from "@/lib/types"
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -55,9 +56,15 @@ export default function FilterBar({
               <option key={o.value} value={o.value}>Sort: {o.label}</option>
             ))}
           </select>
-          <span className="text-sm text-[var(--text-secondary)] ml-auto">
-            {resultCount} {resultCount === 1 ? "city" : "cities"}
-          </span>
+          <div className="flex items-center gap-3 ml-auto">
+            <span className="text-sm text-[var(--text-secondary)]">
+              {resultCount} {resultCount === 1 ? "city" : "cities"}
+            </span>
+            <div className="flex rounded-lg border border-[var(--border)] overflow-hidden">
+              <span className="px-3 py-1.5 text-xs bg-[var(--accent-green)] text-[var(--bg)] font-medium">Grid</span>
+              <Link href="/map" className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Map</Link>
+            </div>
+          </div>
         </div>
 
         {/* Row 2: Filter pills */}
