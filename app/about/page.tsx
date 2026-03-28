@@ -34,10 +34,10 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="flex gap-4 items-start">
-            <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] flex items-center justify-center text-sm font-bold border border-[var(--border)]">2</span>
+            <span className="shrink-0 w-8 h-8 rounded-full bg-[var(--accent-green)] text-[var(--bg)] flex items-center justify-center text-sm font-bold">2</span>
             <div>
               <p className="font-medium text-[var(--text-primary)]">Community</p>
-              <p className="text-sm">Family profiles, trip tracking, city reviews, and a way to find other families nearby.</p>
+              <p className="text-sm">Family profiles, trip tracking, city reviews, and a way to find other families nearby. Live now.</p>
             </div>
           </div>
           <div className="flex gap-4 items-start">

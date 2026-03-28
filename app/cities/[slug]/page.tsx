@@ -4,6 +4,9 @@ import Link from "next/link"
 import CityHero from "@/components/CityHero"
 import ScoreBar from "@/components/ScoreBar"
 import FamilyCostPanel from "@/components/FamilyCostPanel"
+import TripTracker from "@/components/TripTracker"
+import CityReviews from "@/components/CityReviews"
+import FamiliesHere from "@/components/FamiliesHere"
 import { getVisaBadgeColor, getHomeschoolBadgeColor } from "@/lib/scores"
 
 export function generateStaticParams() {
@@ -36,6 +39,16 @@ export default function CityPage({ params }: { params: { slug: string } }) {
           &larr; All cities
         </Link>
 
+        {/* Trip tracker */}
+        <section>
+          <TripTracker citySlug={city.slug} />
+        </section>
+
+        {/* Families here */}
+        <section>
+          <FamiliesHere citySlug={city.slug} fallbackCount={city.meta.familiesNow} />
+        </section>
+
         {/* Scores */}
         <section>
           <h2 className="font-serif text-2xl font-bold mb-6">Scores</h2>
@@ -59,8 +72,6 @@ export default function CityPage({ params }: { params: { slug: string } }) {
         <section>
           <h2 className="font-serif text-2xl font-bold mb-6">Details</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <MetaItem label="Families here now" value={`${city.meta.familiesNow}`} highlight />
-            <MetaItem label="Total families been" value={`${city.meta.familiesBeen}`} />
             <MetaItem label="Return rate" value={`${city.meta.returnRate}%`} />
             <MetaItem label="Timezone" value={city.meta.timezone} />
             <MetaItem label="Languages" value={city.meta.language.join(", ")} />
@@ -124,6 +135,11 @@ export default function CityPage({ params }: { params: { slug: string } }) {
             ))}
           </div>
         </section>
+
+        {/* Reviews */}
+        <section>
+          <CityReviews citySlug={city.slug} />
+        </section>
       </div>
     </div>
   )
@@ -132,18 +148,14 @@ export default function CityPage({ params }: { params: { slug: string } }) {
 function MetaItem({
   label,
   value,
-  highlight,
 }: {
   label: string
   value: string
-  highlight?: boolean
 }) {
   return (
     <div className="rounded-lg bg-[var(--surface)] border border-[var(--border)] p-4">
       <p className="text-xs text-[var(--text-secondary)] mb-1">{label}</p>
-      <p className={`text-sm font-medium ${highlight ? "text-[var(--accent-warm)]" : ""}`}>
-        {value}
-      </p>
+      <p className="text-sm font-medium">{value}</p>
     </div>
   )
 }
