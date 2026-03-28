@@ -8,6 +8,7 @@ import CityReviews from "@/components/CityReviews"
 import FamiliesHere from "@/components/FamiliesHere"
 import CityVisas from "@/components/CityVisas"
 import BookmarkButton from "@/components/BookmarkButton"
+import PaidCityContent from "@/components/PaidCityContent"
 import CityCard from "@/components/CityCard"
 import { getVisaBadgeColor, getHomeschoolBadgeColor, formatEuro } from "@/lib/scores"
 
@@ -133,7 +134,8 @@ export default function CityPage({ params }: { params: { slug: string } }) {
           {/* RIGHT COLUMN — 1/3 sticky */}
           <div className="lg:w-1/3">
             <div className="lg:sticky lg:top-20 space-y-6">
-              {/* Cost panel */}
+              {/* Cost panel — gated for free users */}
+              <PaidCityContent>
               <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
                 <h3 className="font-serif text-lg font-bold mb-1">Family Cost Estimate</h3>
                 <p className="text-xs text-[var(--text-secondary)] mb-5">Estimated for a family of 4</p>
@@ -196,6 +198,7 @@ export default function CityPage({ params }: { params: { slug: string } }) {
 
               {/* Families here (live) */}
               <FamiliesHere citySlug={city.slug} fallbackCount={city.meta.familiesNow} />
+              </PaidCityContent>
             </div>
           </div>
         </div>

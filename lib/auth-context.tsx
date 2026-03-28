@@ -10,6 +10,7 @@ type AuthState = {
   family: Family | null
   session: Session | null
   loading: boolean
+  isPaid: boolean
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthState>({
   family: null,
   session: null,
   loading: true,
+  isPaid: false,
   signUp: async () => ({ error: null }),
   signIn: async () => ({ error: null }),
   signOut: async () => {},
@@ -94,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, family, session, loading, signUp, signIn, signOut, refreshFamily }}
+      value={{ user, family, session, loading, isPaid: family?.membership_tier === "paid", signUp, signIn, signOut, refreshFamily }}
     >
       {children}
     </AuthContext.Provider>
