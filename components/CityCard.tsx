@@ -3,27 +3,20 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { City } from "@/lib/types"
-import { countryCodeToFlag, formatEuro, getScoreColor } from "@/lib/scores"
-
-function jitter(base: number): number {
-  const delta = Math.floor(base * 0.3)
-  return base + Math.floor(Math.random() * delta * 2) - delta
-}
+import { countryCodeToFlag, getScoreColor } from "@/lib/scores"
 
 export default function CityCard({ city }: { city: City }) {
   const flag = countryCodeToFlag(city.countryCode)
   const router = useRouter()
-  const [familiesNow, setFamiliesNow] = useState(city.meta.familiesNow)
   const [saved, setSaved] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
-    setFamiliesNow(Math.max(2, jitter(city.meta.familiesNow)))
     const bookmarks: string[] = JSON.parse(localStorage.getItem("uncomun_bookmarks") || "[]")
     setSaved(bookmarks.includes(city.slug))
-  }, [city.meta.familiesNow, city.slug])
+  }, [city.slug])
 
-  const toggleSave = (e: React.MouseEvent | React.TouchEvent) => {
+  const toggleSave = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     const bookmarks: string[] = JSON.parse(localStorage.getItem("uncomun_bookmarks") || "[]")
@@ -32,14 +25,17 @@ export default function CityCard({ city }: { city: City }) {
     setSaved(!saved)
   }
 
-  // Mobile: first tap shows preview, second tap navigates
+  const dismissPreview = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowPreview(false)
+  }
+
   const handleClick = useCallback((e: React.MouseEvent) => {
-    // Desktop (hover handles preview) — always navigate
     if (window.matchMedia("(hover: hover)").matches) {
       router.push(`/cities/${city.slug}`)
       return
     }
-    // Mobile — toggle preview on first tap, navigate on second
     if (!showPreview) {
       e.preventDefault()
       setShowPreview(true)
@@ -48,26 +44,21 @@ export default function CityCard({ city }: { city: City }) {
     }
   }, [showPreview, city.slug, router])
 
-  // Close preview when tapping outside
-  useEffect(() => {
-    if (!showPreview) return
-    const close = () => setShowPreview(false)
-    const timer = setTimeout(() => {
-      document.addEventListener("click", close, { once: true })
-    }, 100)
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener("click", close)
-    }
-  }, [showPreview])
+  const scores = [
+    { label: "Family", value: city.scores.family },
+    { label: "Safety", value: city.scores.childSafety },
+    { label: "Schools", value: city.scores.schoolAccess },
+    { label: "Nature", value: city.scores.nature },
+    { label: "Internet", value: city.scores.internet },
+  ]
 
   return (
     <div
       onClick={handleClick}
       className="group rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent-green)] hover:-translate-y-1 transition-all duration-200 cursor-pointer"
     >
-      {/* Image with overlays */}
       <div className="relative aspect-[16/10] overflow-hidden">
+        {/* City photo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={city.photo}
@@ -84,31 +75,14 @@ export default function CityCard({ city }: { city: City }) {
         {/* Family Score pill — always visible */}
         <div className="absolute top-3 right-3">
           <span
-            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-mono font-bold"
-            style={{
-              backgroundColor: getScoreColor(city.scores.family) + "dd",
-              color: "#fff",
-            }}
+            className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold"
+            style={{ backgroundColor: getScoreColor(city.scores.family) + "dd", color: "#fff" }}
           >
             {city.scores.family}
           </span>
         </div>
 
-        {/* Heart bookmark */}
-        <button
-          onClick={toggleSave}
-          className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 z-10 ${
-            saved
-              ? "bg-[var(--accent-warm)] text-white opacity-100"
-              : "bg-black/40 text-white/70 opacity-0 group-hover:opacity-100"
-          }`}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">
-            <path d="M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 018 4a3.5 3.5 0 015.5 3c0 3.5-5.5 7-5.5 7z" />
-          </svg>
-        </button>
-
-        {/* City name — always visible */}
+        {/* City name + country — always visible */}
         <div className="absolute bottom-3 left-3 right-3">
           <h3 className="font-serif text-xl font-bold text-white">
             {flag} {city.name}
@@ -116,48 +90,59 @@ export default function CityCard({ city }: { city: City }) {
           <p className="text-sm text-white/80">{city.country}</p>
         </div>
 
-        {/* HOVER/TAP PREVIEW OVERLAY — solid background, covers everything */}
-        <div
-          className={`absolute inset-0 flex flex-col justify-end p-4 transition-opacity duration-200 ${
-            showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
-          }`}
-          style={{ backgroundColor: "#132018" }}
-        >
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
-            <QuickStat label="Family Score" value={`${city.scores.family}`} color={getScoreColor(city.scores.family)} />
-            <QuickStat label="Monthly Cost" value={formatEuro(city.cost.familyMonthly)} color="var(--accent-warm)" />
-            <QuickStat label="Child Safety" value={`${city.scores.childSafety}`} color={getScoreColor(city.scores.childSafety)} />
-            <QuickStat label="Internet" value={`${city.scores.internet}`} color={getScoreColor(city.scores.internet)} />
-          </div>
+        {/* HOVER/TAP OVERLAY — Nomad List style: dark overlay with score bars */}
+        <div className={`absolute inset-0 transition-opacity duration-200 ${
+          showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+        }`} style={{ backgroundColor: "rgba(0,0,0,0.75)" }}>
 
-          {/* Families + tags */}
-          <p className="text-xs text-[var(--accent-warm)]">
-            🏠 {familiesNow} families here now
-          </p>
-          <div className="flex flex-wrap gap-1 mt-2">
-            {city.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70">
-                {tag}
-              </span>
-            ))}
+          {/* Heart + X buttons */}
+          <div className="absolute top-3 left-3">
+            <button
+              onClick={toggleSave}
+              className="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center hover:bg-black/60 transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill={saved ? "white" : "none"} stroke="white" strokeWidth="1.5">
+                <path d="M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 018 4a3.5 3.5 0 015.5 3c0 3.5-5.5 7-5.5 7z" />
+              </svg>
+            </button>
           </div>
-
-          {/* Tap hint on mobile */}
           {showPreview && (
-            <p className="text-[10px] text-white/40 text-center mt-3">Tap again to view city</p>
+            <div className="absolute top-3 right-3">
+              <button
+                onClick={dismissPreview}
+                className="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center hover:bg-black/60 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                  <path d="M4 4l8 8M12 4l-8 8" />
+                </svg>
+              </button>
+            </div>
           )}
+
+          {/* Score bars */}
+          <div className="absolute bottom-4 left-4 right-4 space-y-2.5">
+            {scores.map((s) => (
+              <div key={s.label} className="flex items-center gap-3">
+                <span className="text-xs text-white/80 w-14 shrink-0">{s.label}</span>
+                <div className="flex-1 h-4 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${s.value}%`,
+                      backgroundColor: getScoreColor(s.value),
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+
+            {/* Tap hint on mobile */}
+            {showPreview && (
+              <p className="text-[10px] text-white/30 text-center pt-1">Tap again to view city</p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-function QuickStat({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div>
-      <p className="text-[10px] text-white/50 uppercase tracking-wider leading-none mb-0.5">{label}</p>
-      <p className="text-base font-mono font-bold leading-none" style={{ color: color || "#fff" }}>{value}</p>
     </div>
   )
 }
