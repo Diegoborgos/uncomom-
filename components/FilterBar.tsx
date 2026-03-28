@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Filters, SortOption, CostRange, ClimateTag } from "@/lib/types"
 
@@ -37,6 +38,10 @@ function toggleInArray<T>(arr: T[], item: T): T[] {
   return arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item]
 }
 
+const activeFilterCount = (filters: Filters): number => {
+  return filters.continents.length + filters.costRange.length + filters.climate.length + filters.homeschool.length + filters.tags.length
+}
+
 export default function FilterBar({
   filters,
   onChange,
@@ -46,116 +51,229 @@ export default function FilterBar({
   onChange: (f: Filters) => void
   resultCount: number
 }) {
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const filterCount = activeFilterCount(filters)
+
   return (
-    <div className="sticky top-0 z-30 bg-[var(--surface)] border-b border-[var(--border)] py-3">
-      <div className="max-w-7xl mx-auto px-4 space-y-3">
-        {/* Row 1: Search + Sort + Count */}
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            type="text"
-            placeholder="Search cities..."
-            value={filters.search}
-            onChange={(e) => onChange({ ...filters, search: e.target.value })}
-            className="bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] w-full sm:w-64 transition-colors"
-          />
+    <div className="sticky top-16 z-30 bg-[var(--bg)] border-b border-[var(--border)]">
+      {/* Main toolbar row — Nomad List style */}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center gap-2 h-12 overflow-x-auto scrollbar-hide">
+          {/* Logo icon */}
+          <span className="font-serif text-lg font-bold text-[var(--accent-green)] shrink-0 mr-1">U</span>
+
+          {/* Filters toggle */}
+          <button
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium shrink-0 transition-colors ${
+              filtersOpen || filterCount > 0
+                ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-[var(--bg)]"
+                : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M1 3h14v1.5H1V3zm2 4h10v1.5H3V7zm3 4h4v1.5H6V11z" />
+            </svg>
+            Filters
+            {filterCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-[var(--bg)] text-[var(--accent-green)] text-[10px] flex items-center justify-center font-bold">
+                {filterCount}
+              </span>
+            )}
+          </button>
+
+          {/* Search input */}
+          <div className="relative flex-1 min-w-[140px] max-w-[280px]">
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="7" cy="7" r="5" />
+              <path d="M11 11l3.5 3.5" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search or filter..."
+              value={filters.search}
+              onChange={(e) => onChange({ ...filters, search: e.target.value })}
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-8 pr-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
+            />
+          </div>
+
+          {/* Separator */}
+          <span className="w-px h-5 bg-[var(--border)] shrink-0" />
+
+          {/* Compare */}
+          <Link
+            href="/compare"
+            className="px-3 py-1.5 rounded-full border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+          >
+            Compare
+          </Link>
+
+          {/* View toggle */}
+          <div className="flex rounded-full border border-[var(--border)] overflow-hidden shrink-0">
+            <span className="px-3 py-1.5 text-xs bg-[var(--surface-elevated)] text-[var(--text-primary)] font-medium">
+              Grid view
+            </span>
+            <Link
+              href="/map"
+              className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              Map view
+            </Link>
+          </div>
+
+          {/* Separator */}
+          <span className="w-px h-5 bg-[var(--border)] shrink-0" />
+
+          {/* Sort */}
           <select
             value={filters.sort}
             onChange={(e) => onChange({ ...filters, sort: e.target.value as SortOption })}
-            className="bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)] transition-colors"
+            className="bg-transparent border border-[var(--border)] rounded-full px-3 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)] transition-colors shrink-0 cursor-pointer"
           >
             {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>Sort: {o.label}</option>
+              <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
-          <div className="flex items-center gap-3 ml-auto">
-            <span className="text-sm text-[var(--text-secondary)]">
-              {resultCount} {resultCount === 1 ? "city" : "cities"}
-            </span>
-            <div className="flex rounded-lg border border-[var(--border)] overflow-hidden">
-              <span className="px-3 py-1.5 text-xs bg-[var(--accent-green)] text-[var(--bg)] font-medium">Grid</span>
-              <Link href="/map" className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Map</Link>
-            </div>
-          </div>
-        </div>
 
-        {/* Row 2: Filter pills */}
-        <div className="flex flex-wrap gap-2 text-xs">
-          {/* Continents */}
-          {CONTINENTS.map((c) => (
-            <button
-              key={c}
-              onClick={() => onChange({ ...filters, continents: toggleInArray(filters.continents, c) })}
-              className={`px-3 py-1 rounded-full border transition-colors ${
-                filters.continents.includes(c)
-                  ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-[var(--bg)]"
-                  : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-          <span className="w-px h-5 bg-[var(--border)] self-center" />
-          {/* Cost */}
-          {COST_RANGES.map((c) => (
-            <button
-              key={c.value}
-              onClick={() => onChange({ ...filters, costRange: toggleInArray(filters.costRange, c.value) })}
-              className={`px-3 py-1 rounded-full border transition-colors ${
-                filters.costRange.includes(c.value)
-                  ? "bg-[var(--accent-warm)] border-[var(--accent-warm)] text-[var(--bg)]"
-                  : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-          <span className="w-px h-5 bg-[var(--border)] self-center" />
-          {/* Climate */}
-          {CLIMATES.map((c) => (
-            <button
-              key={c.value}
-              onClick={() => onChange({ ...filters, climate: toggleInArray(filters.climate, c.value) })}
-              className={`px-3 py-1 rounded-full border transition-colors ${
-                filters.climate.includes(c.value)
-                  ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-[var(--bg)]"
-                  : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-          <span className="w-px h-5 bg-[var(--border)] self-center" />
-          {/* Homeschool */}
-          {HOMESCHOOL_OPTIONS.map((h) => (
-            <button
-              key={h.value}
-              onClick={() => onChange({ ...filters, homeschool: toggleInArray(filters.homeschool, h.value) })}
-              className={`px-3 py-1 rounded-full border transition-colors ${
-                filters.homeschool.includes(h.value)
-                  ? "bg-[var(--accent-warm)] border-[var(--accent-warm)] text-[var(--bg)]"
-                  : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-              }`}
-            >
-              HS: {h.label}
-            </button>
-          ))}
-          <span className="w-px h-5 bg-[var(--border)] self-center" />
-          {/* Tags */}
-          {TAGS.map((t) => (
-            <button
-              key={t}
-              onClick={() => onChange({ ...filters, tags: toggleInArray(filters.tags, t) })}
-              className={`px-3 py-1 rounded-full border transition-colors ${
-                filters.tags.includes(t)
-                  ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-[var(--bg)]"
-                  : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Result count + CTA */}
+          <span className="text-xs text-[var(--text-secondary)] shrink-0 hidden sm:inline">
+            {resultCount} {resultCount === 1 ? "city" : "cities"}
+          </span>
+          <Link
+            href="/signup"
+            className="px-4 py-1.5 rounded-full bg-[var(--accent-green)] text-[var(--bg)] text-xs font-medium hover:opacity-90 transition-opacity shrink-0"
+          >
+            Join Uncomun →
+          </Link>
         </div>
       </div>
+
+      {/* Expandable filter panel */}
+      {filtersOpen && (
+        <div className="border-t border-[var(--border)] bg-[var(--surface)]">
+          <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+            {/* Continent */}
+            <FilterSection label="Continent">
+              {CONTINENTS.map((c) => (
+                <FilterPill
+                  key={c}
+                  label={c}
+                  active={filters.continents.includes(c)}
+                  onClick={() => onChange({ ...filters, continents: toggleInArray(filters.continents, c) })}
+                />
+              ))}
+            </FilterSection>
+
+            {/* Cost */}
+            <FilterSection label="Family Cost">
+              {COST_RANGES.map((c) => (
+                <FilterPill
+                  key={c.value}
+                  label={c.label}
+                  active={filters.costRange.includes(c.value)}
+                  onClick={() => onChange({ ...filters, costRange: toggleInArray(filters.costRange, c.value) })}
+                  variant="warm"
+                />
+              ))}
+            </FilterSection>
+
+            {/* Climate */}
+            <FilterSection label="Climate">
+              {CLIMATES.map((c) => (
+                <FilterPill
+                  key={c.value}
+                  label={c.label}
+                  active={filters.climate.includes(c.value)}
+                  onClick={() => onChange({ ...filters, climate: toggleInArray(filters.climate, c.value) })}
+                />
+              ))}
+            </FilterSection>
+
+            {/* Homeschool */}
+            <FilterSection label="Homeschool">
+              {HOMESCHOOL_OPTIONS.map((h) => (
+                <FilterPill
+                  key={h.value}
+                  label={h.label}
+                  active={filters.homeschool.includes(h.value)}
+                  onClick={() => onChange({ ...filters, homeschool: toggleInArray(filters.homeschool, h.value) })}
+                  variant="warm"
+                />
+              ))}
+            </FilterSection>
+
+            {/* Tags */}
+            <FilterSection label="Tags">
+              {TAGS.map((t) => (
+                <FilterPill
+                  key={t}
+                  label={t}
+                  active={filters.tags.includes(t)}
+                  onClick={() => onChange({ ...filters, tags: toggleInArray(filters.tags, t) })}
+                />
+              ))}
+            </FilterSection>
+
+            {/* Clear all */}
+            {filterCount > 0 && (
+              <button
+                onClick={() =>
+                  onChange({
+                    ...filters,
+                    continents: [],
+                    costRange: [],
+                    climate: [],
+                    homeschool: [],
+                    tags: [],
+                  })
+                }
+                className="text-xs text-[var(--score-low)] hover:underline"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function FilterSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs text-[var(--text-secondary)] w-20 shrink-0 font-medium">{label}</span>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  )
+}
+
+function FilterPill({
+  label,
+  active,
+  onClick,
+  variant = "green",
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+  variant?: "green" | "warm"
+}) {
+  const activeColor = variant === "warm" ? "var(--accent-warm)" : "var(--accent-green)"
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 rounded-full border text-xs transition-colors ${
+        active
+          ? "text-[var(--bg)] font-medium"
+          : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
+      }`}
+      style={active ? { backgroundColor: activeColor, borderColor: activeColor } : undefined}
+    >
+      {label}
+    </button>
   )
 }

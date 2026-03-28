@@ -28,7 +28,10 @@ function HomeContent() {
   return (
     <>
       <FilterBar filters={filters} onChange={handleFilterChange} resultCount={filtered.length} />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <p className="text-xs text-[var(--text-secondary)] font-medium uppercase tracking-wider mb-4">
+          {filtered.length === cities.length ? "Popular" : `${filtered.length} results`}
+        </p>
         <CityGrid cities={filtered} />
       </div>
     </>
