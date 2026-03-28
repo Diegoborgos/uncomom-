@@ -300,5 +300,105 @@ export const cities: City[] = [
     },
     tags: ["mountains", "expat community", "international schools", "variable"],
     description: "Bogotá offers big-city energy with excellent international schools and a cosmopolitan culture. The altitude keeps it cool, the museums are world-class, and the cost of living stretches far."
+  },
+  {
+    id: "16",
+    slug: "kyoto",
+    name: "Kyoto",
+    country: "Japan",
+    countryCode: "JP",
+    continent: "Asia",
+    photo: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&h=500&fit=crop",
+    coords: { lat: 35.0116, lng: 135.7681 },
+    scores: { family: 85, childSafety: 95, schoolAccess: 70, nature: 82, internet: 88, healthcare: 90 },
+    cost: { familyMonthly: 3500, rent2br: 1400, internationalSchool: 800, localSchool: 0, childcare: 400 },
+    meta: {
+      familiesNow: 12, familiesBeen: 170, returnRate: 60,
+      bestMonths: ["March", "April", "October", "November"],
+      timezone: "Asia/Tokyo", language: ["Japanese"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "OK", kidsAgeIdeal: "All ages"
+    },
+    tags: ["safe", "nature", "mountains", "variable"],
+    description: "Kyoto is one of the safest cities on earth for children. Temples, forests, and a deep cultural rhythm that families find grounding. The language barrier is real, but the quality of life is extraordinary."
+  },
+  {
+    id: "17",
+    slug: "florianopolis",
+    name: "Florianópolis",
+    country: "Brazil",
+    countryCode: "BR",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1588001832198-c15cff59b078?w=800&h=500&fit=crop",
+    coords: { lat: -27.5954, lng: -48.548 },
+    scores: { family: 77, childSafety: 65, schoolAccess: 68, nature: 90, internet: 70, healthcare: 68 },
+    cost: { familyMonthly: 2200, rent2br: 850, internationalSchool: 450, localSchool: 50, childcare: 200 },
+    meta: {
+      familiesNow: 16, familiesBeen: 200, returnRate: 58,
+      bestMonths: ["December", "January", "February", "March"],
+      timezone: "America/Sao_Paulo", language: ["Portuguese", "English"],
+      homeschoolLegal: "Restricted", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["beach", "surf", "nature", "warm", "tropical"],
+    description: "Florianópolis is Brazil's island paradise — 42 beaches, a laid-back surf culture, and a growing tech scene bringing international families south. The nature is world-class and kids live outdoors."
+  },
+  {
+    id: "18",
+    slug: "las-palmas",
+    name: "Las Palmas",
+    country: "Spain",
+    countryCode: "ES",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1574788722698-8f3acf93f830?w=800&h=500&fit=crop",
+    coords: { lat: 28.1235, lng: -15.4363 },
+    scores: { family: 84, childSafety: 84, schoolAccess: 76, nature: 80, internet: 82, healthcare: 80 },
+    cost: { familyMonthly: 2700, rent2br: 1100, internationalSchool: 500, localSchool: 0, childcare: 300 },
+    meta: {
+      familiesNow: 22, familiesBeen: 280, returnRate: 66,
+      bestMonths: ["October", "November", "December", "January", "February", "March"],
+      timezone: "Atlantic/Canary", language: ["Spanish", "English"],
+      homeschoolLegal: "Restricted", visaFriendly: "Good", kidsAgeIdeal: "All ages"
+    },
+    tags: ["beach", "surf", "warm", "safe", "expat community", "mediterranean"],
+    description: "Las Palmas offers year-round spring weather, a massive nomad and family community, and EU infrastructure on an island off the coast of Africa. The surf, the food, and the lifestyle are hard to beat."
+  },
+  {
+    id: "19",
+    slug: "antigua-guatemala",
+    name: "Antigua Guatemala",
+    country: "Guatemala",
+    countryCode: "GT",
+    continent: "Latin America",
+    photo: "https://images.unsplash.com/photo-1604156788856-2ce5f2171e32?w=800&h=500&fit=crop",
+    coords: { lat: 14.5586, lng: -90.7295 },
+    scores: { family: 72, childSafety: 60, schoolAccess: 62, nature: 85, internet: 62, healthcare: 55 },
+    cost: { familyMonthly: 1700, rent2br: 600, internationalSchool: 350, localSchool: 40, childcare: 120 },
+    meta: {
+      familiesNow: 10, familiesBeen: 130, returnRate: 50,
+      bestMonths: ["November", "December", "January", "February", "March"],
+      timezone: "America/Guatemala", language: ["Spanish", "English"],
+      homeschoolLegal: "Yes", visaFriendly: "Good", kidsAgeIdeal: "Young children"
+    },
+    tags: ["mountains", "low cost", "nature", "warm", "expat community"],
+    description: "Antigua is a colonial gem surrounded by volcanoes with one of Central America's strongest expat family communities. Spanish immersion is effortless, costs are minimal, and the pace of life is slow."
+  },
+  {
+    id: "20",
+    slug: "belgrade",
+    name: "Belgrade",
+    country: "Serbia",
+    countryCode: "RS",
+    continent: "Europe",
+    photo: "https://images.unsplash.com/photo-1580402427914-a6cc60d7adb5?w=800&h=500&fit=crop",
+    coords: { lat: 44.7866, lng: 20.4489 },
+    scores: { family: 74, childSafety: 78, schoolAccess: 72, nature: 60, internet: 82, healthcare: 68 },
+    cost: { familyMonthly: 2000, rent2br: 750, internationalSchool: 450, localSchool: 0, childcare: 220 },
+    meta: {
+      familiesNow: 11, familiesBeen: 150, returnRate: 45,
+      bestMonths: ["May", "June", "September", "October"],
+      timezone: "Europe/Belgrade", language: ["Serbian", "English"],
+      homeschoolLegal: "Yes (grey area)", visaFriendly: "Good", kidsAgeIdeal: "Teens"
+    },
+    tags: ["low cost", "safe", "expat community", "variable"],
+    description: "Belgrade is an underpriced European capital with fast internet, a thriving cafe culture, and a surprisingly family-friendly vibe. The riverfront parks and fortress playground are daily staples for local families."
   }
 ]
