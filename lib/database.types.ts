@@ -98,6 +98,10 @@ export type Database = {
           city_slug: string
           rating: number
           text: string
+          best_neighbourhood: string
+          school_used: string
+          housing_cost_reality: string
+          would_do_differently: string
           created_at: string
           updated_at: string
         }
@@ -107,12 +111,20 @@ export type Database = {
           city_slug: string
           rating: number
           text: string
+          best_neighbourhood?: string
+          school_used?: string
+          housing_cost_reality?: string
+          would_do_differently?: string
           created_at?: string
           updated_at?: string
         }
         Update: {
           rating?: number
           text?: string
+          best_neighbourhood?: string
+          school_used?: string
+          housing_cost_reality?: string
+          would_do_differently?: string
           updated_at?: string
         }
       }

@@ -25,6 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/membership`, priority: 0.7 },
     { url: `${baseUrl}/tracker`, priority: 0.6 },
     { url: `${baseUrl}/homeschool-laws`, priority: 0.8 },
+    { url: `${baseUrl}/submit-city`, priority: 0.4 },
     { url: `${baseUrl}/about`, priority: 0.4 },
   ].map((page) => ({
     ...page,

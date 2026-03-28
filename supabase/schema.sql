@@ -55,9 +55,19 @@ create table if not exists public.reviews (
   city_slug text not null,
   rating integer check (rating >= 1 and rating <= 5) not null,
   text text not null,
+  best_neighbourhood text default '',
+  school_used text default '',
+  housing_cost_reality text default '',
+  would_do_differently text default '',
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
+
+-- Migration for existing reviews table:
+-- ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS best_neighbourhood text default '';
+-- ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS school_used text default '';
+-- ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS housing_cost_reality text default '';
+-- ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS would_do_differently text default '';
 
 -- Indexes
 create index if not exists idx_families_user_id on public.families(user_id);
@@ -177,6 +187,29 @@ create policy "Members can remove their RSVP"
   on public.meetup_rsvps for delete using (
     family_id in (select id from public.families where user_id = auth.uid())
   );
+
+-- City submissions table
+create table if not exists public.city_submissions (
+  id uuid default gen_random_uuid() primary key,
+  city_name text not null,
+  country text not null,
+  why_family_friendly text not null,
+  estimated_monthly_cost integer,
+  school_notes text default '',
+  safety_notes text default '',
+  submitter_email text,
+  submitter_family_id uuid references public.families(id),
+  status text default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz default now() not null
+);
+
+alter table public.city_submissions enable row level security;
+
+create policy "Anyone can submit a city"
+  on public.city_submissions for insert with check (true);
+
+create policy "Submissions are not publicly readable"
+  on public.city_submissions for select using (false);
 
 -- Waitlist table
 create table if not exists public.waitlist (

@@ -8,11 +8,13 @@ import { Filters } from "@/lib/types"
 import FilterBar from "@/components/FilterBar"
 import CityGrid from "@/components/CityGrid"
 import { GridSkeleton } from "@/components/Skeleton"
+import Hero from "@/components/Hero"
 
 function HomeContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  const hasFilters = searchParams.toString().length > 0
   const filters = useMemo(() => paramsToFilters(searchParams), [searchParams])
   const filtered = useMemo(() => filterCities(cities, filters), [filters])
 
@@ -27,6 +29,9 @@ function HomeContent() {
 
   return (
     <>
+      {/* Show hero only when no filters active (landing state) */}
+      {!hasFilters && <Hero />}
+
       <FilterBar filters={filters} onChange={handleFilterChange} resultCount={filtered.length} />
       <div className="max-w-7xl mx-auto px-4 py-6">
         <p className="text-xs text-[var(--text-secondary)] font-medium uppercase tracking-wider mb-4">
