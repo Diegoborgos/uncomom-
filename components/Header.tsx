@@ -197,70 +197,95 @@ export default function Header() {
 
       {/* Mobile full-screen overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 top-16 z-50 bg-[var(--bg)]/[0.98] md:hidden">
-          <div className="flex flex-col h-full px-6 py-8">
-            {/* Nav links */}
-            <nav className="flex flex-col gap-6 flex-1">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-2xl font-serif font-bold transition-colors ${
-                    isActive(link.href)
-                      ? "text-[var(--accent-green)]"
-                      : "text-[var(--text-primary)] hover:text-[var(--accent-green)]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+        <div
+          className="fixed inset-0 z-[100] md:hidden flex flex-col"
+          style={{ backgroundColor: "rgba(13, 26, 20, 0.99)" }}
+        >
+          {/* Mobile header bar */}
+          <div className="flex items-center justify-between px-4 h-16 shrink-0">
+            <Link href="/" onClick={() => setMobileOpen(false)} className="flex flex-col">
+              <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
+                Uncomun
+              </span>
+              <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
+                Find your family&apos;s next home
+              </span>
+            </Link>
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="w-10 h-10 flex items-center justify-center"
+              aria-label="Close menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round">
+                <path d="M4 4l12 12M16 4L4 16" />
+              </svg>
+            </button>
+          </div>
 
-            {/* Auth section at bottom */}
-            <div className="border-t border-[var(--border)] pt-6 space-y-4">
-              {loading ? null : user ? (
-                <>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="w-10 h-10 rounded-full bg-[var(--accent-green)] text-[var(--bg)] flex items-center justify-center text-sm font-bold">
-                      {initials}
-                    </span>
-                    <span className="text-[var(--text-primary)]">
-                      {family?.family_name || user.email}
-                    </span>
-                  </div>
-                  {profileComplete ? (
-                    <Link href="/dashboard" className="block text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-                      My Family
-                    </Link>
-                  ) : (
-                    <Link href="/onboarding" className="block text-[var(--accent-warm)]">
-                      Complete your profile
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => signOut()}
-                    className="block text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                  >
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <Link
-                    href="/signup"
-                    className="text-center py-3 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
-                  >
-                    Join Families
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="text-center py-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                  >
-                    Sign in
-                  </Link>
+          {/* Nav links */}
+          <nav className="flex flex-col gap-1 px-4 pt-4 flex-1">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className={`text-3xl font-serif font-bold py-3 transition-colors ${
+                  isActive(link.href)
+                    ? "text-[var(--accent-green)]"
+                    : "text-[var(--text-primary)]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Auth section at bottom */}
+          <div className="px-4 pb-8 pt-4 border-t border-[var(--border)] space-y-3">
+            {loading ? null : user ? (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="w-10 h-10 rounded-full bg-[var(--accent-green)] text-[var(--bg)] flex items-center justify-center text-sm font-bold">
+                    {initials}
+                  </span>
+                  <span className="text-[var(--text-primary)]">
+                    {family?.family_name || user.email}
+                  </span>
                 </div>
-              )}
-            </div>
+                {profileComplete ? (
+                  <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-1">
+                    My Family
+                  </Link>
+                ) : (
+                  <Link href="/onboarding" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--accent-warm)] py-1">
+                    Complete your profile
+                  </Link>
+                )}
+                <button
+                  onClick={() => { signOut(); setMobileOpen(false) }}
+                  className="block text-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors py-1"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-center py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium text-lg hover:opacity-90 transition-opacity"
+                >
+                  Join Families
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block text-center py-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
