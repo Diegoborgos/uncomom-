@@ -14,10 +14,22 @@ function jitter(base: number): number {
 export default function CityCard({ city }: { city: City }) {
   const flag = countryCodeToFlag(city.countryCode)
   const [familiesNow, setFamiliesNow] = useState(city.meta.familiesNow)
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     setFamiliesNow(Math.max(2, jitter(city.meta.familiesNow)))
-  }, [city.meta.familiesNow])
+    const bookmarks: string[] = JSON.parse(localStorage.getItem("uncomun_bookmarks") || "[]")
+    setSaved(bookmarks.includes(city.slug))
+  }, [city.meta.familiesNow, city.slug])
+
+  const toggleSave = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const bookmarks: string[] = JSON.parse(localStorage.getItem("uncomun_bookmarks") || "[]")
+    const next = saved ? bookmarks.filter((s) => s !== city.slug) : [...bookmarks, city.slug]
+    localStorage.setItem("uncomun_bookmarks", JSON.stringify(next))
+    setSaved(!saved)
+  }
 
   return (
     <Link href={`/cities/${city.slug}`}>
@@ -36,6 +48,30 @@ export default function CityCard({ city }: { city: City }) {
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+          {/* Hover overlay — quick stats preview */}
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+            <div className="grid grid-cols-2 gap-3 text-center px-6">
+              <QuickStat label="Family Score" value={`${city.scores.family}`} color={getScoreColor(city.scores.family)} />
+              <QuickStat label="Monthly Cost" value={formatEuro(city.cost.familyMonthly)} />
+              <QuickStat label="Safety" value={`${city.scores.childSafety}`} color={getScoreColor(city.scores.childSafety)} />
+              <QuickStat label="Internet" value={`${city.scores.internet}`} color={getScoreColor(city.scores.internet)} />
+            </div>
+          </div>
+
+          {/* Heart bookmark — always visible on hover */}
+          <button
+            onClick={toggleSave}
+            className={`absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+              saved
+                ? "bg-[var(--accent-warm)] text-white opacity-100"
+                : "bg-black/40 text-white/70 opacity-0 group-hover:opacity-100 hover:bg-black/60 hover:text-white"
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">
+              <path d="M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 018 4a3.5 3.5 0 015.5 3c0 3.5-5.5 7-5.5 7z" />
+            </svg>
+          </button>
 
           {/* Family Score pill */}
           <div className="absolute top-3 right-3">
@@ -93,5 +129,14 @@ export default function CityCard({ city }: { city: City }) {
         </div>
       </div>
     </Link>
+  )
+}
+
+function QuickStat({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div>
+      <p className="text-[10px] text-white/60 uppercase tracking-wider">{label}</p>
+      <p className="text-lg font-mono font-bold" style={{ color: color || "#fff" }}>{value}</p>
+    </div>
   )
 }

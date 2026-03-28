@@ -8,9 +8,10 @@ import CityReviews from "@/components/CityReviews"
 import FamiliesHere from "@/components/FamiliesHere"
 import CityVisas from "@/components/CityVisas"
 import BookmarkButton from "@/components/BookmarkButton"
-import PaidCityContent from "@/components/PaidCityContent"
 import CityCard from "@/components/CityCard"
-import { getVisaBadgeColor, getHomeschoolBadgeColor, formatEuro } from "@/lib/scores"
+import CostPanelGated from "@/components/CostPanelGated"
+import MetaPanelGated from "@/components/MetaPanelGated"
+import { formatEuro } from "@/lib/scores"
 
 export function generateStaticParams() {
   return cities.map((city) => ({ slug: city.slug }))
@@ -54,10 +55,7 @@ export default function CityPage({ params }: { params: { slug: string } }) {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Back + bookmark */}
         <div className="flex items-center justify-between mb-8">
-          <Link
-            href="/"
-            className="text-sm text-[var(--accent-green)] hover:underline"
-          >
+          <Link href="/" className="text-sm text-[var(--accent-green)] hover:underline">
             &larr; All cities
           </Link>
           <BookmarkButton citySlug={city.slug} />
@@ -70,9 +68,9 @@ export default function CityPage({ params }: { params: { slug: string } }) {
 
         {/* Two column layout */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* LEFT COLUMN — 2/3 */}
+          {/* LEFT COLUMN — 2/3 (all free) */}
           <div className="flex-1 lg:w-2/3 space-y-10">
-            {/* Scores */}
+            {/* Scores — FREE */}
             <section>
               <h2 className="font-serif text-2xl font-bold mb-6">Family Scores</h2>
               <div className="space-y-4">
@@ -85,7 +83,7 @@ export default function CityPage({ params }: { params: { slug: string } }) {
               </div>
             </section>
 
-            {/* Description */}
+            {/* Description — FREE */}
             <section>
               <h2 className="font-serif text-2xl font-bold mb-4">About {city.name}</h2>
               <p className="text-[var(--text-secondary)] leading-relaxed text-lg italic">
@@ -93,9 +91,8 @@ export default function CityPage({ params }: { params: { slug: string } }) {
               </p>
             </section>
 
-            {/* Tags */}
+            {/* Tags — FREE */}
             <section>
-              <h2 className="font-serif text-2xl font-bold mb-4">Tags</h2>
               <div className="flex flex-wrap gap-2">
                 {city.tags.map((tag) => (
                   <span
@@ -108,7 +105,7 @@ export default function CityPage({ params }: { params: { slug: string } }) {
               </div>
             </section>
 
-            {/* Best months */}
+            {/* Best months — FREE */}
             <section>
               <h2 className="font-serif text-2xl font-bold mb-4">Best time to visit</h2>
               <div className="flex flex-wrap gap-2">
@@ -120,12 +117,12 @@ export default function CityPage({ params }: { params: { slug: string } }) {
               </div>
             </section>
 
-            {/* Visas */}
+            {/* Visas — FREE */}
             <section>
               <CityVisas citySlug={city.slug} />
             </section>
 
-            {/* Reviews */}
+            {/* Reviews — GATED (component handles its own paywall) */}
             <section>
               <CityReviews citySlug={city.slug} />
             </section>
@@ -134,76 +131,31 @@ export default function CityPage({ params }: { params: { slug: string } }) {
           {/* RIGHT COLUMN — 1/3 sticky */}
           <div className="lg:w-1/3">
             <div className="lg:sticky lg:top-20 space-y-6">
-              {/* Cost panel — gated for free users */}
-              <PaidCityContent>
+              {/* Cost — total visible, details gated */}
               <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
                 <h3 className="font-serif text-lg font-bold mb-1">Family Cost Estimate</h3>
-                <p className="text-xs text-[var(--text-secondary)] mb-5">Estimated for a family of 4</p>
-                <div className="space-y-3">
-                  <CostLine emoji="🏠" label="2br furnished apartment" value={city.cost.rent2br} />
-                  <CostLine emoji="🎓" label="International school (per child)" value={city.cost.internationalSchool} />
-                  <CostLine emoji="🏫" label="Local/alternative school" value={city.cost.localSchool} />
-                  <CostLine emoji="👶" label="Childcare" value={city.cost.childcare} />
-                  <div className="border-t border-[var(--border)] pt-3 flex justify-between">
-                    <span className="font-bold">Total monthly</span>
-                    <span className="font-mono font-bold text-lg text-[var(--accent-warm)]">
-                      {formatEuro(city.cost.familyMonthly)}
-                    </span>
-                  </div>
+                <p className="text-xs text-[var(--text-secondary)] mb-4">Estimated for a family of 4</p>
+                {/* Total is always visible */}
+                <div className="flex justify-between items-baseline mb-4">
+                  <span className="text-sm text-[var(--text-secondary)]">Total monthly</span>
+                  <span className="font-mono font-bold text-2xl text-[var(--accent-warm)]">
+                    {formatEuro(city.cost.familyMonthly)}
+                  </span>
                 </div>
-                <p className="text-[10px] text-[var(--text-secondary)] mt-4 leading-relaxed">
-                  Estimates only. Costs vary significantly by neighbourhood and season.
-                </p>
+                {/* Line items — gated */}
+                <CostPanelGated city={city} />
               </div>
 
-              {/* Meta info card */}
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 space-y-4">
-                <MetaRow emoji="🏠" label="Families here now" value={`${city.meta.familiesNow}`} highlight />
-                <MetaRow emoji="📊" label="Families have been here" value={`${city.meta.familiesBeen}`} />
-                <MetaRow emoji="🔄" label="Return rate" value={`${city.meta.returnRate}%`} />
-                <MetaRow emoji="⏰" label="Timezone" value={city.meta.timezone} />
-                <MetaRow emoji="🗣" label="Languages" value={city.meta.language.join(", ")} />
-                <div className="flex items-start gap-3">
-                  <span className="text-sm">📚</span>
-                  <div className="flex-1">
-                    <p className="text-xs text-[var(--text-secondary)]">Homeschool legal</p>
-                    <span
-                      className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5"
-                      style={{
-                        backgroundColor: getHomeschoolBadgeColor(city.meta.homeschoolLegal) + "22",
-                        color: getHomeschoolBadgeColor(city.meta.homeschoolLegal),
-                      }}
-                    >
-                      {city.meta.homeschoolLegal}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-sm">🛂</span>
-                  <div className="flex-1">
-                    <p className="text-xs text-[var(--text-secondary)]">Visa friendly</p>
-                    <span
-                      className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5"
-                      style={{
-                        backgroundColor: getVisaBadgeColor(city.meta.visaFriendly) + "22",
-                        color: getVisaBadgeColor(city.meta.visaFriendly),
-                      }}
-                    >
-                      {city.meta.visaFriendly}
-                    </span>
-                  </div>
-                </div>
-                <MetaRow emoji="👶" label="Ideal for kids" value={city.meta.kidsAgeIdeal} />
-              </div>
+              {/* Meta — basic visible, details gated */}
+              <MetaPanelGated city={city} />
 
-              {/* Families here (live) */}
+              {/* Families here — gated */}
               <FamiliesHere citySlug={city.slug} fallbackCount={city.meta.familiesNow} />
-              </PaidCityContent>
             </div>
           </div>
         </div>
 
-        {/* Related cities */}
+        {/* Related cities — FREE */}
         {relatedCities.length > 0 && (
           <section className="mt-16">
             <h2 className="font-serif text-2xl font-bold mb-6">
@@ -216,41 +168,6 @@ export default function CityPage({ params }: { params: { slug: string } }) {
             </div>
           </section>
         )}
-      </div>
-    </div>
-  )
-}
-
-function CostLine({ emoji, label, value }: { emoji: string; label: string; value: number }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-[var(--text-secondary)]">
-        {emoji} {label}
-      </span>
-      <span className="font-mono">{formatEuro(value)}/mo</span>
-    </div>
-  )
-}
-
-function MetaRow({
-  emoji,
-  label,
-  value,
-  highlight,
-}: {
-  emoji: string
-  label: string
-  value: string
-  highlight?: boolean
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="text-sm">{emoji}</span>
-      <div className="flex-1">
-        <p className="text-xs text-[var(--text-secondary)]">{label}</p>
-        <p className={`text-sm ${highlight ? "text-[var(--accent-warm)] font-medium" : ""}`}>
-          {value}
-        </p>
       </div>
     </div>
   )
