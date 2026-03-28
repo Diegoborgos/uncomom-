@@ -25,6 +25,9 @@ export default function Footer() {
             <Link href="/compare" className="hover:text-[var(--text-primary)] transition-colors">Compare</Link>
             <Link href="/schools" className="hover:text-[var(--text-primary)] transition-colors">Schools</Link>
             <Link href="/visas" className="hover:text-[var(--text-primary)] transition-colors">Visas</Link>
+            <Link href="/calculator" className="hover:text-[var(--text-primary)] transition-colors">Calculator</Link>
+            <Link href="/homeschool-laws" className="hover:text-[var(--text-primary)] transition-colors">Homeschool Laws</Link>
+            <Link href="/tracker" className="hover:text-[var(--text-primary)] transition-colors">Tracker</Link>
             <Link href="/signup" className="hover:text-[var(--text-primary)] transition-colors">Join</Link>
           </nav>
         </div>
