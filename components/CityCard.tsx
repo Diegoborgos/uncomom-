@@ -116,10 +116,13 @@ export default function CityCard({ city }: { city: City }) {
           <p className="text-sm text-white/80">{city.country}</p>
         </div>
 
-        {/* HOVER/TAP PREVIEW OVERLAY — replaces the card body */}
-        <div className={`absolute inset-0 bg-black/70 flex flex-col justify-end p-4 transition-opacity duration-200 ${
-          showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
-        }`}>
+        {/* HOVER/TAP PREVIEW OVERLAY — solid background, covers everything */}
+        <div
+          className={`absolute inset-0 flex flex-col justify-end p-4 transition-opacity duration-200 ${
+            showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+          }`}
+          style={{ backgroundColor: "#132018" }}
+        >
           {/* Stats grid */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
             <QuickStat label="Family Score" value={`${city.scores.family}`} color={getScoreColor(city.scores.family)} />
