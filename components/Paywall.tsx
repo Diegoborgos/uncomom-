@@ -32,7 +32,7 @@ export function PaywallBlur({ children }: { children: React.ReactNode }) {
           href="/membership"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium bg-[var(--accent-warm)] text-[var(--bg)] hover:opacity-90 transition-opacity shadow-lg"
         >
-          🔒 Unlock details · €149 lifetime
+          🔒 Unlock details · €179 lifetime
         </Link>
       </div>
     </div>
@@ -61,7 +61,7 @@ export function PaywallGate({ feature }: { feature: string }) {
         href={user ? "/membership" : "/signup"}
         className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
       >
-        {user ? "Become a member · €149" : "Join Uncomun · €149 lifetime"}
+        {user ? "Become a member · €179" : "Join Uncomun · €179 lifetime"}
       </Link>
     </div>
   )
@@ -124,7 +124,7 @@ export default function Paywall({
               href={user ? "/membership" : "/signup"}
               className="block text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
             >
-              {user ? "Become a member · €149" : "Join Uncomun · €149 lifetime"}
+              {user ? "Become a member · €179" : "Join Uncomun · €179 lifetime"}
             </Link>
             <p className="text-[10px] text-[var(--text-secondary)] text-center mt-2">
               One payment · Whole family · 30-day refund
@@ -161,7 +161,7 @@ export function PaywallInline({ feature }: { feature: string }) {
         href={user ? "/membership" : "/signup"}
         className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
       >
-        {user ? "Unlock · €149" : "Join"}
+        {user ? "Unlock · €179" : "Join"}
       </Link>
     </div>
   )

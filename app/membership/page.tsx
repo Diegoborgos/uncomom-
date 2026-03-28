@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 
@@ -110,17 +111,7 @@ export default function MembershipPage() {
             ))}
           </ul>
 
-          <button
-            className="block text-center w-full py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
-            onClick={() => {
-              // TODO: Replace with Stripe checkout
-              // const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!)
-              // stripe.redirectToCheckout({ lineItems: [{ price: 'price_xxx', quantity: 1 }], mode: 'payment' })
-              alert("Stripe checkout coming soon. Contact us at hello@uncomun.com to get early access.")
-            }}
-          >
-            Get lifetime access · €179
-          </button>
+          <CheckoutButton />
           <p className="text-[10px] text-[var(--text-secondary)] text-center mt-3">
             30-day money-back guarantee. No subscription. No recurring fees.
           </p>
@@ -154,6 +145,55 @@ function FAQ({ q, a }: { q: string; a: string }) {
     <div className="border-b border-[var(--border)] pb-4">
       <p className="font-medium text-sm mb-1">{q}</p>
       <p className="text-sm text-[var(--text-secondary)]">{a}</p>
+    </div>
+  )
+}
+
+function CheckoutButton() {
+  const { user, family } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleCheckout = async () => {
+    setLoading(true)
+    setError("")
+
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          familyId: family?.id || null,
+          email: user?.email || null,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setError("Something went wrong. Please try again.")
+      }
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={handleCheckout}
+        disabled={loading}
+        className="block text-center w-full py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? "Redirecting to checkout..." : "Get lifetime access \u00b7 \u20ac179"}
+      </button>
+      {error && (
+        <p className="text-xs text-[var(--score-low)] text-center mt-2">{error}</p>
+      )}
     </div>
   )
 }
