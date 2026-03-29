@@ -22,8 +22,9 @@ export async function generateStaticParams() {
   return staticCities.map((city) => ({ slug: city.slug }))
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const city = staticCities.find((c) => c.slug === params.slug)
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  // Read from DB so metadata reflects current data, not stale static file
+  const city = await getCityBySlug(params.slug)
   if (!city) return { title: "City not found" }
   const title = `${city.name}, ${city.country} — Family Travel Guide | Uncomun`
   const description = `Family Score ${city.scores.family}/100. ${city.description} Estimated family cost: €${city.cost.familyMonthly}/month for a family of 4.`

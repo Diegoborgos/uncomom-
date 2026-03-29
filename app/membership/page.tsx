@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
 const FREE_FEATURES = [
@@ -159,9 +160,20 @@ function CheckoutButton() {
     setError("")
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setError("Please sign in to continue.")
+        setLoading(false)
+        return
+      }
+
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           familyId: family?.id || null,
           email: user?.email || null,

@@ -65,8 +65,11 @@ export async function POST(req: NextRequest) {
           console.error("Failed to update family by ID:", error)
         }
       } else if (customerEmail) {
-        // Fallback: find user by email via listUsers filter
-        const { data: listData } = await supabase.auth.admin.listUsers()
+        // Fallback: bounded lookup by email — paginate instead of full scan
+        const { data: listData } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 100,
+        })
         const matchedUser = listData?.users?.find((u) => u.email === customerEmail)
 
         if (matchedUser) {

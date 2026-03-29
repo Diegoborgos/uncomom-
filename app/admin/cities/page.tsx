@@ -65,10 +65,20 @@ export default function AdminCitiesPage() {
     if (!selectedCity || Object.keys(edits).length === 0 || !reason) return
     setSaving(true)
 
+    // Get session token for server-side verification
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      setSaving(false)
+      return
+    }
+
     const response = await fetch("/api/admin/update-city", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: selectedCity, fields: edits, reason, changedBy: user?.email }),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ slug: selectedCity, fields: edits, reason }),
     })
 
     const result = await response.json()
