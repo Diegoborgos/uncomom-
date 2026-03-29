@@ -213,3 +213,174 @@ export function convertToEUR(amount: number, fromCurrency: string, rates: Record
   if (!rate || rate === 0) return amount
   return Math.round(amount / rate)
 }
+
+// ============================================================
+// G. WORLD BANK — Development indicators (no key, unlimited)
+// ============================================================
+
+export type WorldBankResult = {
+  healthExpendPerCapita: number | null     // current health expenditure per capita USD
+  educationExpendPctGDP: number | null     // government expenditure on education % of GDP
+  lifeExpectancy: number | null
+  infantMortality: number | null           // per 1,000 live births
+  accessToElectricity: number | null       // % of population
+  internetUsers: number | null             // % of population
+  homicideRate: number | null              // per 100,000 people
+}
+
+const WB_INDICATORS: Record<string, keyof WorldBankResult> = {
+  "SH.XPD.CHEX.PC.CD": "healthExpendPerCapita",
+  "SE.XPD.TOTL.GD.ZS": "educationExpendPctGDP",
+  "SP.DYN.LE00.IN": "lifeExpectancy",
+  "SP.DYN.IMRT.IN": "infantMortality",
+  "EG.ELC.ACCS.ZS": "accessToElectricity",
+  "IT.NET.USER.ZS": "internetUsers",
+  "VC.IHR.PSRC.P5": "homicideRate",
+}
+
+export async function fetchWorldBank(countryCode: string): Promise<WorldBankResult> {
+  const result: WorldBankResult = {
+    healthExpendPerCapita: null,
+    educationExpendPctGDP: null,
+    lifeExpectancy: null,
+    infantMortality: null,
+    accessToElectricity: null,
+    internetUsers: null,
+    homicideRate: null,
+  }
+
+  // World Bank uses ISO 3166-1 alpha-2 codes (same as our countryCode)
+  const indicators = Object.keys(WB_INDICATORS).join(";")
+
+  try {
+    const res = await fetch(
+      `https://api.worldbank.org/v2/country/${countryCode.toLowerCase()}/indicator/${indicators}?date=2020:2024&format=json&per_page=100`
+    )
+    if (!res.ok) return result
+    const data = await res.json()
+
+    // World Bank returns [metadata, data[]] — we want data[1]
+    const rows = data[1] || []
+    for (const row of rows) {
+      if (row.value === null) continue
+      const key = WB_INDICATORS[row.indicator?.id]
+      if (key && result[key] === null) {
+        // Take the most recent non-null value
+        (result as Record<string, unknown>)[key] = Math.round(row.value * 100) / 100
+      }
+    }
+  } catch {
+    // World Bank API can be slow/flaky — fail silently
+  }
+
+  return result
+}
+
+// ============================================================
+// H. OPENWEATHERMAP — Detailed weather (free tier, 1000/day)
+// ============================================================
+
+export type OpenWeatherResult = {
+  temp: number
+  feelsLike: number
+  humidity: number
+  windSpeed: number
+  description: string
+  cloudiness: number
+}
+
+export async function fetchOpenWeather(lat: number, lng: number): Promise<OpenWeatherResult | null> {
+  const key = process.env.OPENWEATHERMAP_API_KEY
+  if (!key) return null
+
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${key}&units=metric`
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+
+    return {
+      temp: Math.round(data.main?.temp || 0),
+      feelsLike: Math.round(data.main?.feels_like || 0),
+      humidity: data.main?.humidity || 0,
+      windSpeed: Math.round((data.wind?.speed || 0) * 3.6), // m/s to km/h
+      description: data.weather?.[0]?.description || "",
+      cloudiness: data.clouds?.all || 0,
+    }
+  } catch {
+    return null
+  }
+}
+
+// ============================================================
+// I. VISADB — Visa + safety + health risks (free tier)
+// ============================================================
+
+export type VisaDBResult = {
+  visaRequired: boolean
+  visaOnArrival: boolean
+  visaFree: boolean
+  maxStayDays: number | null
+  safetyLevel: string | null    // "safe", "moderate", "dangerous"
+  healthRisks: string[]
+}
+
+export async function fetchVisaDB(
+  passportCountry: string,
+  destinationCountry: string
+): Promise<VisaDBResult | null> {
+  try {
+    const res = await fetch(
+      `https://visadb.io/api/visa/${passportCountry}/${destinationCountry}`
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+
+    return {
+      visaRequired: data.visa_required === true,
+      visaOnArrival: data.visa_on_arrival === true,
+      visaFree: data.visa_free === true,
+      maxStayDays: data.max_stay_days || null,
+      safetyLevel: data.safety?.level || null,
+      healthRisks: data.health_risks || [],
+    }
+  } catch {
+    return null
+  }
+}
+
+// ============================================================
+// J. TRAVEL BUDDY — Visa requirements (free tier)
+// ============================================================
+
+export type TravelBuddyResult = {
+  requirement: string         // "visa_free", "visa_required", "e_visa", "visa_on_arrival"
+  allowedStay: string | null  // e.g. "90 days"
+  notes: string | null
+}
+
+export async function fetchTravelBuddy(
+  passportCountry: string,
+  destinationCountry: string
+): Promise<TravelBuddyResult | null> {
+  const key = process.env.TRAVEL_BUDDY_API_KEY
+  if (!key) return null
+
+  try {
+    const res = await fetch(
+      `https://api.travel-buddy.ai/v2/visa?passport=${passportCountry}&destination=${destinationCountry}`,
+      { headers: { "Authorization": `Bearer ${key}` } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+
+    return {
+      requirement: data.requirement || "unknown",
+      allowedStay: data.allowed_stay || null,
+      notes: data.notes || null,
+    }
+  } catch {
+    return null
+  }
+}

@@ -6,6 +6,8 @@ import {
   fetchTeleport,
   fetchAqicn,
   fetchExchangeRates,
+  fetchWorldBank,
+  fetchOpenWeather,
 } from "@/lib/api-integrations"
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
@@ -201,6 +203,74 @@ export async function POST(req: NextRequest) {
       }
     } catch (err) {
       results.push({ source: "AQICN", signal: "airQuality", value: null, error: String(err) })
+    }
+
+    // World Bank — country-level development indicators (no key, free)
+    try {
+      const wb = await fetchWorldBank(city.country_code)
+
+      if (wb.healthExpendPerCapita !== null) {
+        // Convert health spend to 0-100 score (higher spend = better, capped)
+        const healthScore = Math.min(100, Math.round(wb.healthExpendPerCapita / 50))
+        signalUpdates["healthcare.systemQuality"] = healthScore
+        results.push({ source: "World Bank", signal: "healthcare.systemQuality", value: healthScore })
+      }
+      if (wb.homicideRate !== null) {
+        // Convert homicide rate to safety score (lower rate = safer = higher score)
+        const safetyScore = Math.max(0, Math.min(100, Math.round(100 - wb.homicideRate * 5)))
+        signalUpdates["childSafety.streetCrime"] = safetyScore
+        results.push({ source: "World Bank", signal: "childSafety.streetCrime", value: safetyScore })
+      }
+      if (wb.internetUsers !== null) {
+        signalUpdates["remoteWork.internetReliability"] = Math.round(wb.internetUsers)
+        results.push({ source: "World Bank", signal: "remoteWork.internetReliability", value: Math.round(wb.internetUsers) })
+      }
+      if (wb.lifeExpectancy !== null) {
+        results.push({ source: "World Bank", signal: "healthcare.lifeExpectancy", value: wb.lifeExpectancy })
+      }
+      if (wb.infantMortality !== null) {
+        results.push({ source: "World Bank", signal: "healthcare.infantMortality", value: wb.infantMortality })
+      }
+
+      await supabase.from("city_data_sources").upsert({
+        city_slug: city.slug,
+        signal_key: "worldbank.indicators",
+        signal_value: JSON.stringify(wb),
+        source_name: "World Bank",
+        source_url: `https://data.worldbank.org/country/${city.country_code.toLowerCase()}`,
+        source_type: "public_api",
+        fetched_at: new Date().toISOString(),
+        valid_until: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days
+        confidence: 95,
+      }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+    } catch (err) {
+      results.push({ source: "World Bank", signal: "indicators", value: null, error: String(err) })
+    }
+
+    // OpenWeatherMap — current weather (if key set)
+    try {
+      const weather = await fetchOpenWeather(city.lat, city.lng)
+      if (weather) {
+        results.push(
+          { source: "OpenWeatherMap", signal: "weather.temp", value: weather.temp },
+          { source: "OpenWeatherMap", signal: "weather.humidity", value: weather.humidity },
+          { source: "OpenWeatherMap", signal: "weather.description", value: weather.description },
+        )
+
+        await supabase.from("city_data_sources").upsert({
+          city_slug: city.slug,
+          signal_key: "weather.current",
+          signal_value: JSON.stringify(weather),
+          source_name: "OpenWeatherMap",
+          source_url: "https://openweathermap.org",
+          source_type: "public_api",
+          fetched_at: new Date().toISOString(),
+          valid_until: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6h
+          confidence: 90,
+        }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      }
+    } catch (err) {
+      results.push({ source: "OpenWeatherMap", signal: "weather", value: null, error: String(err) })
     }
 
     // Update the city's signals JSONB with new values
