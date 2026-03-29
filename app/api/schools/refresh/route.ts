@@ -147,9 +147,19 @@ export async function POST(req: NextRequest) {
           seenIds.add(p.id)
 
           const name = p.displayName?.text || ""
-          const photos = (p.photos || []).slice(0, 5).map(
-            (photo: { name: string }) => `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${API_KEY}`
-          )
+          // Resolve photo URLs server-side
+          const photoNames = (p.photos || []).slice(0, 3).map((photo: { name: string }) => photo.name)
+          const photos: string[] = []
+          for (const name of photoNames) {
+            try {
+              const url = `https://places.googleapis.com/v1/${name}/media?maxWidthPx=800&key=${API_KEY}&skipHttpRedirect=true`
+              const photoRes = await fetch(url)
+              if (photoRes.ok) {
+                const photoData = await photoRes.json()
+                if (photoData.photoUri) photos.push(photoData.photoUri)
+              }
+            } catch { /* skip failed photos */ }
+          }
 
           const { error } = await supabase.from("city_schools").upsert({
             city_slug: citySlug,

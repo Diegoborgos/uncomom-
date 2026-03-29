@@ -46,6 +46,23 @@ export type GooglePlace = {
  * Text Search (New) — search for places by keyword near a location.
  * POST https://places.googleapis.com/v1/places:searchText
  */
+/**
+ * Resolve a Google Places photo URL to the final image URL.
+ * The Places API returns a 302 redirect — we follow it and return the destination.
+ */
+export async function resolvePhotoUrl(photoName: string): Promise<string | null> {
+  if (!API_KEY) return null
+  try {
+    const url = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=800&key=${API_KEY}&skipHttpRedirect=true`
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.photoUri || null
+  } catch {
+    return null
+  }
+}
+
 export async function textSearch(
   keyword: string,
   lat: number,
@@ -88,10 +105,8 @@ export async function textSearch(
     const location = p.location as { latitude: number; longitude: number } | undefined
     const photos = (p.photos as Array<{ name: string }>) || []
 
-    // Build photo URLs using the Places Photos API (New)
-    const photoUrls = photos.slice(0, 3).map(
-      (photo) => `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${API_KEY}`
-    )
+    // Store raw photo names — resolved server-side during refresh
+    const photoNames = photos.slice(0, 3).map((photo) => photo.name)
 
     const priceLevelMap: Record<string, number> = {
       PRICE_LEVEL_FREE: 0,
@@ -111,7 +126,7 @@ export async function textSearch(
       phone: p.nationalPhoneNumber as string | undefined,
       website: p.websiteUri as string | undefined,
       google_maps_url: p.googleMapsUri as string | undefined,
-      photos: photoUrls,
+      photos: photoNames,
       lat: location?.latitude,
       lng: location?.longitude,
       types: p.types as string[] | undefined,

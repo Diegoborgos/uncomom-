@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { fetchPlacesForCity, textSearch } from "@/lib/google-places"
+import { fetchPlacesForCity, textSearch, resolvePhotoUrl } from "@/lib/google-places"
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
@@ -80,6 +80,13 @@ export async function POST(req: NextRequest) {
     let errors = 0
 
     for (const place of places) {
+      // Resolve photo URLs server-side
+      const resolvedPhotos: string[] = []
+      for (const photoName of (place.photos || []).slice(0, 3)) {
+        const resolved = await resolvePhotoUrl(photoName)
+        if (resolved) resolvedPhotos.push(resolved)
+      }
+
       const { error } = await supabase.from("city_places").upsert({
         city_slug: citySlug,
         google_place_id: place.place_id,
@@ -93,7 +100,7 @@ export async function POST(req: NextRequest) {
         phone: place.phone || null,
         website: place.website || null,
         google_maps_url: place.google_maps_url || null,
-        photo_urls: place.photos || [],
+        photo_urls: resolvedPhotos,
         latitude: place.lat || null,
         longitude: place.lng || null,
         opening_hours: place.opening_hours || null,
@@ -113,7 +120,8 @@ export async function POST(req: NextRequest) {
     let cityPhotoUpdated = false
     try {
       const cityResults = await textSearch(`${city.name} city`, city.lat, city.lng, 10000)
-      const topPhoto = cityResults[0]?.photos?.[0]
+      const topPhotoName = cityResults[0]?.photos?.[0]
+      const topPhoto = topPhotoName ? await resolvePhotoUrl(topPhotoName) : null
       if (topPhoto) {
         await supabase
           .from("cities")
