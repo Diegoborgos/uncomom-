@@ -12,7 +12,7 @@ const DIMENSIONS = [
   { name: "Family Cost", weight: 18, description: "Family-of-4 monthly estimate, 2br/3br rent, school fees, childcare, grocery index, member-reported actual spend and housing availability." },
   { name: "Healthcare", weight: 12, description: "System quality, paediatric access, English-speaking doctors, appointment speed, emergency care, international insurance acceptance." },
   { name: "Nature & Outdoor", weight: 10, description: "Beach and mountain access, park density, playground quality, comfortable outdoor months, cycling infrastructure, environmental quality." },
-  { name: "Family Community", weight: 8, description: "Uncomun families currently there and historically, return rate, worldschooling activity, expat family density, meetup frequency, local attitude toward families." },
+  { name: "Family Community", weight: 8, description: "Uncomun families currently there and historically, return rate, worldschooling activity, expat family density, meetup frequency, local attitude toward families. Includes arrival curve modifiers: cities where setup takes ≤2 weeks get a bonus; cities requiring 8+ weeks to become operational are penalised. First community connection speed also modifies this score." },
   { name: "Remote Work", weight: 5, description: "Download/upload speeds, internet reliability, coworking count, timezone overlap with EU and US." },
   { name: "Visa & Legal", weight: 3, description: "Digital nomad visa availability, dependent inclusion, income requirements, processing time and difficulty." },
   { name: "Lifestyle & Culture", weight: 2, description: "English proficiency, city pace, restaurant quality, cultural activities for kids, international food availability." },
@@ -118,14 +118,22 @@ export default function MethodologyPage() {
             members can submit a structured Family Field Report covering all 9 dimensions.
           </p>
           <p>
+            Field reports include arrival curve data that no other platform collects: how many
+            days until you secured housing, made your first family connection, enrolled kids in
+            school, and felt fully operational. This data is broken down by passport tier
+            (strong, medium, limited) so families see processing times relevant to their
+            nationality.
+          </p>
+          <p>
             Field reports are weighted by stay duration (longer stays carry more weight) and
             recency (recent reports outweigh older ones). Only families with a verified logged
             trip to a city can submit a report for that city.
           </p>
           <p>
-            This is what makes the FIS&trade; impossible to replicate. No travel writer, no AI,
-            no survey can match the depth and specificity of a structured report from a family
-            that spent 3 months living in a city with their children.
+            When enough reports accumulate (3+), nightly aggregation recalculates median values
+            and updates the city&apos;s signals directly. Every signal tracks its source and
+            confidence level &mdash; you can always see whether a data point comes from public
+            APIs, member field reports, or manual research.
           </p>
         </div>
       </section>
@@ -150,7 +158,7 @@ export default function MethodologyPage() {
         <h2 className="font-serif text-2xl font-bold mb-6">FAQ</h2>
         <div className="space-y-6">
           <FAQ q="Can cities pay to improve their score?" a="No. Never. The FIS is calculated algorithmically from public data and member reports. No city, tourism board, or commercial partner can influence a score." />
-          <FAQ q="How often is data updated?" a="Member data (field reports, trip counts, community signals) updates continuously. Public data sources are refreshed monthly." />
+          <FAQ q="How often is data updated?" a="Field reports trigger nightly aggregation — new reports are reflected in city scores within 24 hours. Public data sources (Numbeo, IQAir) are refreshed monthly. Every signal tracks its source, freshness, and confidence level." />
           <FAQ q="Why does my personal FIS differ from the default?" a="The personal FIS recalibrates dimension weights based on your family's profile, kids' ages, education approach, and behavioral signals from your platform usage." />
           <FAQ q="How many field reports does a city need for reliable scores?" a="We consider a city's FIS robust after 10+ field reports from different families. Below that, we rely more heavily on public data sources and flag the lower data confidence." />
           <FAQ q="Can I see how my FIS was calculated?" a="Yes. Your personal FIS breakdown shows exactly which dimensions were weighted up or down and why, based on your family profile." />
@@ -170,7 +178,7 @@ export default function MethodologyPage() {
             href="/signup"
             className="text-sm px-5 py-2.5 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
           >
-            Join Uncomun &middot; &euro;179 lifetime
+            Join Uncomun
           </Link>
         </div>
         <p className="text-xs text-[var(--text-secondary)]/60 mt-4">
