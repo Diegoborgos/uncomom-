@@ -248,16 +248,28 @@ export function calculateDefaultFIS(city: City): FISResult {
 // ============================================================
 
 function calculateFISFromLegacy(city: City): FISResult {
+  // Cost score: scale so €1000/mo = 95, €2500/mo = 75, €4000/mo = 55, €5000/mo = 40
+  const costScore = Math.min(100, Math.max(20, Math.round(110 - (city.cost.familyMonthly / 55))))
+
+  // Community: combine familiesNow (capped), returnRate, and visa friendliness as proxy
+  const communityBase = Math.min(40, city.meta.familiesNow * 1.5)
+  const communityReturn = city.meta.returnRate * 0.4
+  const communityVisa = city.meta.visaFriendly === "Excellent" ? 15 : city.meta.visaFriendly === "Good" ? 10 : 5
+  const communityScore = Math.min(100, Math.round(communityBase + communityReturn + communityVisa))
+
+  // Lifestyle: average of available scores as proxy
+  const lifestyleScore = Math.round((city.scores.childSafety + city.scores.nature + city.scores.internet) / 3)
+
   const dimensionScores: Record<FISDimensionKey, number> = {
     childSafety: city.scores.childSafety,
     educationAccess: city.scores.schoolAccess,
-    familyCost: Math.round(100 - (city.cost.familyMonthly / 50)),
+    familyCost: costScore,
     healthcare: city.scores.healthcare,
     nature: city.scores.nature,
-    community: Math.min(100, city.meta.familiesNow * 2 + city.meta.returnRate),
+    community: communityScore,
     remoteWork: city.scores.internet,
     visa: city.meta.visaFriendly === "Excellent" ? 90 : city.meta.visaFriendly === "Good" ? 75 : city.meta.visaFriendly === "OK" ? 60 : 40,
-    lifestyle: 70,
+    lifestyle: lifestyleScore,
   }
 
   const weights = DEFAULT_WEIGHTS
