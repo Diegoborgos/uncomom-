@@ -177,7 +177,7 @@ export default function Header() {
                   href="/signup"
                   className="text-sm px-4 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
                 >
-                  Join Uncomun
+                  Sign up
                 </Link>
               </>
             )}
@@ -314,7 +314,7 @@ function MobileMenu({
               onClick={() => setMobileOpen(false)}
               className="block text-center py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium text-lg"
             >
-              Join Uncomun
+              Sign up
             </Link>
             <Link
               href="/login"
