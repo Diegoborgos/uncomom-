@@ -78,10 +78,10 @@ export default function CityCard({ city, rank }: { city: City; rank?: number }) 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-        {/* Ranking number — top left */}
-        {rank && (
-          <div className="absolute top-3 left-3">
-            <span className="font-mono text-sm font-bold text-white/60">
+        {/* Ranking number — top left, prominent */}
+        {rank != null && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/50 text-white font-mono text-xs font-bold">
               {rank}
             </span>
           </div>
@@ -114,8 +114,8 @@ export default function CityCard({ city, rank }: { city: City; rank?: number }) 
           showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
         }`} style={{ backgroundColor: "rgba(0,0,0,0.78)" }}>
 
-          {/* Heart + X buttons */}
-          <div className="absolute top-3 left-3">
+          {/* Heart button — top left, offset if rank exists */}
+          <div className={`absolute top-3 ${rank != null ? "left-12" : "left-3"}`}>
             <button
               onClick={toggleSave}
               className="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center hover:bg-black/60 transition-colors"
