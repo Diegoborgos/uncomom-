@@ -54,6 +54,26 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Rate limit: skip if this city was refreshed in the last 24 hours
+    const { data: existing } = await supabase
+      .from("city_places")
+      .select("cached_at")
+      .eq("city_slug", citySlug)
+      .order("cached_at", { ascending: false })
+      .limit(1)
+      .single()
+
+    if (existing?.cached_at) {
+      const hoursSince = (Date.now() - new Date(existing.cached_at).getTime()) / (1000 * 60 * 60)
+      if (hoursSince < 24) {
+        return NextResponse.json({
+          error: `Places were refreshed ${Math.round(hoursSince)}h ago. Wait 24h between refreshes to control API costs.`,
+          city: citySlug,
+          lastRefresh: existing.cached_at,
+        }, { status: 429 })
+      }
+    }
+
     const places = await fetchPlacesForCity(city.lat, city.lng)
 
     let inserted = 0

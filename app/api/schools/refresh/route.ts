@@ -114,6 +114,26 @@ export async function POST(req: NextRequest) {
   if (!city?.lat || !city?.lng) return NextResponse.json({ error: "City not found" }, { status: 404 })
 
   try {
+    // Rate limit: skip if this city was refreshed in the last 24 hours
+    const { data: existing } = await supabase
+      .from("city_schools")
+      .select("cached_at")
+      .eq("city_slug", citySlug)
+      .order("cached_at", { ascending: false })
+      .limit(1)
+      .single()
+
+    if (existing?.cached_at) {
+      const hoursSince = (Date.now() - new Date(existing.cached_at).getTime()) / (1000 * 60 * 60)
+      if (hoursSince < 24) {
+        return NextResponse.json({
+          error: `Schools were refreshed ${Math.round(hoursSince)}h ago. Wait 24h between refreshes to control API costs.`,
+          city: citySlug,
+          lastRefresh: existing.cached_at,
+        }, { status: 429 })
+      }
+    }
+
     const seenIds = new Set<string>()
     let inserted = 0
     let errors = 0

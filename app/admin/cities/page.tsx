@@ -247,6 +247,7 @@ export default function AdminCitiesPage() {
         <button
           onClick={async () => {
             if (!selectedCity) { alert("Select a city first"); return }
+            if (!confirm(`Fetch places for ${selectedCity}? This makes ~11 Google API calls (~$0.37). Limit: once per 24h per city.`)) return
             const { data: { session } } = await supabase.auth.getSession()
             const res = await fetch("/api/places/refresh", {
               method: "POST",
@@ -285,6 +286,7 @@ export default function AdminCitiesPage() {
         <button
           onClick={async () => {
             if (!selectedCity) { alert("Select a city first"); return }
+            if (!confirm(`Fetch schools for ${selectedCity}? This makes ~10 Google API calls (~$0.34). Limit: once per 24h per city.`)) return
             const { data: { session } } = await supabase.auth.getSession()
             const res = await fetch("/api/schools/refresh", {
               method: "POST",
