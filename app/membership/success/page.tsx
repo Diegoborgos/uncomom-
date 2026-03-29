@@ -1,18 +1,15 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 
 function SuccessContent() {
   const { user, refreshFamily } = useAuth()
-  const [refreshed, setRefreshed] = useState(false)
-
   useEffect(() => {
     if (!user) return
     const refresh = async () => {
       await refreshFamily()
-      setRefreshed(true)
     }
     refresh()
     const timer = setTimeout(refresh, 2000)
