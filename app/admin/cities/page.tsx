@@ -263,6 +263,25 @@ export default function AdminCitiesPage() {
         >
           Fetch Google Places for selected city →
         </button>
+        <button
+          onClick={async () => {
+            if (!selectedCity) { alert("Select a city first"); return }
+            const { data: { session } } = await supabase.auth.getSession()
+            const res = await fetch("/api/schools/refresh", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session?.access_token || ""}`,
+              },
+              body: JSON.stringify({ citySlug: selectedCity }),
+            })
+            const result = await res.json()
+            alert(result.error || `Found ${result.total || 0} schools for ${selectedCity} (${result.inserted || 0} saved)`)
+          }}
+          className="w-full py-2 mt-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors"
+        >
+          Fetch Schools for selected city →
+        </button>
       </div>
     </div>
   )

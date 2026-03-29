@@ -3,36 +3,50 @@
 import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
-import { schools as staticSchools } from "@/data/schools"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag, formatEuro } from "@/lib/scores"
-import { School, SchoolType, SchoolCurriculum } from "@/lib/school-types"
 
-const SCHOOL_TYPES: SchoolType[] = ["International", "Bilingual", "Montessori", "Waldorf", "Online/Hybrid"]
-const CURRICULA: SchoolCurriculum[] = ["IB", "British", "American", "French", "Montessori", "Waldorf"]
-
-function rowToSchool(row: Record<string, unknown>): School {
-  return {
-    id: row.id as string, name: row.name as string, citySlug: row.city_slug as string,
-    type: row.type as SchoolType, curriculum: row.curriculum as SchoolCurriculum, ageRange: row.age_range as string,
-    monthlyFee: row.monthly_fee as number, language: (row.languages as string[]) || [],
-    rating: row.rating as number, familyReviews: row.family_reviews as number,
-    website: row.website as string, description: (row.description as string) || "", tags: (row.tags as string[]) || [],
-  }
+type CitySchool = {
+  id: string
+  city_slug: string
+  name: string
+  school_type: string
+  curriculum: string
+  age_range: string
+  monthly_fee: number | null
+  rating: number | null
+  review_count: number
+  address: string | null
+  phone: string | null
+  website: string | null
+  google_maps_url: string | null
+  photo_urls: string[]
+  description: string | null
+  languages: string[]
+  tags: string[]
 }
 
+const SCHOOL_TYPES = ["International", "British", "American", "Montessori", "Waldorf", "Bilingual", "Forest School", "Alternative", "Private"]
+const CURRICULA = ["IB", "British", "American", "French", "Montessori", "Waldorf"]
+
 export default function SchoolsPage() {
-  const [schools, setSchools] = useState<School[]>(staticSchools)
+  const [schools, setSchools] = useState<CitySchool[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [cityFilter, setCityFilter] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [curriculumFilter, setCurriculumFilter] = useState("")
-  const [sort, setSort] = useState<"rating" | "fee-low" | "fee-high">("rating")
+  const [sort, setSort] = useState<"rating" | "name" | "reviews">("rating")
 
   useEffect(() => {
-    supabase.from("schools").select("*").order("name").then(({ data }) => {
-      if (data && data.length > 0) setSchools(data.map(rowToSchool))
-    })
+    supabase
+      .from("city_schools")
+      .select("*")
+      .order("rating", { ascending: false, nullsFirst: false })
+      .then(({ data }) => {
+        setSchools(data || [])
+        setLoading(false)
+      })
   }, [])
 
   const filtered = useMemo(() => {
@@ -43,18 +57,18 @@ export default function SchoolsPage() {
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(q) ||
-          s.description.toLowerCase().includes(q) ||
-          s.tags.some((t) => t.toLowerCase().includes(q))
+          (s.description || "").toLowerCase().includes(q) ||
+          (s.address || "").toLowerCase().includes(q)
       )
     }
-    if (cityFilter) result = result.filter((s) => s.citySlug === cityFilter)
-    if (typeFilter) result = result.filter((s) => s.type === typeFilter)
+    if (cityFilter) result = result.filter((s) => s.city_slug === cityFilter)
+    if (typeFilter) result = result.filter((s) => s.school_type === typeFilter)
     if (curriculumFilter) result = result.filter((s) => s.curriculum === curriculumFilter)
 
     result.sort((a, b) => {
-      if (sort === "rating") return b.rating - a.rating
-      if (sort === "fee-low") return a.monthlyFee - b.monthlyFee
-      return b.monthlyFee - a.monthlyFee
+      if (sort === "rating") return (b.rating || 0) - (a.rating || 0)
+      if (sort === "reviews") return b.review_count - a.review_count
+      return a.name.localeCompare(b.name)
     })
 
     return result
@@ -62,18 +76,20 @@ export default function SchoolsPage() {
 
   const getCityInfo = (slug: string) => {
     const city = cities.find((c) => c.slug === slug)
-    if (!city) return { name: slug, flag: "" }
+    if (!city) return { name: slug.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "), flag: "" }
     return { name: city.name, flag: countryCodeToFlag(city.countryCode) }
   }
 
-  const cityOptions = Array.from(new Set(schools.map((s) => s.citySlug))).sort()
+  const cityOptions = useMemo(() =>
+    Array.from(new Set(schools.map((s) => s.city_slug))).sort()
+  , [schools])
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="mb-8">
         <h1 className="font-serif text-4xl font-bold mb-2">School Finder</h1>
         <p className="text-[var(--text-secondary)]">
-          International schools across our city directory. Fees, curricula, and reviews from traveling families.
+          International and alternative schools across our city directory. Real Google ratings and reviews.
         </p>
       </div>
 
@@ -120,83 +136,97 @@ export default function SchoolsPage() {
             className="bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)]"
           >
             <option value="rating">Sort: Rating</option>
-            <option value="fee-low">Sort: Fee (low first)</option>
-            <option value="fee-high">Sort: Fee (high first)</option>
+            <option value="reviews">Sort: Most reviewed</option>
+            <option value="name">Sort: Name</option>
           </select>
         </div>
         <p className="text-sm text-[var(--text-secondary)]">
-          {filtered.length} {filtered.length === 1 ? "school" : "schools"}
+          {loading ? "Loading..." : `${filtered.length} ${filtered.length === 1 ? "school" : "schools"}`}
         </p>
       </div>
 
       {/* School list */}
-      {filtered.length === 0 ? (
+      {!loading && filtered.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-[var(--text-secondary)]">No schools match your filters.</p>
+          <p className="text-[var(--text-secondary)] mb-2">No schools found.</p>
+          <p className="text-sm text-[var(--text-secondary)]">Schools are loaded per city. Check back as we expand coverage.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {filtered.map((school) => {
-            const cityInfo = getCityInfo(school.citySlug)
+            const cityInfo = getCityInfo(school.city_slug)
+            const photoUrl = school.photo_urls?.[0]
+
             return (
               <div
                 key={school.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 hover:border-[var(--accent-green)] transition-colors"
+                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden hover:border-[var(--accent-green)] transition-colors"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-serif text-xl font-bold mb-1">{school.name}</h3>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-secondary)] mb-3">
-                      <Link
-                        href={`/cities/${school.citySlug}`}
-                        className="hover:text-[var(--accent-green)] transition-colors"
-                      >
-                        {cityInfo.flag} {cityInfo.name}
-                      </Link>
-                      <span>·</span>
-                      <span>{school.type}</span>
-                      <span>·</span>
-                      <span>{school.curriculum} curriculum</span>
-                      <span>·</span>
-                      <span>Ages {school.ageRange}</span>
+                <div className="flex flex-col sm:flex-row">
+                  {/* Photo */}
+                  {photoUrl && (
+                    <div className="sm:w-48 h-36 sm:h-auto shrink-0 bg-[var(--surface-elevated)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photoUrl} alt={school.name} className="w-full h-full object-cover" />
                     </div>
-                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
-                      {school.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {school.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex sm:flex-col items-center sm:items-end gap-3 shrink-0">
-                    <div className="text-right">
-                      <p className="text-xs text-[var(--text-secondary)]">Monthly fee</p>
-                      <p className="font-mono font-bold text-[var(--accent-warm)]">
-                        {formatEuro(school.monthlyFee)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-[var(--text-secondary)]">Rating</p>
-                      <p className="font-mono text-[var(--accent-warm)]">
-                        {"★".repeat(Math.round(school.rating))}{"☆".repeat(5 - Math.round(school.rating))}
-                        <span className="text-xs ml-1">({school.familyReviews})</span>
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {school.language.map((lang) => (
-                        <span
-                          key={lang}
-                          className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]"
-                        >
-                          {lang}
-                        </span>
-                      ))}
+                  )}
+
+                  {/* Info */}
+                  <div className="flex-1 p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="flex-1">
+                        <h3 className="font-serif text-lg font-bold mb-1">{school.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)] mb-2">
+                          <Link href={`/cities/${school.city_slug}`} className="hover:text-[var(--accent-green)] transition-colors">
+                            {cityInfo.flag} {cityInfo.name}
+                          </Link>
+                          {school.school_type && <><span>·</span><span>{school.school_type}</span></>}
+                          {school.curriculum && <><span>·</span><span>{school.curriculum}</span></>}
+                          {school.age_range && <><span>·</span><span>Ages {school.age_range}</span></>}
+                        </div>
+                        {school.description && (
+                          <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-2 line-clamp-2">
+                            {school.description}
+                          </p>
+                        )}
+                        {school.address && (
+                          <p className="text-xs text-[var(--text-secondary)] mb-2">{school.address}</p>
+                        )}
+                        <div className="flex gap-2">
+                          {school.google_maps_url && (
+                            <a href={school.google_maps_url} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] px-2 py-1 rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors">
+                              Google Maps
+                            </a>
+                          )}
+                          {school.website && (
+                            <a href={school.website} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] px-2 py-1 rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors">
+                              Website
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex sm:flex-col items-center sm:items-end gap-3 shrink-0">
+                        {school.rating && school.rating > 0 && (
+                          <div className="text-right">
+                            <p className="font-mono text-lg font-bold text-[var(--accent-warm)]">
+                              {"★"} {school.rating.toFixed(1)}
+                            </p>
+                            <p className="text-[10px] text-[var(--text-secondary)]">
+                              {school.review_count} Google reviews
+                            </p>
+                          </div>
+                        )}
+                        {school.monthly_fee && school.monthly_fee > 0 && (
+                          <div className="text-right">
+                            <p className="text-xs text-[var(--text-secondary)]">Monthly fee</p>
+                            <p className="font-mono font-bold text-[var(--accent-warm)]">
+                              {formatEuro(school.monthly_fee)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
