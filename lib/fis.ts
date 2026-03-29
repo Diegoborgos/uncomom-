@@ -138,6 +138,21 @@ export function calculateDimensionScores(signals: CitySignals): Record<FISDimens
     (signals.nature.mountainAccess ? signals.nature.hikingForKids * 0.05 : 0)
   )
 
+  // Arrival curve modifier — how hard is it to actually land and settle?
+  // Fast setup (≤2 weeks) = +8 to community. Brutal setup (8+ weeks) = -8.
+  const setupModifier =
+    signals.setupDifficulty.memberSetupTimelineWeeks <= 2 ? 8 :
+    signals.setupDifficulty.memberSetupTimelineWeeks <= 4 ? 4 :
+    signals.setupDifficulty.memberSetupTimelineWeeks <= 6 ? 0 :
+    signals.setupDifficulty.memberSetupTimelineWeeks <= 8 ? -4 : -8
+
+  // First community connection speed modifier
+  const communitySpeedModifier =
+    signals.community.daysToFirstCommunityConnection <= 3 ? 5 :
+    signals.community.daysToFirstCommunityConnection <= 7 ? 2 :
+    signals.community.daysToFirstCommunityConnection <= 14 ? 0 :
+    signals.community.daysToFirstCommunityConnection <= 30 ? -3 : -6
+
   const community = Math.round(
     signals.community.memberCommunityRating * 0.20 +
     signals.community.kidsIntegrationSpeed * 0.20 +
@@ -150,7 +165,9 @@ export function calculateDimensionScores(signals: CitySignals): Record<FISDimens
      signals.community.meetupsPerMonth >= 2 ? 3 : 0) +
     (signals.community.whatsappGroupsAccessible ? 5 : 0) +
     (signals.community.uncomonFamiliesNow >= 20 ? 5 :
-     signals.community.uncomonFamiliesNow >= 10 ? 3 : 0)
+     signals.community.uncomonFamiliesNow >= 10 ? 3 : 0) +
+    setupModifier +
+    communitySpeedModifier
   )
 
   const remoteWork = Math.round(

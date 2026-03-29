@@ -214,6 +214,37 @@ export default function AdminCitiesPage() {
           )}
         </div>
       </div>
+
+      {/* Manual aggregation trigger */}
+      <div className="mt-6 pt-6 border-t border-[var(--border)]">
+        <p className="text-xs text-[var(--text-secondary)] mb-3 font-medium uppercase tracking-wider">Pipeline</p>
+        <button
+          onClick={async () => {
+            const res = await fetch("/api/aggregate-signals", {
+              method: "POST",
+              headers: { "x-cron-secret": process.env.NEXT_PUBLIC_CRON_SECRET || "" },
+            })
+            const result = await res.json()
+            alert(`Aggregated ${result.succeeded || 0} cities`)
+          }}
+          className="w-full py-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors"
+        >
+          Run field report aggregation →
+        </button>
+        <button
+          onClick={async () => {
+            const res = await fetch("/api/refresh-public-data", {
+              method: "POST",
+              headers: { "x-cron-secret": process.env.NEXT_PUBLIC_CRON_SECRET || "" },
+            })
+            const result = await res.json()
+            alert(`Refreshed ${result.refreshed || 0} signals from public APIs`)
+          }}
+          className="w-full py-2 mt-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--accent-warm)] hover:text-[var(--accent-warm)] transition-colors"
+        >
+          Refresh public API data →
+        </button>
+      </div>
     </div>
   )
 }
