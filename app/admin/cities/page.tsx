@@ -298,6 +298,16 @@ export default function AdminCitiesPage() {
                       alert(result.error || `Refreshed ${result.signals || 0} signals from ${Object.keys(result.results || {}).length} APIs for ${selectedCityName}`)
                     }}
                   />
+                  <PipelineButton
+                    label="Seed Passport Visa Data"
+                    description="Download global visa requirements dataset (MIT license). One-time, ~40k rows."
+                    color="warm"
+                    onClick={async () => {
+                      if (!confirm("Download and seed passport visa data? ~40k rows, one-time operation.")) return
+                      const result = await runPipeline("/api/seed-passport-data")
+                      alert(result.error || `Seeded ${result.inserted || 0} visa requirements`)
+                    }}
+                  />
                 </div>
               )}
 
