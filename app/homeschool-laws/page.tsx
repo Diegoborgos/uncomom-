@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { homeschoolLaws } from "@/data/homeschool-laws"
-import { cities } from "@/data/cities"
+import { getAllHomeschoolLaws } from "@/lib/homeschool-db"
+import { getAllCities } from "@/lib/cities-db"
 import Link from "next/link"
 
 export const metadata: Metadata = {
@@ -25,7 +25,9 @@ function flag(code: string) {
   return code.toUpperCase().split("").map((c) => String.fromCodePoint(127397 + c.charCodeAt(0))).join("")
 }
 
-export default function HomeschoolLawsPage() {
+export default async function HomeschoolLawsPage() {
+  const homeschoolLaws = await getAllHomeschoolLaws()
+  const cities = await getAllCities()
   const sorted = [...homeschoolLaws].sort((a, b) => a.country.localeCompare(b.country))
 
   const legalCount = homeschoolLaws.filter((l) => l.status.startsWith("Legal")).length

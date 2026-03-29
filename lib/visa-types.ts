@@ -5,7 +5,7 @@ export type VisaInfo = {
   country: string
   countryCode: string
   visaName: string
-  type: VisaType
+  type: string
   durationDays: number // max stay in days
   renewable: boolean
   familyFriendly: boolean // includes dependents

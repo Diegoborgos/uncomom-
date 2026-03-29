@@ -1,21 +1,39 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
-import { schools } from "@/data/schools"
+import { supabase } from "@/lib/supabase"
+import { schools as staticSchools } from "@/data/schools"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag, formatEuro } from "@/lib/scores"
-import { SchoolType, SchoolCurriculum } from "@/lib/school-types"
+import { School, SchoolType, SchoolCurriculum } from "@/lib/school-types"
 
 const SCHOOL_TYPES: SchoolType[] = ["International", "Bilingual", "Montessori", "Waldorf", "Online/Hybrid"]
 const CURRICULA: SchoolCurriculum[] = ["IB", "British", "American", "French", "Montessori", "Waldorf"]
 
+function rowToSchool(row: Record<string, unknown>): School {
+  return {
+    id: row.id as string, name: row.name as string, citySlug: row.city_slug as string,
+    type: row.type as SchoolType, curriculum: row.curriculum as SchoolCurriculum, ageRange: row.age_range as string,
+    monthlyFee: row.monthly_fee as number, language: (row.languages as string[]) || [],
+    rating: row.rating as number, familyReviews: row.family_reviews as number,
+    website: row.website as string, description: (row.description as string) || "", tags: (row.tags as string[]) || [],
+  }
+}
+
 export default function SchoolsPage() {
+  const [schools, setSchools] = useState<School[]>(staticSchools)
   const [search, setSearch] = useState("")
   const [cityFilter, setCityFilter] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [curriculumFilter, setCurriculumFilter] = useState("")
   const [sort, setSort] = useState<"rating" | "fee-low" | "fee-high">("rating")
+
+  useEffect(() => {
+    supabase.from("schools").select("*").order("name").then(({ data }) => {
+      if (data && data.length > 0) setSchools(data.map(rowToSchool))
+    })
+  }, [])
 
   const filtered = useMemo(() => {
     let result = [...schools]
