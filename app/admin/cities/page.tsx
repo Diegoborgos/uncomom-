@@ -247,16 +247,17 @@ export default function AdminCitiesPage() {
         <button
           onClick={async () => {
             if (!selectedCity) { alert("Select a city first"); return }
+            const { data: { session } } = await supabase.auth.getSession()
             const res = await fetch("/api/places/refresh", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "x-cron-secret": process.env.NEXT_PUBLIC_CRON_SECRET || "",
+                "Authorization": `Bearer ${session?.access_token || ""}`,
               },
               body: JSON.stringify({ citySlug: selectedCity }),
             })
             const result = await res.json()
-            alert(`Fetched ${result.fetched || 0} places for ${selectedCity} (${result.inserted || 0} saved)`)
+            alert(result.error || `Fetched ${result.fetched || 0} places for ${selectedCity} (${result.inserted || 0} saved)`)
           }}
           className="w-full py-2 mt-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors"
         >

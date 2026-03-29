@@ -2,9 +2,30 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { fetchPlacesForCity } from "@/lib/google-places"
 
+const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
+
 export async function POST(req: NextRequest) {
+  // Auth: accept cron secret OR admin session token
   const cronSecret = req.headers.get("x-cron-secret")
-  if (cronSecret !== process.env.CRON_SECRET) {
+  const authHeader = req.headers.get("authorization")
+  const token = authHeader?.replace("Bearer ", "")
+
+  let authorized = cronSecret === process.env.CRON_SECRET
+
+  if (!authorized && token) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const userClient = createClient(url, anonKey, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    })
+    const { data: { user } } = await userClient.auth.getUser()
+    if (user?.email && ADMIN_EMAILS.includes(user.email)) {
+      authorized = true
+    }
+  }
+
+  if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
