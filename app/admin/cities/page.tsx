@@ -290,12 +290,12 @@ export default function AdminCitiesPage() {
                     }}
                   />
                   <PipelineButton
-                    label="Refresh Public API Data"
-                    description="Numbeo + IQAir refresh. Requires API keys."
+                    label="Refresh All Public Data"
+                    description={`Open-Meteo + REST Countries + Teleport + AQICN for ${selectedCityName}. Free, no cost.`}
                     color="warm"
                     onClick={async () => {
-                      const result = await runPipeline("/api/refresh-public-data")
-                      alert(`Refreshed ${result.refreshed || 0} signals`)
+                      const result = await runPipeline("/api/refresh-public-data", { citySlug: selectedCity })
+                      alert(result.error || `Refreshed ${result.signals || 0} signals from ${Object.keys(result.results || {}).length} APIs for ${selectedCityName}`)
                     }}
                   />
                 </div>

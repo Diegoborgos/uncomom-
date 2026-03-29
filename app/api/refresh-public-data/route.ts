@@ -1,119 +1,248 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import {
+  fetchOpenMeteo,
+  fetchRestCountry,
+  fetchTeleport,
+  fetchAqicn,
+  fetchExchangeRates,
+} from "@/lib/api-integrations"
 
-const CITY_EXTERNAL_IDS: Record<string, { numbeoName: string; iqairCity: string; iqairCountry: string }> = {
-  "lisbon": { numbeoName: "Lisbon", iqairCity: "Lisbon", iqairCountry: "Portugal" },
-  "chiang-mai": { numbeoName: "Chiang Mai", iqairCity: "Chiang Mai", iqairCountry: "Thailand" },
-  "bali-canggu": { numbeoName: "Bali", iqairCity: "Denpasar", iqairCountry: "Indonesia" },
-  "valencia": { numbeoName: "Valencia", iqairCity: "Valencia", iqairCountry: "Spain" },
-  "medellin": { numbeoName: "Medellin", iqairCity: "Medellín", iqairCountry: "Colombia" },
-  "tbilisi": { numbeoName: "Tbilisi", iqairCity: "Tbilisi", iqairCountry: "Georgia" },
-  "porto": { numbeoName: "Porto", iqairCity: "Porto", iqairCountry: "Portugal" },
-  "budapest": { numbeoName: "Budapest", iqairCity: "Budapest", iqairCountry: "Hungary" },
+const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
+
+type RefreshResult = {
+  source: string
+  signal: string
+  value: unknown
+  error?: string
 }
 
-type SignalResult = { city: string; signal: string; value: unknown; source: string; error?: string }
-
 export async function POST(req: NextRequest) {
+  // Auth: cron secret or admin session
   const cronSecret = req.headers.get("x-cron-secret")
-  if (cronSecret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authHeader = req.headers.get("authorization")
+  const token = authHeader?.replace("Bearer ", "")
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } })
+
+  let authorized = cronSecret === process.env.CRON_SECRET
+  if (!authorized && token) {
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const userClient = createClient(supabaseUrl, anonKey, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    })
+    const { data: { user } } = await userClient.auth.getUser()
+    if (user?.email && ADMIN_EMAILS.includes(user.email)) authorized = true
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  const supabase = createClient(url, key, { auth: { persistSession: false } })
+  if (!authorized) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const results: SignalResult[] = []
+  const body = await req.json().catch(() => ({}))
+  const citySlug = body.citySlug
 
-  // Numbeo — Cost of living data
-  if (process.env.NUMBEO_API_KEY) {
-    for (const [citySlug, ids] of Object.entries(CITY_EXTERNAL_IDS)) {
-      try {
-        const res = await fetch(
-          `https://www.numbeo.com/api/city_prices?api_key=${process.env.NUMBEO_API_KEY}&query=${encodeURIComponent(ids.numbeoName)}&currency=EUR`
-        )
-        if (!res.ok) continue
-        const data = await res.json()
+  // If a specific city is provided, refresh just that city
+  // Otherwise refresh all cities (for cron)
+  let citiesToRefresh: Array<{ slug: string; lat: number; lng: number; name: string; country: string; country_code: string }>
 
-        const rentOutside = data.prices?.find((p: { item_id: number }) => p.item_id === 27)
-        if (rentOutside) {
-          const { data: city } = await supabase.from("cities").select("signals").eq("slug", citySlug).single()
-          if (city?.signals) {
-            const rent2br = Math.round(rentOutside.average_price * 1.4)
-            const newSignals = { ...city.signals, familyCost: { ...city.signals.familyCost, rent2br } }
-            await supabase.from("cities").update({ signals: newSignals, last_automated_update: new Date().toISOString() }).eq("slug", citySlug)
+  if (citySlug) {
+    const { data: city } = await supabase
+      .from("cities")
+      .select("slug, lat, lng, name, country, country_code")
+      .eq("slug", citySlug)
+      .single()
+    if (!city?.lat) return NextResponse.json({ error: "City not found" }, { status: 404 })
+    citiesToRefresh = [city]
+  } else {
+    const { data: allCities } = await supabase
+      .from("cities")
+      .select("slug, lat, lng, name, country, country_code")
+      .order("name")
+    citiesToRefresh = allCities || []
+  }
 
-            await supabase.from("city_data_sources").insert({
-              city_slug: citySlug,
-              signal_key: "familyCost.rent2br",
-              signal_value: rent2br.toString(),
-              source_name: "Numbeo",
-              source_url: `https://www.numbeo.com/cost-of-living/in/${ids.numbeoName.replace(" ", "-")}`,
-              source_type: "public_api",
-              fetched_at: new Date().toISOString(),
-              valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              confidence: 85,
-              report_count: rentOutside.data_points || 1,
-            })
+  const allResults: Record<string, RefreshResult[]> = {}
 
-            results.push({ city: citySlug, signal: "familyCost.rent2br", value: rent2br, source: "Numbeo" })
+  // Fetch exchange rates once (cached 24h)
+  let exchangeRates: Record<string, number> = {}
+  try {
+    exchangeRates = await fetchExchangeRates()
+  } catch (err) {
+    console.error("Exchange rates failed:", err)
+  }
+
+  for (const city of citiesToRefresh) {
+    const results: RefreshResult[] = []
+    const signalUpdates: Record<string, unknown> = {}
+
+    // A. Open-Meteo — weather + air quality
+    try {
+      const meteo = await fetchOpenMeteo(city.lat, city.lng)
+
+      // Convert AQI to 0-100 score (lower AQI = better = higher score)
+      const airScore = Math.max(0, Math.round(100 - (meteo.aqi / 2)))
+
+      signalUpdates["nature.outdoorMonthsComfortable"] = meteo.comfortableMonths
+      signalUpdates["nature.humidityComfort"] = meteo.humidity
+      signalUpdates["childSafety.airQuality"] = airScore
+
+      results.push(
+        { source: "Open-Meteo", signal: "nature.outdoorMonthsComfortable", value: meteo.comfortableMonths },
+        { source: "Open-Meteo", signal: "nature.humidityComfort", value: meteo.humidity },
+        { source: "Open-Meteo", signal: "childSafety.airQuality", value: airScore },
+        { source: "Open-Meteo", signal: "childSafety.uvIndex", value: meteo.uvIndexMax },
+      )
+
+      // Log sources
+      for (const r of results.filter((r) => r.source === "Open-Meteo")) {
+        await supabase.from("city_data_sources").upsert({
+          city_slug: city.slug,
+          signal_key: r.signal,
+          signal_value: String(r.value),
+          source_name: "Open-Meteo",
+          source_url: "https://open-meteo.com",
+          source_type: "public_api",
+          fetched_at: new Date().toISOString(),
+          valid_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          confidence: 90,
+        }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      }
+    } catch (err) {
+      results.push({ source: "Open-Meteo", signal: "weather+aq", value: null, error: String(err) })
+    }
+
+    // B. REST Countries — country data
+    try {
+      const country = await fetchRestCountry(city.country_code)
+
+      results.push(
+        { source: "REST Countries", signal: "meta.languages", value: country.languages },
+        { source: "REST Countries", signal: "meta.currencies", value: country.currencies },
+        { source: "REST Countries", signal: "meta.population", value: country.population },
+      )
+
+      await supabase.from("city_data_sources").upsert({
+        city_slug: city.slug,
+        signal_key: "meta.country",
+        signal_value: JSON.stringify({ languages: country.languages, currencies: country.currencies }),
+        source_name: "REST Countries",
+        source_url: `https://restcountries.com/v3.1/alpha/${city.country_code}`,
+        source_type: "public_api",
+        fetched_at: new Date().toISOString(),
+        valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        confidence: 95,
+      }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+    } catch (err) {
+      results.push({ source: "REST Countries", signal: "country", value: null, error: String(err) })
+    }
+
+    // C. Teleport — quality of life scores
+    try {
+      const teleport = await fetchTeleport(city.slug)
+      if (teleport) {
+        // Map Teleport categories to our signals
+        const mapping: Record<string, string> = {
+          "Safety": "childSafety.overall",
+          "Healthcare": "healthcare.systemQuality",
+          "Education": "educationAccess.overall",
+          "Environmental Quality": "nature.environmentalQuality",
+          "Internet Access": "remoteWork.internetReliability",
+          "Cost of Living": "familyCost.overall",
+          "Outdoors": "nature.overall",
+          "Commute": "childSafety.trafficSafety",
+        }
+
+        for (const [teleportName, signalKey] of Object.entries(mapping)) {
+          const score = teleport.scores[teleportName]
+          if (score !== undefined) {
+            const normalized = Math.round(score * 10) // Teleport is 0-10, we use 0-100
+            signalUpdates[signalKey] = normalized
+            results.push({ source: "Teleport", signal: signalKey, value: normalized })
           }
         }
-      } catch (err) {
-        results.push({ city: citySlug, signal: "familyCost.rent2br", value: null, source: "Numbeo", error: String(err) })
+
+        await supabase.from("city_data_sources").upsert({
+          city_slug: city.slug,
+          signal_key: "teleport.scores",
+          signal_value: JSON.stringify(teleport.scores),
+          source_name: "Teleport",
+          source_url: `https://teleport.org/cities/${city.slug}`,
+          source_type: "public_api",
+          fetched_at: new Date().toISOString(),
+          valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          confidence: 80,
+        }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
       }
+    } catch (err) {
+      results.push({ source: "Teleport", signal: "scores", value: null, error: String(err) })
     }
-  }
 
-  // IQAir — Air quality data
-  if (process.env.IQAIR_API_KEY) {
-    for (const [citySlug, ids] of Object.entries(CITY_EXTERNAL_IDS)) {
-      try {
-        const res = await fetch(
-          `https://api.airvisual.com/v2/city?city=${encodeURIComponent(ids.iqairCity)}&state=&country=${encodeURIComponent(ids.iqairCountry)}&key=${process.env.IQAIR_API_KEY}`
-        )
-        if (!res.ok) continue
-        const data = await res.json()
-        const aqi = data.data?.current?.pollution?.aqius
+    // E. AQICN — real-time air quality (if token set)
+    try {
+      const aqicn = await fetchAqicn(city.name)
+      if (aqicn) {
+        const airScore = Math.max(0, Math.round(100 - (aqicn.aqi / 3)))
+        signalUpdates["childSafety.airQuality"] = airScore // Override Open-Meteo with real-time
+        results.push({ source: "AQICN", signal: "childSafety.airQuality", value: airScore })
 
-        if (aqi !== undefined) {
-          const airScore = Math.max(0, Math.round(100 - (aqi / 3)))
+        await supabase.from("city_data_sources").upsert({
+          city_slug: city.slug,
+          signal_key: "childSafety.airQuality",
+          signal_value: String(airScore),
+          source_name: "AQICN",
+          source_url: `https://aqicn.org/city/${city.name.toLowerCase()}`,
+          source_type: "public_api",
+          fetched_at: new Date().toISOString(),
+          valid_until: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6h for real-time
+          confidence: 95,
+        }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      }
+    } catch (err) {
+      results.push({ source: "AQICN", signal: "airQuality", value: null, error: String(err) })
+    }
 
-          const { data: city } = await supabase.from("cities").select("signals").eq("slug", citySlug).single()
-          if (city?.signals) {
-            const newSignals = { ...city.signals, childSafety: { ...city.signals.childSafety, airQuality: airScore } }
-            await supabase.from("cities").update({ signals: newSignals, last_automated_update: new Date().toISOString() }).eq("slug", citySlug)
+    // Update the city's signals JSONB with new values
+    if (Object.keys(signalUpdates).length > 0) {
+      const { data: currentCity } = await supabase
+        .from("cities")
+        .select("signals")
+        .eq("slug", city.slug)
+        .single()
 
-            await supabase.from("city_data_sources").insert({
-              city_slug: citySlug,
-              signal_key: "childSafety.airQuality",
-              signal_value: airScore.toString(),
-              source_name: "IQAir",
-              source_url: `https://www.iqair.com/${ids.iqairCountry.toLowerCase()}/${ids.iqairCity.toLowerCase()}`,
-              source_type: "public_api",
-              fetched_at: new Date().toISOString(),
-              valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              confidence: 90,
-              report_count: 1,
-            })
+      if (currentCity?.signals) {
+        const signals = { ...currentCity.signals } as Record<string, Record<string, unknown>>
 
-            results.push({ city: citySlug, signal: "childSafety.airQuality", value: airScore, source: "IQAir" })
+        for (const [key, value] of Object.entries(signalUpdates)) {
+          const [section, field] = key.split(".")
+          if (signals[section]) {
+            signals[section] = { ...signals[section], [field]: value }
           }
         }
-      } catch (err) {
-        results.push({ city: citySlug, signal: "childSafety.airQuality", value: null, source: "IQAir", error: String(err) })
+
+        await supabase
+          .from("cities")
+          .update({
+            signals,
+            last_automated_update: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("slug", city.slug)
       }
     }
+
+    allResults[city.slug] = results
   }
+
+  const totalSignals = Object.values(allResults).flat().filter((r) => !r.error).length
+  const totalErrors = Object.values(allResults).flat().filter((r) => r.error).length
 
   return NextResponse.json({
-    refreshed: results.filter((r) => !r.error).length,
-    errors: results.filter((r) => r.error).length,
-    results,
-    apis_configured: {
-      numbeo: !!process.env.NUMBEO_API_KEY,
-      iqair: !!process.env.IQAIR_API_KEY,
-    },
+    cities: citiesToRefresh.length,
+    signals: totalSignals,
+    errors: totalErrors,
+    exchangeRates: Object.keys(exchangeRates).length > 0,
+    results: allResults,
   })
 }
