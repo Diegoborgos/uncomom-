@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const ADMIN_EMAILS = ["hello@uncomun.com"]
+const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL

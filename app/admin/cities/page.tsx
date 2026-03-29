@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
-const ADMIN_EMAILS = ["hello@uncomun.com"]
+const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
 const EDITABLE_FIELDS = [
   { key: "cost_family_monthly", label: "Family monthly total (EUR)", type: "number" },
