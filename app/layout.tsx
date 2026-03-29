@@ -3,6 +3,7 @@ import "./globals.css"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { AuthProvider } from "@/lib/auth-context"
+import JoinOverlay from "@/components/JoinOverlay"
 import { homepageJsonLd } from "@/lib/structured-data"
 
 export const metadata: Metadata = {
@@ -51,6 +52,7 @@ export default function RootLayout({
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <JoinOverlay />
         </AuthProvider>
       </body>
     </html>

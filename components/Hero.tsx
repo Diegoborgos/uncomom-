@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { openJoinOverlay } from "./JoinOverlay"
 
 export default function Hero() {
   return (
@@ -33,12 +34,12 @@ export default function Hero() {
           >
             Find your family&apos;s next city
           </Link>
-          <Link
-            href="/membership"
+          <button
+            onClick={openJoinOverlay}
             className="px-8 py-3.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors text-sm"
           >
             Join Uncomun · €179 lifetime
-          </Link>
+          </button>
         </div>
 
       </div>

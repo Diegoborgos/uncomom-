@@ -31,7 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/meetups`, priority: 0.6 },
     { url: `${baseUrl}/member-map`, priority: 0.5 },
     { url: `${baseUrl}/kids-finder`, priority: 0.6 },
-    { url: `${baseUrl}/membership`, priority: 0.7 },
+    { url: `${baseUrl}/signup`, priority: 0.7 },
     { url: `${baseUrl}/tracker`, priority: 0.6 },
     { url: `${baseUrl}/homeschool-laws`, priority: 0.8 },
     { url: `${baseUrl}/submit-city`, priority: 0.4 },

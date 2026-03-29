@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { openJoinOverlay } from "./JoinOverlay"
 
 const MEMBER_BENEFITS = [
   "Full city data & detailed cost breakdowns",
@@ -28,12 +29,12 @@ export function PaywallBlur({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <div className="absolute inset-0 flex items-end justify-center pb-2">
-        <Link
-          href="/membership"
+        <button
+          onClick={openJoinOverlay}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium bg-[var(--accent-warm)] text-[var(--bg)] hover:opacity-90 transition-opacity shadow-lg"
         >
           🔒 Unlock details · €179 lifetime
-        </Link>
+        </button>
       </div>
     </div>
   )
@@ -57,12 +58,21 @@ export function PaywallGate({ feature }: { feature: string }) {
       <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-sm mx-auto">
         This is available to Uncomun members. One payment, lifetime access for your whole family.
       </p>
-      <Link
-        href={user ? "/membership" : "/signup"}
-        className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
-      >
-        {user ? "Become a member · €179" : "Join Uncomun · €179 lifetime"}
-      </Link>
+      {user ? (
+        <button
+          onClick={openJoinOverlay}
+          className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
+        >
+          Join now · €179 lifetime
+        </button>
+      ) : (
+        <Link
+          href="/signup"
+          className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
+        >
+          Join Uncomun · €179 lifetime
+        </Link>
+      )}
     </div>
   )
 }
@@ -120,12 +130,21 @@ export default function Paywall({
               ))}
             </ul>
 
-            <Link
-              href={user ? "/membership" : "/signup"}
-              className="block text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
-            >
-              {user ? "Become a member · €179" : "Join Uncomun · €179 lifetime"}
-            </Link>
+            {user ? (
+              <button
+                onClick={openJoinOverlay}
+                className="block w-full text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+              >
+                Join now · €179 lifetime
+              </button>
+            ) : (
+              <Link
+                href="/signup"
+                className="block text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+              >
+                Join Uncomun · €179 lifetime
+              </Link>
+            )}
             <p className="text-[10px] text-[var(--text-secondary)] text-center mt-2">
               One payment · Whole family · 30-day refund
             </p>
@@ -157,12 +176,21 @@ export function PaywallInline({ feature }: { feature: string }) {
         <span className="text-sm">🔒</span>
         <span className="text-xs text-[var(--text-secondary)]">{feature}</span>
       </div>
-      <Link
-        href={user ? "/membership" : "/signup"}
-        className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
-      >
-        {user ? "Unlock · €179" : "Join"}
-      </Link>
+      {user ? (
+        <button
+          onClick={openJoinOverlay}
+          className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
+        >
+          Unlock · €179
+        </button>
+      ) : (
+        <Link
+          href="/signup"
+          className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
+        >
+          Join
+        </Link>
+      )}
     </div>
   )
 }

@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         user_id: user.id,  // Add verified user ID to metadata
       },
       success_url: `${appUrl}/membership/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/membership`,
+      cancel_url: `${appUrl}/`,
       billing_address_collection: "auto",
       allow_promotion_codes: true,
     })

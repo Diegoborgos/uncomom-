@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
             amount: session.amount_total,
             currency: session.currency,
           },
-          page_url: "/membership",
+          page_url: "/",
         })
       }
     } catch (error) {

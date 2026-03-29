@@ -167,7 +167,7 @@ export default function MethodologyPage() {
             Explore cities &rarr;
           </Link>
           <Link
-            href="/membership"
+            href="/signup"
             className="text-sm px-5 py-2.5 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
           >
             Join Uncomun &middot; &euro;179 lifetime
