@@ -308,6 +308,96 @@ export default function AdminCitiesPage() {
                       alert(result.error || `Seeded ${result.inserted || 0} visa requirements`)
                     }}
                   />
+
+                  {/* Divider */}
+                  <div className="border-t border-[var(--border)] pt-4 mt-4">
+                    <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">Bulk Operations — All 45 Cities</p>
+                  </div>
+
+                  {/* FREE: Refresh public data for ALL cities */}
+                  <PipelineButton
+                    label="Refresh ALL Cities — Free APIs Only"
+                    description="Open-Meteo + REST Countries + Teleport + World Bank for all 45 cities. 100% FREE. ~180 API calls, $0 cost. Takes ~2 minutes."
+                    color="green"
+                    onClick={async () => {
+                      if (!confirm(
+                        "Refresh ALL 45 cities with free APIs?\n\n" +
+                        "APIs: Open-Meteo, REST Countries, Teleport, World Bank\n" +
+                        "Calls: ~180 total (4 per city × 45 cities)\n" +
+                        "Cost: $0.00 — all free, no API key needed\n\n" +
+                        "This takes ~2 minutes. Proceed?"
+                      )) return
+                      const result = await runPipeline("/api/refresh-public-data")
+                      alert(result.error || `Done! Refreshed ${result.signals || 0} signals across ${result.cities || 0} cities.`)
+                    }}
+                  />
+
+                  {/* PAID: Google Places for ALL cities */}
+                  <PipelineButton
+                    label="⚠️ Fetch Google Places — ALL Cities"
+                    description="Google Places API for all 45 cities. COSTS MONEY. Read the warning carefully."
+                    color="warm"
+                    onClick={async () => {
+                      const cityCount = cities.length
+                      if (!confirm(
+                        `⚠️ PAID API — READ CAREFULLY ⚠️\n\n` +
+                        `This will fetch Google Places for ALL ${cityCount} cities.\n\n` +
+                        `Per city: ~11 API calls (~$0.37)\n` +
+                        `Total: ~${cityCount * 11} API calls\n` +
+                        `ESTIMATED COST: ~$${(cityCount * 0.37).toFixed(2)}\n\n` +
+                        `24h cooldown per city — cities refreshed in the last 24h will be skipped.\n\n` +
+                        `Are you sure? This will charge your Google Cloud account.`
+                      )) return
+                      // Second confirmation
+                      if (!confirm(`FINAL CONFIRMATION: Spend ~$${(cityCount * 0.37).toFixed(2)} on Google Places API for ${cityCount} cities?`)) return
+
+                      let done = 0
+                      let failed = 0
+                      for (const city of cities) {
+                        try {
+                          const result = await runPipeline("/api/places/refresh", { citySlug: city.slug as string })
+                          if (result.error) failed++
+                          else done++
+                        } catch {
+                          failed++
+                        }
+                      }
+                      alert(`Google Places: ${done} cities refreshed, ${failed} failed/skipped.`)
+                    }}
+                  />
+
+                  {/* PAID: Google Schools for ALL cities */}
+                  <PipelineButton
+                    label="⚠️ Fetch Schools — ALL Cities"
+                    description="Google Places school search for all 45 cities. COSTS MONEY."
+                    color="warm"
+                    onClick={async () => {
+                      const cityCount = cities.length
+                      if (!confirm(
+                        `⚠️ PAID API — READ CAREFULLY ⚠️\n\n` +
+                        `This will fetch schools for ALL ${cityCount} cities.\n\n` +
+                        `Per city: ~10 API calls (~$0.34)\n` +
+                        `Total: ~${cityCount * 10} API calls\n` +
+                        `ESTIMATED COST: ~$${(cityCount * 0.34).toFixed(2)}\n\n` +
+                        `24h cooldown per city — recently refreshed cities will be skipped.\n\n` +
+                        `Are you sure? This will charge your Google Cloud account.`
+                      )) return
+                      if (!confirm(`FINAL CONFIRMATION: Spend ~$${(cityCount * 0.34).toFixed(2)} on school data for ${cityCount} cities?`)) return
+
+                      let done = 0
+                      let failed = 0
+                      for (const city of cities) {
+                        try {
+                          const result = await runPipeline("/api/schools/refresh", { citySlug: city.slug as string })
+                          if (result.error) failed++
+                          else done++
+                        } catch {
+                          failed++
+                        }
+                      }
+                      alert(`Schools: ${done} cities refreshed, ${failed} failed/skipped.`)
+                    }}
+                  />
                 </div>
               )}
 
