@@ -41,29 +41,6 @@ export default function Hero() {
           </Link>
         </div>
 
-        {/* Quick stats */}
-        <div className="flex items-center gap-8 mt-12 text-[var(--text-secondary)] text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🌍</span>
-            <span>45 cities</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🏠</span>
-            <span>For families</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📚</span>
-            <span>Schools & visas</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[var(--text-secondary)]/40">
-        <span className="text-xs">Explore cities</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M4 6l4 4 4-4" />
-        </svg>
       </div>
     </section>
   )
