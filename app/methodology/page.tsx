@@ -27,8 +27,8 @@ const DATA_SOURCES = [
   "EF English Proficiency Index \u2014 English proficiency by country",
   "Environmental Performance Index \u2014 Environmental quality",
   "CDC/WHO \u2014 Disease risk data (dengue, malaria)",
-  "Uncomun Member Field Reports \u2014 Verified family experience data",
-  "Uncomun Platform Data \u2014 Trip logs, community activity, meetup frequency",
+  "Uncomun Member Field Reports \u2014 Family experience data (collected as members contribute)",
+  "Uncomun Platform Data \u2014 Trip logs, community activity (grows with membership)",
 ]
 
 export default function MethodologyPage() {

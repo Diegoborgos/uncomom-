@@ -27,7 +27,7 @@ export function cityJsonLd(city: City): object[] {
       },
       image: city.photo,
     },
-    // Product-like review aggregate (for the city as a "destination product")
+    // City as destination — only include aggregateRating when real reviews exist
     {
       "@context": "https://schema.org",
       "@type": "Product",
@@ -39,13 +39,15 @@ export function cityJsonLd(city: City): object[] {
         "@type": "Organization",
         name: "Uncomun",
       },
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: (city.scores.family / 20).toFixed(1), // Convert 0-100 to 0-5
-        bestRating: "5",
-        worstRating: "1",
-        ratingCount: city.meta.familiesBeen,
-      },
+      ...(city.meta.familiesBeen > 0 ? {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: (city.scores.family / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: city.meta.familiesBeen,
+        },
+      } : {}),
       offers: {
         "@type": "Offer",
         name: "Estimated monthly family cost",
