@@ -33,7 +33,7 @@ export function PaywallBlur({ children }: { children: React.ReactNode }) {
           onClick={openJoinOverlay}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium bg-[var(--accent-warm)] text-[var(--bg)] hover:opacity-90 transition-opacity shadow-lg"
         >
-          🔒 Unlock details · €179 lifetime
+          🔒 Unlock details
         </button>
       </div>
     </div>
@@ -63,14 +63,14 @@ export function PaywallGate({ feature }: { feature: string }) {
           onClick={openJoinOverlay}
           className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
         >
-          Join now · €179 lifetime
+          Join Uncomun
         </button>
       ) : (
         <Link
           href="/signup"
           className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
         >
-          Join Uncomun · €179 lifetime
+          Join Uncomun
         </Link>
       )}
     </div>
@@ -135,14 +135,14 @@ export default function Paywall({
                 onClick={openJoinOverlay}
                 className="block w-full text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
               >
-                Join now · €179 lifetime
+                Join Uncomun
               </button>
             ) : (
               <Link
                 href="/signup"
                 className="block text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
               >
-                Join Uncomun · €179 lifetime
+                Join Uncomun
               </Link>
             )}
             <p className="text-[10px] text-[var(--text-secondary)] text-center mt-2">
@@ -181,7 +181,7 @@ export function PaywallInline({ feature }: { feature: string }) {
           onClick={openJoinOverlay}
           className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
         >
-          Unlock · €179
+          Join Uncomun
         </button>
       ) : (
         <Link

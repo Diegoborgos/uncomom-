@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { openJoinOverlay } from "./JoinOverlay"
 
 export default function Hero() {
@@ -22,25 +21,13 @@ export default function Hero() {
           Great on paper. Wrong school options. No family community. Traffic that made walking with your kids dangerous. That&apos;s what we prevent.
         </p>
 
-        {/* CTA buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Link
-            href="#cities"
-            onClick={(e) => {
-              e.preventDefault()
-              document.getElementById("cities")?.scrollIntoView({ behavior: "smooth" })
-            }}
-            className="px-8 py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity text-sm"
-          >
-            Find your family&apos;s next city
-          </Link>
-          <button
-            onClick={openJoinOverlay}
-            className="px-8 py-3.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors text-sm"
-          >
-            Join Uncomun · €179 lifetime
-          </button>
-        </div>
+        {/* CTA */}
+        <button
+          onClick={openJoinOverlay}
+          className="px-8 py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity text-sm"
+        >
+          Join Uncomun
+        </button>
 
       </div>
     </section>

@@ -164,7 +164,7 @@ export default function JoinOverlay() {
             disabled={loading}
             className="block w-full text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {loading ? "Redirecting..." : "Join now · €179 lifetime"}
+            {loading ? "Redirecting..." : "Join Uncomun"}
           </button>
 
           {error && (
