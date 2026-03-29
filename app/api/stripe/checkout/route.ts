@@ -12,31 +12,39 @@ function getSupabaseUserClient(token: string) {
 }
 
 export async function POST(req: NextRequest) {
-  // Validate required env vars at runtime
   if (!process.env.STRIPE_PRICE_ID) {
     console.error("STRIPE_PRICE_ID is not set")
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
   }
 
-  // Verify the user is authenticated before creating a checkout session
-  // This prevents unauthenticated bots from spamming Stripe API
   const authHeader = req.headers.get("authorization")
   const token = authHeader?.replace("Bearer ", "")
 
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const { familyId, email } = await req.json()
 
-  const userClient = getSupabaseUserClient(token)
-  const { data: { user }, error: authError } = await userClient.auth.getUser()
+  let userId: string | undefined
+  let userEmail: string | undefined
 
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (token) {
+    // Authenticated path — verify user
+    const userClient = getSupabaseUserClient(token)
+    const { data: { user }, error: authError } = await userClient.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    userId = user.id
+    userEmail = email || user.email || undefined
+  } else {
+    // Guest path — just needs a valid email
+    if (!email || !email.includes("@")) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 })
+    }
+    userEmail = email
   }
 
   try {
-    const { familyId, email } = await req.json()
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
     const session = await stripe.checkout.sessions.create({
@@ -48,10 +56,11 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      customer_email: email || user.email || undefined,
+      customer_email: userEmail,
       metadata: {
         family_id: familyId || "",
-        user_id: user.id,  // Add verified user ID to metadata
+        user_id: userId || "",
+        flow: token ? "authenticated" : "guest",
       },
       success_url: `${appUrl}/membership/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/`,

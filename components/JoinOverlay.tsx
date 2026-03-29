@@ -26,6 +26,7 @@ export function openJoinOverlay() {
 export default function JoinOverlay() {
   const [open, setOpen] = useState(false)
   const { user, family, isPaid } = useAuth()
+  const [guestEmail, setGuestEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -47,41 +48,58 @@ export default function JoinOverlay() {
   }, [open, handleClose])
 
   const handleCheckout = async () => {
-    if (!user) {
-      window.location.href = "/signup"
-      return
-    }
-
     setLoading(true)
     setError("")
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      if (user) {
+        // Authenticated path
+        const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session?.access_token) {
-        setError("Please sign in to continue.")
-        setLoading(false)
-        return
-      }
+        if (!session?.access_token) {
+          setError("Please sign in to continue.")
+          setLoading(false)
+          return
+        }
 
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          familyId: family?.id || null,
-          email: user?.email || null,
-        }),
-      })
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            familyId: family?.id || null,
+            email: user.email || null,
+          }),
+        })
 
-      const data = await res.json()
-
-      if (data.url) {
-        window.location.href = data.url
+        const data = await res.json()
+        if (data.url) {
+          window.location.href = data.url
+        } else {
+          setError("Something went wrong. Please try again.")
+        }
       } else {
-        setError("Something went wrong. Please try again.")
+        // Guest path — no auth required
+        if (!guestEmail || !guestEmail.includes("@")) {
+          setError("Please enter a valid email.")
+          setLoading(false)
+          return
+        }
+
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: guestEmail }),
+        })
+
+        const data = await res.json()
+        if (data.url) {
+          window.location.href = data.url
+        } else {
+          setError(data.error || "Something went wrong. Please try again.")
+        }
       }
     } catch {
       setError("Something went wrong. Please try again.")
@@ -118,7 +136,7 @@ export default function JoinOverlay() {
           </div>
         </div>
 
-        {/* Benefits */}
+        {/* Benefits + CTA */}
         <div className="px-8 pb-8">
           <ul className="space-y-2.5 mb-6">
             {MEMBER_BENEFITS.map((b) => (
@@ -128,6 +146,18 @@ export default function JoinOverlay() {
               </li>
             ))}
           </ul>
+
+          {/* Email input for guests */}
+          {!user && (
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCheckout() }}
+              className="w-full mb-3 px-4 py-2.5 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
+            />
+          )}
 
           <button
             onClick={handleCheckout}

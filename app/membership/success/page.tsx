@@ -5,20 +5,62 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 
 function SuccessContent() {
-  const { refreshFamily } = useAuth()
-  const [, setRefreshed] = useState(false)
+  const { user, refreshFamily } = useAuth()
+  const [refreshed, setRefreshed] = useState(false)
 
   useEffect(() => {
+    if (!user) return
     const refresh = async () => {
       await refreshFamily()
       setRefreshed(true)
     }
-
     refresh()
     const timer = setTimeout(refresh, 2000)
     return () => clearTimeout(timer)
-  }, [refreshFamily])
+  }, [user, refreshFamily])
 
+  // Guest purchase — no session yet
+  if (!user) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center text-3xl mx-auto mb-8">
+          &#10003;
+        </div>
+
+        <h1 className="font-serif text-3xl font-bold mb-4">
+          Welcome to Uncomun
+        </h1>
+
+        <p className="text-[var(--text-secondary)] text-lg mb-2">
+          Your lifetime membership is confirmed.
+        </p>
+        <p className="text-[var(--text-secondary)] mb-10">
+          We&apos;ve sent a magic link to your email. Click it to access your account
+          and set up your family profile.
+        </p>
+
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 mb-6">
+          <p className="text-sm font-medium mb-1">Check your inbox</p>
+          <p className="text-xs text-[var(--text-secondary)]">
+            Look for an email from Uncomun with a sign-in link. It may take a minute to arrive.
+          </p>
+        </div>
+
+        <Link
+          href="/"
+          className="text-sm text-[var(--accent-green)] hover:underline"
+        >
+          Browse cities while you wait &rarr;
+        </Link>
+
+        <p className="text-xs text-[var(--text-secondary)] mt-8">
+          A receipt has been sent to your email. Questions? hello@uncomun.com
+        </p>
+      </div>
+    )
+  }
+
+  // Authenticated purchase
   return (
     <div className="max-w-lg mx-auto px-4 py-20 text-center">
       <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center text-3xl mx-auto mb-8">
