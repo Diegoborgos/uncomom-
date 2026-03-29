@@ -4,6 +4,7 @@ import { City } from "@/lib/types"
 import { getFISColor } from "@/lib/fis"
 import { useAuth } from "@/lib/auth-context"
 import { PaywallBlur } from "./Paywall"
+import DataPoint from "./DataPoint"
 
 /**
  * Renders deep signal intelligence for cities that have full signals data.
@@ -31,12 +32,12 @@ export default function CityIntelligence({ city }: { city: City }) {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <TimelineItem label="Housing secured" value={`~${s.setupDifficulty.housingSetupDays} days`} />
+            <TimelineItem label="Housing secured" value={`~${s.setupDifficulty.housingSetupDays} days`} citySlug={city.slug} signalKey="setupDifficulty.housingSetupDays" />
             <TimelineItem label="SIM card" value={`~${s.setupDifficulty.simCardSetupHours} hours`} />
             <TimelineItem label="Bank account" value={s.setupDifficulty.bankAccountOpenable ? `~${s.setupDifficulty.bankAccountDays} days` : "Not available"} />
             <TimelineItem label="GP registered" value={`~${s.setupDifficulty.gpRegistrationDays} days`} />
-            <TimelineItem label="School enrolled" value={`~${s.setupDifficulty.schoolEnrollmentSetupDays} days`} />
-            <TimelineItem label="First family connection" value={`~${s.setupDifficulty.firstCommunityConnectionDays} days`} />
+            <TimelineItem label="School enrolled" value={`~${s.setupDifficulty.schoolEnrollmentSetupDays} days`} citySlug={city.slug} signalKey="setupDifficulty.schoolEnrollmentSetupDays" />
+            <TimelineItem label="First family connection" value={`~${s.setupDifficulty.firstCommunityConnectionDays} days`} citySlug={city.slug} signalKey="community.daysToFirstCommunityConnection" />
           </div>
           {s.setupDifficulty.schoolEnrollmentBlocks.length > 0 && (
             <div className="mb-4">
@@ -84,8 +85,8 @@ export default function CityIntelligence({ city }: { city: City }) {
           <div className="grid grid-cols-2 gap-3 mb-4">
             <SignalPill label="EN-speaking paediatrician" value={s.healthcare.englishSpeakingPaediatrician} />
             <SignalPill label="Intl insurance accepted" value={s.healthcare.internationalInsuranceAccepted} />
-            <TimelineItem label="Routine appointment" value={`${s.healthcare.appointmentSpeedDays} day wait`} />
-            <TimelineItem label="Nearest children's hospital" value={`${s.healthcare.nearestChildrensHospital} km`} />
+            <TimelineItem label="Routine appointment" value={`${s.healthcare.appointmentSpeedDays} day wait`} citySlug={city.slug} signalKey="healthcare.appointmentSpeedDays" />
+            <TimelineItem label="Nearest children's hospital" value={`${s.healthcare.nearestChildrensHospital} km`} citySlug={city.slug} signalKey="healthcare.nearestChildrensHospital" />
           </div>
           {s.healthcare.memberEmergencyNarrative && (
             <MemberQuote quote={s.healthcare.memberEmergencyNarrative} />
@@ -117,8 +118,8 @@ export default function CityIntelligence({ city }: { city: City }) {
             <SignalPill label="Mid-year entry possible" value={s.educationAccess.midYearEntryPossible} />
             <SignalPill label="Requires local address" value={s.educationAccess.enrollmentRequiresLocalAddress} negative />
             <SignalPill label="Requires tax number" value={s.educationAccess.enrollmentRequiresLocalTaxNumber} negative />
-            <TimelineItem label="Processing time" value={`~${s.educationAccess.processingTimeWeeks} weeks`} />
-            <TimelineItem label="Fee range" value={`${s.educationAccess.internationalSchoolMinFee}–${s.educationAccess.internationalSchoolMaxFee}/mo`} />
+            <TimelineItem label="Processing time" value={`~${s.educationAccess.processingTimeWeeks} weeks`} citySlug={city.slug} signalKey="educationAccess.processingTimeWeeks" />
+            <TimelineItem label="Fee range" value={`${s.educationAccess.internationalSchoolMinFee}–${s.educationAccess.internationalSchoolMaxFee}/mo`} citySlug={city.slug} signalKey="educationAccess.internationalSchoolAvgFee" />
           </div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {s.educationAccess.ibAvailable && <CurriculumChip label="IB" />}
@@ -194,10 +195,10 @@ export default function CityIntelligence({ city }: { city: City }) {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <TimelineItem label="Int'l kid community" value={`${s.community.internationalKidCommunitySize}/100`} />
+            <TimelineItem label="Int'l kid community" value={`${s.community.internationalKidCommunitySize}/100`} citySlug={city.slug} signalKey="community.internationalKidCommunitySize" />
             <TimelineItem label="Playgroup availability" value={`${s.community.kidsPlaygroupAvailability}/100`} />
             <TimelineItem label="Teen scene" value={`${s.community.teenCommunityRating}/100`} />
-            <TimelineItem label="First connection" value={`~${s.community.daysToFirstCommunityConnection} days`} />
+            <TimelineItem label="First connection" value={`~${s.community.daysToFirstCommunityConnection} days`} citySlug={city.slug} signalKey="community.daysToFirstCommunityConnection" />
             <SignalPill label="WhatsApp groups accessible" value={s.community.whatsappGroupsAccessible} />
             <TimelineItem label="Solo parent rating" value={`${s.community.soloParentCommunityRating}/100`} />
           </div>
@@ -238,13 +239,17 @@ function IntelSection({ title, subtitle, children }: { title: string; subtitle: 
   )
 }
 
-function TimelineItem({ label, value }: { label: string; value: string }) {
-  return (
+function TimelineItem({ label, value, citySlug, signalKey }: { label: string; value: string; citySlug?: string; signalKey?: string }) {
+  const inner = (
     <div className="rounded-lg bg-[var(--surface-elevated)] px-3 py-2">
       <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
       <p className="text-sm font-mono">{value}</p>
     </div>
   )
+  if (citySlug && signalKey) {
+    return <DataPoint citySlug={citySlug} signalKey={signalKey}>{inner}</DataPoint>
+  }
+  return inner
 }
 
 function SignalPill({ label, value, negative }: { label: string; value: boolean; negative?: boolean }) {
