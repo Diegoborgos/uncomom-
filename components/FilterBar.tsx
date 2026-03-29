@@ -157,17 +157,6 @@ export default function FilterBar({
 
           {/* Spacer */}
           <div className="flex-1" />
-
-          {/* Result count + CTA */}
-          <span className="text-xs text-[var(--text-secondary)] shrink-0 hidden sm:inline">
-            {resultCount} {resultCount === 1 ? "city" : "cities"}
-          </span>
-          <Link
-            href="/signup"
-            className="px-4 py-1.5 rounded-full bg-[var(--accent-green)] text-[var(--bg)] text-xs font-medium hover:opacity-90 transition-opacity shrink-0"
-          >
-            Join Uncomun →
-          </Link>
         </div>
       </div>
 
