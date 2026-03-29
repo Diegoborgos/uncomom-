@@ -2,20 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Damion&display=swap');
 
 :root {
-  --bg: #0d1a14;
-  --surface: #132018;
-  --surface-elevated: #1a2d20;
-  --border: #2a3d2e;
-  --text-primary: #f0ece0;
-  --text-secondary: #8a9e8d;
-  --accent-green: #4caf7d;
-  --accent-warm: #d4874a;
-  --score-high: #4caf7d;
+  /* Damas-inspired light theme */
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-elevated: #f0f0f0;
+  --border: #063d3020;
+  --text-primary: #063d30;
+  --text-secondary: #063d3080;
+  --accent-green: #063d30;
+  --accent-warm: #fcd718;
+  --score-high: #063d30;
   --score-mid: #c8932a;
-  --score-low: #c44b2b;
+  --score-low: #eb4d6d;
 }
 
 * {
@@ -25,17 +26,19 @@
 body {
   color: var(--text-primary);
   background: var(--bg);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Anton', 'Arial Black', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
 }
 
 ::selection {
-  background: var(--accent-green);
-  color: var(--bg);
+  background: var(--accent-warm);
+  color: var(--text-primary);
 }
 
 ::-webkit-scrollbar {

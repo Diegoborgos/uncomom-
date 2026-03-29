@@ -240,7 +240,7 @@ function MobileMenu({
   return createPortal(
     <div
       className="fixed inset-0 flex flex-col md:hidden"
-      style={{ backgroundColor: "#0d1a14", zIndex: 99999 }}
+      style={{ backgroundColor: "var(--bg)", zIndex: 99999 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 h-16 shrink-0">

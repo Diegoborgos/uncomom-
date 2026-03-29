@@ -112,7 +112,7 @@ export default function CityCard({ city, rank }: { city: City; rank?: number }) 
         {/* HOVER/TAP OVERLAY — FIS dimension bars */}
         <div className={`absolute inset-0 transition-opacity duration-200 ${
           showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
-        }`} style={{ backgroundColor: "rgba(0,0,0,0.78)" }}>
+        }`} style={{ backgroundColor: "rgba(6,61,48,0.92)" }}>
 
           {/* Heart button — top left, offset if rank exists */}
           <div className={`absolute top-3 ${rank != null ? "left-12" : "left-3"}`}>

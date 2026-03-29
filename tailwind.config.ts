@@ -22,7 +22,7 @@ const config: Config = {
         "score-low": "var(--score-low)",
       },
       fontFamily: {
-        serif: ["'Playfair Display'", "Georgia", "serif"],
+        serif: ["'Anton'", "'Arial Black'", "sans-serif"],
         mono: ["'GeistMono'", "monospace"],
       },
     },
