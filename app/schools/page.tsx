@@ -161,8 +161,18 @@ export default function SchoolsPage() {
             return (
               <div
                 key={school.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 hover:border-[var(--accent-green)] transition-colors"
+                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden hover:border-[var(--accent-green)] transition-colors"
               >
+                {/* Photo */}
+                <div className="h-44 bg-[var(--surface-elevated)]">
+                  {school.photo_urls?.[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={school.photo_urls[0]} alt={school.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)] text-xs">No photo</div>
+                  )}
+                </div>
+                <div className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="font-serif text-xl font-bold mb-1">{school.name}</h3>
@@ -245,6 +255,7 @@ export default function SchoolsPage() {
                       </div>
                     )}
                   </div>
+                </div>
                 </div>
               </div>
             )
