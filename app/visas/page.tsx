@@ -64,7 +64,7 @@ export default function VisasPage() {
     })
 
     return result
-  }, [search, typeFilter, familyOnly, sort])
+  }, [visas, search, typeFilter, familyOnly, sort])
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">

@@ -32,7 +32,7 @@ function HomeContent() {
       {/* Show hero only when no filters active (landing state) */}
       {!hasFilters && <Hero />}
 
-      <FilterBar filters={filters} onChange={handleFilterChange} resultCount={filtered.length} />
+      <FilterBar filters={filters} onChange={handleFilterChange} />
       <div id="cities" className="max-w-7xl mx-auto px-4 py-6">
         <p className="text-xs text-[var(--text-secondary)] font-medium uppercase tracking-wider mb-4">
           {filtered.length === cities.length ? "Popular" : `${filtered.length} results`}

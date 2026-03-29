@@ -58,7 +58,7 @@ export default function SchoolsPage() {
     })
 
     return result
-  }, [search, cityFilter, typeFilter, curriculumFilter, sort])
+  }, [schools, search, cityFilter, typeFilter, curriculumFilter, sort])
 
   const getCityInfo = (slug: string) => {
     const city = cities.find((c) => c.slug === slug)

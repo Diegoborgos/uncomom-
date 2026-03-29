@@ -47,11 +47,9 @@ const activeFilterCount = (filters: Filters): number => {
 export default function FilterBar({
   filters,
   onChange,
-  resultCount,
 }: {
   filters: Filters
   onChange: (f: Filters) => void
-  resultCount: number
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterCount = activeFilterCount(filters)
