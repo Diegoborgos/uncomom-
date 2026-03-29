@@ -17,6 +17,7 @@ import CityPageTracker from "@/components/CityPageTracker"
 import { FISBreakdown } from "@/components/FISScore"
 import CityIntelligence from "@/components/CityIntelligence"
 import FieldReportForm from "@/components/FieldReportForm"
+import PlacesGallery from "@/components/PlacesGallery"
 
 export async function generateStaticParams() {
   // Use static data for build-time generation (DB may not be available)
@@ -102,6 +103,9 @@ export default async function CityPage({ params }: { params: { slug: string } })
 
             {/* Deep Signal Intelligence — only shows for cities with full signals data */}
             <CityIntelligence city={city} />
+
+            {/* Things to Do — scrollable gallery */}
+            <PlacesGallery citySlug={city.slug} />
 
             {/* Description — FREE */}
             <section>

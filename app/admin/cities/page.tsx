@@ -244,6 +244,24 @@ export default function AdminCitiesPage() {
         >
           Refresh public API data →
         </button>
+        <button
+          onClick={async () => {
+            if (!selectedCity) { alert("Select a city first"); return }
+            const res = await fetch("/api/places/refresh", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-cron-secret": process.env.NEXT_PUBLIC_CRON_SECRET || "",
+              },
+              body: JSON.stringify({ citySlug: selectedCity }),
+            })
+            const result = await res.json()
+            alert(`Fetched ${result.fetched || 0} places for ${selectedCity} (${result.inserted || 0} saved)`)
+          }}
+          className="w-full py-2 mt-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors"
+        >
+          Fetch Google Places for selected city →
+        </button>
       </div>
     </div>
   )
