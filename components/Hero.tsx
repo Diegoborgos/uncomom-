@@ -1,6 +1,6 @@
 "use client"
 
-import { openJoinOverlay } from "./JoinOverlay"
+import Link from "next/link"
 
 export default function Hero() {
   return (
@@ -22,12 +22,12 @@ export default function Hero() {
         </p>
 
         {/* CTA */}
-        <button
-          onClick={openJoinOverlay}
+        <Link
+          href="/signup"
           className="px-8 py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity text-sm"
         >
           Join Uncomun
-        </button>
+        </Link>
 
       </div>
     </section>

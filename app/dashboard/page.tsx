@@ -277,7 +277,7 @@ export default function DashboardPage() {
               }}
               className="inline-block px-5 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
             >
-              Join Uncomun
+              Unlock details
             </button>
           </>
         )}

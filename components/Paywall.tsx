@@ -16,8 +16,13 @@ const MEMBER_BENEFITS = [
 ]
 
 /**
+ * CTA logic used across all paywall components:
+ * - Logged out → "Join Uncomun" → /signup (create account)
+ * - Logged in, not paid → "Unlock details" → opens JoinOverlay (buy membership)
+ */
+
+/**
  * PaywallBlur — blurs a small section of content with a thin unlock bar.
- * Used for cost details, meta info rows, etc. Subtle, not intrusive.
  */
 export function PaywallBlur({ children }: { children: React.ReactNode }) {
   const { isPaid, loading } = useAuth()
@@ -42,8 +47,6 @@ export function PaywallBlur({ children }: { children: React.ReactNode }) {
 
 /**
  * PaywallGate — clean card that gates interactive/premium features.
- * Used for trip logger, reviews, family finder, meetups, etc.
- * No blur — just a locked state with benefits list.
  */
 export function PaywallGate({ feature }: { feature: string }) {
   const { user, isPaid, loading } = useAuth()
@@ -63,7 +66,7 @@ export function PaywallGate({ feature }: { feature: string }) {
           onClick={openJoinOverlay}
           className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
         >
-          Join Uncomun
+          Unlock details
         </button>
       ) : (
         <Link
@@ -79,7 +82,6 @@ export function PaywallGate({ feature }: { feature: string }) {
 
 /**
  * Paywall — full overlay for entire sections (community pages).
- * Shows blurred preview with upgrade-only card overlay (no free tier column).
  */
 export default function Paywall({
   children,
@@ -135,7 +137,7 @@ export default function Paywall({
                 onClick={openJoinOverlay}
                 className="block w-full text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
               >
-                Join Uncomun
+                Unlock details
               </button>
             ) : (
               <Link
@@ -181,7 +183,7 @@ export function PaywallInline({ feature }: { feature: string }) {
           onClick={openJoinOverlay}
           className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
         >
-          Join Uncomun
+          Unlock
         </button>
       ) : (
         <Link
