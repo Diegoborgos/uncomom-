@@ -24,10 +24,12 @@ type SchoolRow = {
   description: string | null
   languages: string[]
   tags: string[]
+  google_reviews: Array<{ author: string; rating: number; text: string; time: string }> | null
 }
 
 const SCHOOL_TYPES = ["International", "British", "American", "Montessori", "Waldorf", "Bilingual", "Forest School", "Alternative", "Private"]
 const CURRICULA = ["IB", "British", "American", "French", "Montessori", "Waldorf"]
+const USELESS_TAGS = ["point_of_interest", "establishment", "service", "political", "premise", "locality", "sublocality", "administrative_area_level_1", "administrative_area_level_2", "country", "geocode"]
 
 export default function SchoolsPage() {
   const [schools, setSchools] = useState<SchoolRow[]>([])
@@ -175,89 +177,98 @@ export default function SchoolsPage() {
                   </div>
                   {/* Content — right side */}
                   <div className="flex-1 p-5">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1">
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
                     <h3 className="font-serif text-xl font-bold mb-1">{school.name}</h3>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-secondary)] mb-3">
-                      <Link
-                        href={`/cities/${school.city_slug}`}
-                        className="hover:text-[var(--accent-green)] transition-colors"
-                      >
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-secondary)]">
+                      <Link href={`/cities/${school.city_slug}`} className="hover:text-[var(--accent-green)] transition-colors">
                         {cityInfo.flag} {cityInfo.name}
                       </Link>
                       {school.school_type && <><span>·</span><span>{school.school_type}</span></>}
-                      {school.curriculum && <><span>·</span><span>{school.curriculum} curriculum</span></>}
+                      {school.curriculum && <><span>·</span><span>{school.curriculum}</span></>}
                       {school.age_range && <><span>·</span><span>Ages {school.age_range}</span></>}
                     </div>
-                    {school.description && (
-                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
-                        {school.description}
-                      </p>
-                    )}
-                    {school.address && (
-                      <p className="text-xs text-[var(--text-secondary)] mb-3">{school.address}</p>
-                    )}
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {school.tags.filter((t) => !t.startsWith("point_of_interest")).slice(0, 6).map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)]"
-                        >
-                          {tag.replace(/_/g, " ")}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      {school.google_maps_url && (
-                        <a href={school.google_maps_url} target="_blank" rel="noopener noreferrer"
-                          className="text-[10px] px-2 py-1 rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors">
-                          Google Maps
-                        </a>
-                      )}
-                      {school.website && (
-                        <a href={school.website} target="_blank" rel="noopener noreferrer"
-                          className="text-[10px] px-2 py-1 rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors">
-                          Website
-                        </a>
-                      )}
-                    </div>
                   </div>
-                  <div className="flex sm:flex-col items-center sm:items-end gap-3 shrink-0">
-                    {school.monthly_fee && school.monthly_fee > 0 && (
-                      <div className="text-right">
-                        <p className="text-xs text-[var(--text-secondary)]">Monthly fee</p>
-                        <p className="font-mono font-bold text-[var(--accent-warm)]">
-                          {formatEuro(school.monthly_fee)}
-                        </p>
-                      </div>
-                    )}
-                    <div className="text-right">
-                      <p className="text-xs text-[var(--text-secondary)]">Rating</p>
-                      <p className="font-mono text-[var(--accent-warm)]">
-                        {school.rating && school.rating > 0 ? (
-                          <>
-                            {"★".repeat(Math.round(school.rating))}{"☆".repeat(5 - Math.round(school.rating))}
-                            <span className="text-xs ml-1">({school.review_count})</span>
-                          </>
-                        ) : (
-                          <span className="text-xs text-[var(--text-secondary)]">No reviews</span>
-                        )}
-                      </p>
-                    </div>
-                    {school.languages && school.languages.length > 0 && (
-                      <div className="flex gap-2">
-                        {school.languages.map((lang) => (
-                          <span
-                            key={lang}
-                            className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]"
-                          >
-                            {lang}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-[var(--text-secondary)]">Rating</p>
+                    <p className="font-mono text-[var(--accent-warm)]">
+                      {school.rating && school.rating > 0 ? (
+                        <>{"★".repeat(Math.round(school.rating))}{"☆".repeat(5 - Math.round(school.rating))} <span className="text-xs">({school.review_count})</span></>
+                      ) : (
+                        <span className="text-xs text-[var(--text-secondary)]">No reviews</span>
+                      )}
+                    </p>
                   </div>
                 </div>
+
+                {/* Description */}
+                {school.description && (
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">{school.description}</p>
+                )}
+
+                {/* Cost + Tags row */}
+                <div className="flex flex-wrap items-center gap-3 mb-3">
+                  {school.monthly_fee && school.monthly_fee > 0 && (
+                    <span className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)] font-medium">
+                      {formatEuro(school.monthly_fee)}/mo
+                    </span>
+                  )}
+                  {school.tags.filter((t) => !USELESS_TAGS.includes(t)).slice(0, 5).map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => setSearch(tag.replace(/_/g, " "))}
+                      className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
+                    >
+                      {tag.replace(/_/g, " ")}
+                    </button>
+                  ))}
+                </div>
+
+                {/* CTA buttons */}
+                <div className="flex gap-3 mb-4">
+                  {school.google_maps_url && (
+                    <a href={school.google_maps_url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs px-4 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity">
+                      View on Google Maps
+                    </a>
+                  )}
+                  {school.website && (
+                    <a href={school.website} target="_blank" rel="noopener noreferrer"
+                      className="text-xs px-4 py-2 rounded-lg border border-[var(--accent-green)] text-[var(--accent-green)] font-medium hover:bg-[var(--accent-green)]/10 transition-colors">
+                      Visit Website
+                    </a>
+                  )}
+                </div>
+
+                {/* Google Reviews — one positive, one negative */}
+                {school.google_reviews && school.google_reviews.length > 0 && (() => {
+                  const positive = school.google_reviews!.find((r) => r.rating >= 4 && r.text)
+                  const negative = school.google_reviews!.find((r) => r.rating <= 3 && r.text)
+                  if (!positive && !negative) return null
+                  return (
+                    <div className="border-t border-[var(--border)] pt-3 space-y-2">
+                      {positive && (
+                        <div className="flex gap-2">
+                          <span className="text-[var(--accent-green)] shrink-0 text-xs mt-0.5">+</span>
+                          <div>
+                            <p className="text-xs text-[var(--text-secondary)] line-clamp-2">&ldquo;{positive.text}&rdquo;</p>
+                            <p className="text-[10px] text-[var(--text-secondary)]/50 mt-0.5">{positive.author} · Google Maps</p>
+                          </div>
+                        </div>
+                      )}
+                      {negative && (
+                        <div className="flex gap-2">
+                          <span className="text-[var(--score-low)] shrink-0 text-xs mt-0.5">−</span>
+                          <div>
+                            <p className="text-xs text-[var(--text-secondary)] line-clamp-2">&ldquo;{negative.text}&rdquo;</p>
+                            <p className="text-[10px] text-[var(--text-secondary)]/50 mt-0.5">{negative.author} · Google Maps</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
                   </div>
                 </div>
               </div>

@@ -36,7 +36,7 @@ async function searchSchools(keyword: string, lat: number, lng: number) {
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": API_KEY,
-      "X-Goog-FieldMask": "places.id,places.displayName,places.rating,places.userRatingCount,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.photos,places.location,places.types,places.editorialSummary",
+      "X-Goog-FieldMask": "places.id,places.displayName,places.rating,places.userRatingCount,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.photos,places.location,places.types,places.editorialSummary,places.reviews",
     },
     body: JSON.stringify(body),
   })
@@ -148,6 +148,12 @@ export async function POST(req: NextRequest) {
             longitude: p.location?.longitude || null,
             description: p.editorialSummary?.text || null,
             tags: p.types || [],
+            google_reviews: (p.reviews || []).slice(0, 5).map((r: Record<string, unknown>) => ({
+              author: (r.authorAttribution as Record<string, unknown>)?.displayName || "Anonymous",
+              rating: r.rating,
+              text: (r.text as Record<string, unknown>)?.text || "",
+              time: r.publishTime,
+            })),
             cached_at: new Date().toISOString(),
           }, { onConflict: "google_place_id" })
 
