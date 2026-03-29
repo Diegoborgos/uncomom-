@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { fetchPlacesForCity } from "@/lib/google-places"
+import { fetchPlacesForCity, textSearch } from "@/lib/google-places"
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
@@ -89,11 +89,28 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Also update the city's main photo from Google
+    let cityPhotoUpdated = false
+    try {
+      const cityResults = await textSearch(`${city.name} city`, city.lat, city.lng, 10000)
+      const topPhoto = cityResults[0]?.photos?.[0]
+      if (topPhoto) {
+        await supabase
+          .from("cities")
+          .update({ photo: topPhoto, updated_at: new Date().toISOString() })
+          .eq("slug", citySlug)
+        cityPhotoUpdated = true
+      }
+    } catch (err) {
+      console.error("Failed to update city photo:", err)
+    }
+
     return NextResponse.json({
       city: citySlug,
       fetched: places.length,
       inserted,
       errors,
+      cityPhotoUpdated,
     })
   } catch (error) {
     console.error("Places refresh error:", error)

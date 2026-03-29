@@ -46,7 +46,7 @@ export type GooglePlace = {
  * Text Search (New) — search for places by keyword near a location.
  * POST https://places.googleapis.com/v1/places:searchText
  */
-async function textSearch(
+export async function textSearch(
   keyword: string,
   lat: number,
   lng: number,
