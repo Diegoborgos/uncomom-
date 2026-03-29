@@ -1,17 +1,19 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { City } from "@/lib/types"
-import { countryCodeToFlag, getScoreColor } from "@/lib/scores"
+import { countryCodeToFlag, formatEuro } from "@/lib/scores"
 import { track } from "@/lib/tracking"
-import { calculateDefaultFIS, getFISColor } from "@/lib/fis"
+import { calculateDefaultFIS, getFISColor, DIMENSION_LABELS } from "@/lib/fis"
 
-export default function CityCard({ city }: { city: City }) {
+export default function CityCard({ city, rank }: { city: City; rank?: number }) {
   const flag = countryCodeToFlag(city.countryCode)
   const router = useRouter()
   const [saved, setSaved] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+
+  const fis = useMemo(() => calculateDefaultFIS(city), [city])
 
   useEffect(() => {
     const bookmarks: string[] = JSON.parse(localStorage.getItem("uncomun_bookmarks") || "[]")
@@ -47,13 +49,14 @@ export default function CityCard({ city }: { city: City }) {
     }
   }, [showPreview, city.slug, city.name, router])
 
-  const scores = [
-    { label: "Family", value: city.scores.family },
-    { label: "Safety", value: city.scores.childSafety },
-    { label: "Schools", value: city.scores.schoolAccess },
-    { label: "Nature", value: city.scores.nature },
-    { label: "Internet", value: city.scores.internet },
-  ]
+  // Top 5 FIS dimensions for hover bars
+  const dimensionBars = useMemo(() => {
+    const keys = ["childSafety", "educationAccess", "familyCost", "healthcare", "nature"] as const
+    return keys.map((key) => ({
+      label: DIMENSION_LABELS[key],
+      value: fis.dimensionScores[key],
+    }))
+  }, [fis])
 
   return (
     <div
@@ -75,29 +78,41 @@ export default function CityCard({ city }: { city: City }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-        {/* FIS badge — always visible */}
+        {/* Ranking number — top left */}
+        {rank && (
+          <div className="absolute top-3 left-3">
+            <span className="font-mono text-sm font-bold text-white/60">
+              {rank}
+            </span>
+          </div>
+        )}
+
+        {/* FIS badge — top right */}
         <div className="absolute top-3 right-3 flex flex-col items-center">
           <span
             className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold"
-            style={{ backgroundColor: getFISColor(calculateDefaultFIS(city).score) + "dd", color: "#fff" }}
+            style={{ backgroundColor: getFISColor(fis.score) + "dd", color: "#fff" }}
           >
-            {calculateDefaultFIS(city).score}
+            {fis.score}
           </span>
           <span className="text-[7px] text-white/50 mt-0.5 tracking-widest">FIS&trade;</span>
         </div>
 
-        {/* City name + country — always visible */}
+        {/* City name + country + cost — bottom */}
         <div className="absolute bottom-3 left-3 right-3">
           <h3 className="font-serif text-xl font-bold text-white">
             {flag} {city.name}
           </h3>
-          <p className="text-sm text-white/80">{city.country}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-white/80">{city.country}</p>
+            <p className="text-xs font-mono text-white/60">{formatEuro(city.cost.familyMonthly)}/mo</p>
+          </div>
         </div>
 
-        {/* HOVER/TAP OVERLAY — Nomad List style: dark overlay with score bars */}
+        {/* HOVER/TAP OVERLAY — FIS dimension bars */}
         <div className={`absolute inset-0 transition-opacity duration-200 ${
           showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
-        }`} style={{ backgroundColor: "rgba(0,0,0,0.75)" }}>
+        }`} style={{ backgroundColor: "rgba(0,0,0,0.78)" }}>
 
           {/* Heart + X buttons */}
           <div className="absolute top-3 left-3">
@@ -123,24 +138,24 @@ export default function CityCard({ city }: { city: City }) {
             </div>
           )}
 
-          {/* Score bars */}
-          <div className="absolute bottom-4 left-4 right-4 space-y-2.5">
-            {scores.map((s) => (
-              <div key={s.label} className="flex items-center gap-3">
-                <span className="text-xs text-white/80 w-14 shrink-0">{s.label}</span>
-                <div className="flex-1 h-4 rounded-full bg-white/10 overflow-hidden">
+          {/* FIS dimension score bars */}
+          <div className="absolute bottom-4 left-4 right-4 space-y-2">
+            {dimensionBars.map((d) => (
+              <div key={d.label} className="flex items-center gap-3">
+                <span className="text-[11px] text-white/70 w-20 shrink-0">{d.label}</span>
+                <div className="flex-1 h-3.5 rounded-full bg-white/10 overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{
-                      width: `${s.value}%`,
-                      backgroundColor: getScoreColor(s.value),
+                      width: `${d.value}%`,
+                      backgroundColor: getFISColor(d.value),
                     }}
                   />
                 </div>
+                <span className="text-[10px] font-mono text-white/50 w-6 text-right">{d.value}</span>
               </div>
             ))}
 
-            {/* Tap hint on mobile */}
             {showPreview && (
               <p className="text-[10px] text-white/30 text-center pt-1">Tap again to view city</p>
             )}

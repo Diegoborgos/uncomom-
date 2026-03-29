@@ -2,7 +2,6 @@ import { cities } from "@/data/cities"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import CityHero from "@/components/CityHero"
-import ScoreBar from "@/components/ScoreBar"
 import TripTracker from "@/components/TripTracker"
 import CityReviews from "@/components/CityReviews"
 import FamiliesHere from "@/components/FamiliesHere"
@@ -98,18 +97,6 @@ export default function CityPage({ params }: { params: { slug: string } }) {
 
             {/* Deep Signal Intelligence — only shows for cities with full signals data */}
             <CityIntelligence city={city} />
-
-            {/* Legacy Scores — keep for data depth */}
-            <section>
-              <h2 className="font-serif text-2xl font-bold mb-6">Detailed Scores</h2>
-              <div className="space-y-4">
-                <ScoreBar label="Child Safety" score={city.scores.childSafety} />
-                <ScoreBar label="School Access" score={city.scores.schoolAccess} />
-                <ScoreBar label="Nature" score={city.scores.nature} />
-                <ScoreBar label="Internet" score={city.scores.internet} />
-                <ScoreBar label="Healthcare" score={city.scores.healthcare} />
-              </div>
-            </section>
 
             {/* Description — FREE */}
             <section>

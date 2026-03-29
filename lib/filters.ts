@@ -1,4 +1,5 @@
 import { City, Filters, SortOption, CostRange } from "./types"
+import { calculateDefaultFIS } from "./fis"
 
 export function filterCities(cities: City[], filters: Filters): City[] {
   let result = [...cities]
@@ -67,6 +68,7 @@ function matchesCostRange(cost: number, range: CostRange): boolean {
 function sortCities(cities: City[], sort: SortOption): City[] {
   return cities.sort((a, b) => {
     switch (sort) {
+      case "fis": return calculateDefaultFIS(b).score - calculateDefaultFIS(a).score
       case "family": return b.scores.family - a.scores.family
       case "cost": return a.cost.familyMonthly - b.cost.familyMonthly
       case "childSafety": return b.scores.childSafety - a.scores.childSafety
@@ -74,7 +76,7 @@ function sortCities(cities: City[], sort: SortOption): City[] {
       case "internet": return b.scores.internet - a.scores.internet
       case "familiesNow": return b.meta.familiesNow - a.meta.familiesNow
       case "returnRate": return b.meta.returnRate - a.meta.returnRate
-      default: return b.scores.family - a.scores.family
+      default: return calculateDefaultFIS(b).score - calculateDefaultFIS(a).score
     }
   })
 }
@@ -82,7 +84,7 @@ function sortCities(cities: City[], sort: SortOption): City[] {
 export function filtersToParams(filters: Filters): URLSearchParams {
   const params = new URLSearchParams()
   if (filters.search) params.set("search", filters.search)
-  if (filters.sort !== "family") params.set("sort", filters.sort)
+  if (filters.sort !== "fis") params.set("sort", filters.sort)
   if (filters.continents.length) params.set("continent", filters.continents.join(","))
   if (filters.costRange.length) params.set("cost", filters.costRange.join(","))
   if (filters.climate.length) params.set("climate", filters.climate.join(","))
@@ -94,7 +96,7 @@ export function filtersToParams(filters: Filters): URLSearchParams {
 export function paramsToFilters(params: URLSearchParams): Filters {
   return {
     search: params.get("search") || "",
-    sort: (params.get("sort") as SortOption) || "family",
+    sort: (params.get("sort") as SortOption) || "fis",
     continents: params.get("continent")?.split(",").filter(Boolean) || [],
     costRange: (params.get("cost")?.split(",").filter(Boolean) as CostRange[]) || [],
     climate: (params.get("climate")?.split(",").filter(Boolean) || []) as Filters["climate"],
@@ -105,7 +107,7 @@ export function paramsToFilters(params: URLSearchParams): Filters {
 
 export const defaultFilters: Filters = {
   search: "",
-  sort: "family",
+  sort: "fis",
   continents: [],
   costRange: [],
   climate: [],
