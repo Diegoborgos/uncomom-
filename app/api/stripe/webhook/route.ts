@@ -47,12 +47,20 @@ async function handleAuthenticatedPurchase(
     return
   }
 
-  // Fallback: bounded lookup by email
+  // Fallback: paginated lookup by email (getUserByEmail not available in SDK v2)
   if (customerEmail) {
-    const { data: listData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 100 })
-    const matchedUser = listData?.users?.find((u) => u.email === customerEmail)
-    if (matchedUser) {
-      const { error } = await supabase.from("families").update(paidUpdate).eq("user_id", matchedUser.id)
+    let matchedUserId: string | null = null
+    let page = 1
+    while (!matchedUserId) {
+      const { data: listData } = await supabase.auth.admin.listUsers({ page, perPage: 100 })
+      if (!listData?.users?.length) break
+      const found = listData.users.find((u) => u.email === customerEmail)
+      if (found) { matchedUserId = found.id; break }
+      if (listData.users.length < 100) break
+      page++
+    }
+    if (matchedUserId) {
+      const { error } = await supabase.from("families").update(paidUpdate).eq("user_id", matchedUserId)
       if (error) console.error("Failed to update family by email:", error)
     }
   }
@@ -74,9 +82,17 @@ async function handleGuestPurchase(
     updated_at: new Date().toISOString(),
   }
 
-  // Step 1: Check if user already exists
-  const { data: listData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 100 })
-  let existingUser = listData?.users?.find((u) => u.email === customerEmail)
+  // Step 1: Check if user already exists (paginated — no getUserByEmail in SDK v2)
+  let existingUser: { id: string; email?: string } | undefined
+  let page = 1
+  while (!existingUser) {
+    const { data: listData } = await supabase.auth.admin.listUsers({ page, perPage: 100 })
+    if (!listData?.users?.length) break
+    existingUser = listData.users.find((u) => u.email === customerEmail)
+    if (existingUser) break
+    if (listData.users.length < 100) break
+    page++
+  }
 
   // Step 2: Create user if new
   if (!existingUser) {

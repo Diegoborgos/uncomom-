@@ -10,7 +10,7 @@ import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
 
 export default function DashboardPage() {
-  const { user, family, loading } = useAuth()
+  const { user, family, loading, isPaid } = useAuth()
   const router = useRouter()
   const [trips, setTrips] = useState<Trip[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
@@ -252,16 +252,35 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Membership status (placeholder) */}
+      {/* Membership status */}
       <section className="mt-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center">
         <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-2">Membership</p>
-        <p className="font-serif text-lg font-bold mb-1">Free Explorer</p>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
-          Upgrade to unlock the residence tracker, family finder, and premium city data.
-        </p>
-        <span className="inline-block px-4 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--text-secondary)] cursor-not-allowed">
-          Upgrade coming soon
-        </span>
+        {isPaid ? (
+          <>
+            <div className="w-10 h-10 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center text-lg mx-auto mb-3">
+              ✓
+            </div>
+            <p className="font-serif text-lg font-bold mb-1">Uncomun Member</p>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Lifetime access. Thank you for being part of the society.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-serif text-lg font-bold mb-1">Free Explorer</p>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              Join to unlock full city intelligence, trip tracker, family finder, and community.
+            </p>
+            <button
+              onClick={() => {
+                import("@/components/JoinOverlay").then(({ openJoinOverlay }) => openJoinOverlay())
+              }}
+              className="inline-block px-5 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
+            >
+              Join Uncomun
+            </button>
+          </>
+        )}
       </section>
     </div>
   )

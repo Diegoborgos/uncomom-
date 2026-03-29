@@ -18,6 +18,9 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
   const [leftAt, setLeftAt] = useState("")
   const [notes, setNotes] = useState("")
 
+  // Field report prompt — shown after marking a trip as left
+  const [showReportPrompt, setShowReportPrompt] = useState(false)
+
   useEffect(() => {
     if (family) {
       supabase
@@ -66,7 +69,10 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
       .eq("id", tripId)
       .select()
       .single()
-    if (data) setTrips(trips.map((t) => (t.id === tripId ? data : t)))
+    if (data) {
+      setTrips(trips.map((t) => (t.id === tripId ? data : t)))
+      setShowReportPrompt(true)
+    }
     setLoading(false)
   }
 
@@ -264,6 +270,35 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
                 </button>
               </div>
             ))}
+        </div>
+      )}
+
+      {/* Field report prompt — appears after marking a trip as left */}
+      {showReportPrompt && (
+        <div className="mt-4 rounded-lg border border-[var(--accent-warm)]/40 bg-[var(--accent-warm)]/8 p-4">
+          <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
+            You stayed. Now tell us what the next family needs to know.
+          </p>
+          <p className="text-xs text-[var(--text-secondary)] mb-3">
+            Your field report updates this city&apos;s intelligence for every family researching it.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setShowReportPrompt(false)
+                document.getElementById("field-report")?.scrollIntoView({ behavior: "smooth" })
+              }}
+              className="flex-1 text-center py-2 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-xs hover:opacity-90 transition-opacity"
+            >
+              File a field report →
+            </button>
+            <button
+              onClick={() => setShowReportPrompt(false)}
+              className="px-3 py-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              Later
+            </button>
+          </div>
         </div>
       )}
     </div>
