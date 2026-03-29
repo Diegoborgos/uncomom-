@@ -267,25 +267,6 @@ export default function AdminCitiesPage() {
         <button
           onClick={async () => {
             if (!selectedCity) { alert("Select a city first"); return }
-            const { data: { session } } = await supabase.auth.getSession()
-            const res = await fetch("/api/cities/photo", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${session?.access_token || ""}`,
-              },
-              body: JSON.stringify({ citySlug: selectedCity }),
-            })
-            const result = await res.json()
-            alert(result.error || `Photo updated from "${result.place}"`)
-          }}
-          className="w-full py-2 mt-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--accent-warm)] hover:text-[var(--accent-warm)] transition-colors"
-        >
-          Update city card photo →
-        </button>
-        <button
-          onClick={async () => {
-            if (!selectedCity) { alert("Select a city first"); return }
             if (!confirm(`Fetch schools for ${selectedCity}? This makes ~10 Google API calls (~$0.34). Limit: once per 24h per city.`)) return
             const { data: { session } } = await supabase.auth.getSession()
             const res = await fetch("/api/schools/refresh", {
