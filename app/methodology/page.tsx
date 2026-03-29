@@ -3,7 +3,7 @@ import Link from "next/link"
 
 export const metadata: Metadata = {
   title: "How the FIS\u2122 Works \u2014 Methodology | Uncomun",
-  description: "The Uncomun Family Intelligence Score is calculated from 1,000+ signals across 9 dimensions. Here is exactly how it works.",
+  description: "The Uncomun Family Intelligence Score is calculated from 250+ data points across 9 dimensions per city. Here is exactly how it works.",
 }
 
 const DIMENSIONS = [
@@ -38,9 +38,9 @@ export default function MethodologyPage() {
         How the FIS&trade; Works
       </h1>
       <p className="text-lg text-[var(--text-secondary)] leading-relaxed mb-10">
-        The Uncomun Family Intelligence Score&trade; is calculated from 1,000+ data points across
-        9 dimensions &mdash; combining researched data from public sources with member field reports
-        as families contribute their real experiences.
+        The Uncomun Family Intelligence Score&trade; is calculated from 250+ data points across
+        9 dimensions per city &mdash; built from researched public data sources. As members contribute
+        field reports, the scores become more precise over time.
       </p>
 
       {/* Why it exists */}
