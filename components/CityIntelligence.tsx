@@ -17,21 +17,19 @@ export default function CityIntelligence({ city }: { city: City }) {
     <div className="space-y-8">
       {/* Setup Difficulty */}
       <IntelSection title="Setup Difficulty" subtitle="How hard is it to arrive and get operational">
-        {/* Tease: headline stats visible */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.setupDifficulty.overallSetupScore) }}>
-              {s.setupDifficulty.overallSetupScore}
-            </p>
-            <p className="text-[10px] text-[var(--text-secondary)]">Setup score</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold">{s.setupDifficulty.memberSetupTimelineWeeks}</p>
-            <p className="text-[10px] text-[var(--text-secondary)]">weeks to operational</p>
-          </div>
-        </div>
-        {/* Details: gated */}
         <GatedDetails>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.setupDifficulty.overallSetupScore) }}>
+                {s.setupDifficulty.overallSetupScore}
+              </p>
+              <p className="text-[10px] text-[var(--text-secondary)]">Setup score</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">{s.setupDifficulty.memberSetupTimelineWeeks}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">weeks to operational</p>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
             <TimelineItem label="Housing secured" value={`~${s.setupDifficulty.housingSetupDays} days`} />
             <TimelineItem label="SIM card" value={`~${s.setupDifficulty.simCardSetupHours} hours`} />
@@ -61,27 +59,25 @@ export default function CityIntelligence({ city }: { city: City }) {
 
       {/* Pediatric Emergency Path */}
       <IntelSection title="Pediatric Emergency Care" subtitle="What happens if your child needs emergency care at 11pm">
-        {/* Tease: headline stats visible */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.healthcare.emergencyCareQuality) }}>
-              {s.healthcare.paediatricEmergencyResponseTime}
-            </p>
-            <p className="text-[10px] text-[var(--text-secondary)]">min response</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.healthcare.emergencyCareQuality) }}>
-              {s.healthcare.emergencyCareQuality}
-            </p>
-            <p className="text-[10px] text-[var(--text-secondary)]">care quality</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold">{s.healthcare.englishSpeakingPaediatricianCount}</p>
-            <p className="text-[10px] text-[var(--text-secondary)]">EN paediatricians</p>
-          </div>
-        </div>
-        {/* Details: gated */}
         <GatedDetails>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.healthcare.emergencyCareQuality) }}>
+                {s.healthcare.paediatricEmergencyResponseTime}
+              </p>
+              <p className="text-[10px] text-[var(--text-secondary)]">min response</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.healthcare.emergencyCareQuality) }}>
+                {s.healthcare.emergencyCareQuality}
+              </p>
+              <p className="text-[10px] text-[var(--text-secondary)]">care quality</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">{s.healthcare.englishSpeakingPaediatricianCount}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">EN paediatricians</p>
+            </div>
+          </div>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
             {s.healthcare.paediatricEmergencyPath}
           </p>
@@ -99,25 +95,23 @@ export default function CityIntelligence({ city }: { city: City }) {
 
       {/* School Enrollment Reality */}
       <IntelSection title="School Enrollment Reality" subtitle="Not just what schools exist — how hard it is to actually get in">
-        {/* Tease: headline stats visible */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold">{s.educationAccess.internationalSchoolCount}</p>
-            <p className="text-[10px] text-[var(--text-secondary)]">int&apos;l schools</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold">{s.educationAccess.waitlistMonthsTypical}</p>
-            <p className="text-[10px] text-[var(--text-secondary)]">month waitlist</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.educationAccess.enrollmentDifficulty) }}>
-              {s.educationAccess.enrollmentDifficulty}
-            </p>
-            <p className="text-[10px] text-[var(--text-secondary)]">ease of enrollment</p>
-          </div>
-        </div>
-        {/* Details: gated */}
         <GatedDetails>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">{s.educationAccess.internationalSchoolCount}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">int&apos;l schools</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">{s.educationAccess.waitlistMonthsTypical}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">month waitlist</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.educationAccess.enrollmentDifficulty) }}>
+                {s.educationAccess.enrollmentDifficulty}
+              </p>
+              <p className="text-[10px] text-[var(--text-secondary)]">ease of enrollment</p>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
             <SignalPill label="August arrive, September start" value={s.educationAccess.augustArrivalSeptemberEnrollPossible} />
             <SignalPill label="Mid-year entry possible" value={s.educationAccess.midYearEntryPossible} />
@@ -142,19 +136,15 @@ export default function CityIntelligence({ city }: { city: City }) {
 
       {/* Passport-Aware Visa Reality */}
       <IntelSection title="Visa Reality by Passport" subtitle="Processing experience differs dramatically by passport strength">
-        {/* Tease: first passport tier visible */}
-        <div className="mb-4">
-          <PassportRow
-            tier="Strong"
-            examples="US, UK, EU, AU, CA, JP"
-            days={s.visa.strongPassportProcessingDays}
-            approval={s.visa.strongPassportApprovalRate}
-            friendly={s.visa.strongPassportVisaFriendly}
-          />
-        </div>
-        {/* Details: gated */}
         <GatedDetails>
           <div className="space-y-3 mb-4">
+            <PassportRow
+              tier="Strong"
+              examples="US, UK, EU, AU, CA, JP"
+              days={s.visa.strongPassportProcessingDays}
+              approval={s.visa.strongPassportApprovalRate}
+              friendly={s.visa.strongPassportVisaFriendly}
+            />
             <PassportRow
               tier="Medium"
               examples="BR, MX, AR, TR, IN, ZA"
@@ -184,27 +174,25 @@ export default function CityIntelligence({ city }: { city: City }) {
 
       {/* Kids Social Integration */}
       <IntelSection title="Kids Social Integration" subtitle="How fast do children make friends here">
-        {/* Tease: headline stats visible */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.community.kidsIntegrationSpeed) }}>
-              {s.community.kidsIntegrationSpeedWeeks}
-            </p>
-            <p className="text-[10px] text-[var(--text-secondary)]">weeks to friends</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.community.kidsActivitiesForNewcomers) }}>
-              {s.community.kidsActivitiesForNewcomers}
-            </p>
-            <p className="text-[10px] text-[var(--text-secondary)]">newcomer activities</p>
-          </div>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold">{s.community.meetupsPerMonth}</p>
-            <p className="text-[10px] text-[var(--text-secondary)]">meetups/month</p>
-          </div>
-        </div>
-        {/* Details: gated */}
         <GatedDetails>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.community.kidsIntegrationSpeed) }}>
+                {s.community.kidsIntegrationSpeedWeeks}
+              </p>
+              <p className="text-[10px] text-[var(--text-secondary)]">weeks to friends</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold" style={{ color: getFISColor(s.community.kidsActivitiesForNewcomers) }}>
+                {s.community.kidsActivitiesForNewcomers}
+              </p>
+              <p className="text-[10px] text-[var(--text-secondary)]">newcomer activities</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">{s.community.meetupsPerMonth}</p>
+              <p className="text-[10px] text-[var(--text-secondary)]">meetups/month</p>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <TimelineItem label="Int'l kid community" value={`${s.community.internationalKidCommunitySize}/100`} />
             <TimelineItem label="Playgroup availability" value={`${s.community.kidsPlaygroupAvailability}/100`} />
