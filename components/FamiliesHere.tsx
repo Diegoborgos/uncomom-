@@ -72,21 +72,25 @@ export default function FamiliesHere({
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <h3 className="font-serif text-lg font-bold mb-4">Families in this city</h3>
 
-      {/* Counters */}
-      <div className="flex gap-6 mb-5">
-        <div>
-          <p className="text-2xl font-mono font-bold text-[var(--accent-warm)] pulse-live">
-            {totalHere}
-          </p>
-          <p className="text-xs text-[var(--text-secondary)]">here now</p>
+      {/* Counters — only show when there's real data */}
+      {(totalHere > 0 || (loaded && totalBeen > 0)) && (
+        <div className="flex gap-6 mb-5">
+          {totalHere > 0 && (
+            <div>
+              <p className="text-2xl font-mono font-bold text-[var(--accent-warm)] pulse-live">
+                {totalHere}
+              </p>
+              <p className="text-xs text-[var(--text-secondary)]">here now</p>
+            </div>
+          )}
+          {(loaded && totalBeen > 0) && (
+            <div>
+              <p className="text-2xl font-mono font-bold">{totalBeen}</p>
+              <p className="text-xs text-[var(--text-secondary)]">have been here</p>
+            </div>
+          )}
         </div>
-        {(loaded && totalBeen > 0) && (
-          <div>
-            <p className="text-2xl font-mono font-bold">{totalBeen}</p>
-            <p className="text-xs text-[var(--text-secondary)]">have been here</p>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Families here now */}
       {familiesNow.length > 0 && (
