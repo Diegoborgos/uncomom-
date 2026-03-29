@@ -56,7 +56,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.setupDifficulty.memberSetupNarrative && (
             <MemberQuote quote={s.setupDifficulty.memberSetupNarrative} />
           )}
-          <ContributePrompt citySlug={city.slug} label="Settled here? Share your setup timeline" />
+          <ContributePrompt label="Settled here? Share your setup timeline" />
         </GatedDetails>
       </IntelSection>
 
@@ -93,7 +93,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.healthcare.memberEmergencyNarrative && (
             <MemberQuote quote={s.healthcare.memberEmergencyNarrative} />
           )}
-          <ContributePrompt citySlug={city.slug} label="Used healthcare here? Share your experience" />
+          <ContributePrompt label="Used healthcare here? Share your experience" />
         </GatedDetails>
       </IntelSection>
 
@@ -135,7 +135,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.educationAccess.memberEnrollmentNarrative && (
             <MemberQuote quote={s.educationAccess.memberEnrollmentNarrative} />
           )}
-          <ContributePrompt citySlug={city.slug} label="Enrolled kids here? Share the reality" />
+          <ContributePrompt label="Enrolled kids here? Share the reality" />
         </GatedDetails>
       </IntelSection>
 
@@ -174,7 +174,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.visa.memberVisaNarrative && (
             <MemberQuote quote={s.visa.memberVisaNarrative} />
           )}
-          <ContributePrompt citySlug={city.slug} label="Got a visa here? Share processing times" />
+          <ContributePrompt label="Got a visa here? Share processing times" />
         </GatedDetails>
       </IntelSection>
 
@@ -207,7 +207,7 @@ export default function CityIntelligence({ city }: { city: City }) {
             <SignalPill label="WhatsApp groups accessible" value={s.community.whatsappGroupsAccessible} />
             <TimelineItem label="Solo parent rating" value={`${s.community.soloParentCommunityRating}/100`} />
           </div>
-          <ContributePrompt citySlug={city.slug} label="Made friends here? Tell other families how" />
+          <ContributePrompt label="Made friends here? Tell other families how" />
         </GatedDetails>
       </IntelSection>
 

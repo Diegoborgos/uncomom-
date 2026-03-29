@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 
-export default function ContributePrompt({ citySlug, label }: { citySlug: string; label?: string }) {
+export default function ContributePrompt({ label }: { label?: string }) {
   const { user } = useAuth()
 
   return (
