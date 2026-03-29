@@ -78,7 +78,7 @@ export default function CityMap({ cities }: { cities: City[] }) {
             </span>
           </div>
           <div style="font-size: 11px; color: #d4874a;">
-            ${city.meta.familiesNow} families here now
+            ${city.meta.familiesNow > 0 ? `${city.meta.familiesNow} families here now` : "No families checked in yet"}
           </div>
           <a href="/cities/${city.slug}" style="
             display: inline-block;

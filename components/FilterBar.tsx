@@ -12,8 +12,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "childSafety", label: "Child Safety" },
   { value: "nature", label: "Nature" },
   { value: "internet", label: "Internet" },
-  { value: "familiesNow", label: "Families There Now" },
-  { value: "returnRate", label: "Return Rate" },
 ]
 
 const CONTINENTS = ["Europe", "Asia", "Latin America", "Africa"]

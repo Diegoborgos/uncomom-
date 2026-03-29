@@ -126,9 +126,14 @@ export default function FamiliesHere({
           No families have checked in yet. Be the first!
         </p>
       )}
-      {!loaded && familiesNow.length === 0 && (
+      {!loaded && familiesNow.length === 0 && fallbackCount > 0 && (
         <p className="text-sm text-[var(--text-secondary)]">
           {fallbackCount} families estimated
+        </p>
+      )}
+      {!loaded && familiesNow.length === 0 && fallbackCount === 0 && (
+        <p className="text-sm text-[var(--text-secondary)]">
+          No families have checked in yet. Be the first!
         </p>
       )}
     </div>

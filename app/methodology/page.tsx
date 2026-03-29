@@ -38,9 +38,9 @@ export default function MethodologyPage() {
         How the FIS&trade; Works
       </h1>
       <p className="text-lg text-[var(--text-secondary)] leading-relaxed mb-10">
-        The Uncomun Family Intelligence Score&trade; is calculated from 1,000+ signals across
-        9 dimensions &mdash; combining live public data from 14 global sources with verified
-        field reports from families who have actually lived in each city.
+        The Uncomun Family Intelligence Score&trade; is calculated from 1,000+ data points across
+        9 dimensions &mdash; combining researched data from public sources with member field reports
+        as families contribute their real experiences.
       </p>
 
       {/* Why it exists */}
@@ -113,27 +113,21 @@ export default function MethodologyPage() {
         <h2 className="font-serif text-2xl font-bold mb-4">Member Field Reports</h2>
         <div className="space-y-4 text-[var(--text-secondary)] leading-relaxed">
           <p>
-            The most valuable data in the FIS&trade; comes from members who have actually lived
+            As Uncomun grows, the most valuable data will come from members who have actually lived
             in each city with their families. After logging a trip and marking it as complete,
             members can submit a structured Family Field Report covering all 9 dimensions.
           </p>
           <p>
-            Field reports include arrival curve data that no other platform collects: how many
+            Field reports collect arrival curve data that no other platform has: how many
             days until you secured housing, made your first family connection, enrolled kids in
             school, and felt fully operational. This data is broken down by passport tier
             (strong, medium, limited) so families see processing times relevant to their
             nationality.
           </p>
           <p>
-            Field reports are weighted by stay duration (longer stays carry more weight) and
-            recency (recent reports outweigh older ones). Only families with a verified logged
-            trip to a city can submit a report for that city.
-          </p>
-          <p>
-            When enough reports accumulate (3+), nightly aggregation recalculates median values
-            and updates the city&apos;s signals directly. Every signal tracks its source and
-            confidence level &mdash; you can always see whether a data point comes from public
-            APIs, member field reports, or manual research.
+            Currently, city scores are based on researched data from public sources. As member
+            field reports accumulate, they will progressively replace estimated values with
+            verified family experience data &mdash; making the FIS&trade; more accurate over time.
           </p>
         </div>
       </section>

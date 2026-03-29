@@ -18,9 +18,9 @@ export default function MetaPanelGated({ city }: { city: City }) {
       {/* These are gated */}
       {isPaid ? (
         <>
-          <MetaRow emoji="🏠" label="Families here now" value={`${city.meta.familiesNow}`} highlight />
-          <MetaRow emoji="📊" label="Families have been here" value={`${city.meta.familiesBeen}`} />
-          <MetaRow emoji="🔄" label="Return rate" value={`${city.meta.returnRate}%`} />
+          {city.meta.familiesNow > 0 && <MetaRow emoji="🏠" label="Families here now" value={`${city.meta.familiesNow}`} highlight />}
+          {city.meta.familiesBeen > 0 && <MetaRow emoji="📊" label="Families have been here" value={`${city.meta.familiesBeen}`} />}
+          {city.meta.returnRate > 0 && <MetaRow emoji="🔄" label="Return rate" value={`${city.meta.returnRate}%`} />}
           <div className="flex items-start gap-3">
             <span className="text-sm">📚</span>
             <div className="flex-1">
@@ -55,9 +55,9 @@ export default function MetaPanelGated({ city }: { city: City }) {
       ) : (
         <PaywallBlur>
           <div className="space-y-4">
-            <MetaRow emoji="🏠" label="Families here now" value={`${city.meta.familiesNow}`} />
-            <MetaRow emoji="📊" label="Families have been here" value={`${city.meta.familiesBeen}`} />
-            <MetaRow emoji="🔄" label="Return rate" value={`${city.meta.returnRate}%`} />
+            {city.meta.familiesNow > 0 && <MetaRow emoji="🏠" label="Families here now" value={`${city.meta.familiesNow}`} />}
+            {city.meta.familiesBeen > 0 && <MetaRow emoji="📊" label="Families have been here" value={`${city.meta.familiesBeen}`} />}
+            {city.meta.returnRate > 0 && <MetaRow emoji="🔄" label="Return rate" value={`${city.meta.returnRate}%`} />}
             <MetaRow emoji="📚" label="Homeschool legal" value={city.meta.homeschoolLegal} />
             <MetaRow emoji="🛂" label="Visa friendly" value={city.meta.visaFriendly} />
           </div>

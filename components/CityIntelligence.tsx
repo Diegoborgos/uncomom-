@@ -192,7 +192,11 @@ export default function CityIntelligence({ city }: { city: City }) {
 
       {/* Data quality footer */}
       <div className="rounded-lg bg-[var(--surface-elevated)] px-4 py-3 flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
-        <span>{s.dataQuality.fieldReportCount} field reports ({s.dataQuality.fieldReportsLast12Mo} in last 12mo)</span>
+        <span>
+          {s.dataQuality.fieldReportCount > 0
+            ? `${s.dataQuality.fieldReportCount} field reports (${s.dataQuality.fieldReportsLast12Mo} in last 12mo)`
+            : "No family field reports yet"}
+        </span>
         <span>{s.dataQuality.signalCount} signals &middot; {s.dataQuality.dataCompleteness}% complete</span>
       </div>
     </div>
@@ -243,10 +247,11 @@ function CurriculumChip({ label }: { label: string }) {
 }
 
 function MemberQuote({ quote }: { quote: string }) {
+  if (!quote) return null
   return (
     <div className="border-l-2 border-[var(--accent-warm)]/40 pl-3 py-1">
       <p className="text-xs text-[var(--text-secondary)] italic leading-relaxed">&ldquo;{quote}&rdquo;</p>
-      <p className="text-[9px] text-[var(--text-secondary)]/60 mt-1">Verified family field report</p>
+      <p className="text-[9px] text-[var(--text-secondary)]/60 mt-1">Researched estimate</p>
     </div>
   )
 }
