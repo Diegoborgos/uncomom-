@@ -412,3 +412,84 @@ create policy "Families can update their own report"
   on public.city_field_reports for update using (
     family_id in (select id from public.families where user_id = auth.uid())
   );
+
+-- ============================================================
+-- CITIES TABLE — Source of truth for all city data
+-- Replaces data/cities.ts as primary data source
+-- ============================================================
+
+create table if not exists public.cities (
+  id text primary key,
+  slug text not null unique,
+  name text not null,
+  country text not null,
+  country_code text not null,
+  continent text not null,
+  photo text,
+  lat numeric,
+  lng numeric,
+
+  score_family integer,
+  score_child_safety integer,
+  score_school_access integer,
+  score_nature integer,
+  score_internet integer,
+  score_healthcare integer,
+
+  cost_family_monthly integer,
+  cost_rent_2br integer,
+  cost_international_school integer,
+  cost_local_school integer,
+  cost_childcare integer,
+
+  families_now integer default 0,
+  families_been integer default 0,
+  return_rate integer default 0,
+  best_months text[] default '{}',
+  timezone text,
+  languages text[] default '{}',
+  homeschool_legal text,
+  visa_friendly text,
+  kids_age_ideal text,
+
+  tags text[] default '{}',
+  description text,
+
+  signals jsonb,
+
+  last_manual_update timestamptz default now(),
+  last_automated_update timestamptz,
+  data_confidence integer default 70,
+  pending_review boolean default false,
+  review_notes text,
+
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+create index if not exists idx_cities_slug on public.cities(slug);
+create index if not exists idx_cities_continent on public.cities(continent);
+create index if not exists idx_cities_country on public.cities(country);
+
+alter table public.cities enable row level security;
+
+create policy "Cities are publicly readable"
+  on public.cities for select using (true);
+
+-- City data change log
+create table if not exists public.city_data_changelog (
+  id uuid default gen_random_uuid() primary key,
+  city_slug text not null,
+  field_changed text not null,
+  old_value text,
+  new_value text,
+  change_source text not null,
+  changed_by text,
+  change_reason text,
+  created_at timestamptz default now() not null
+);
+
+alter table public.city_data_changelog enable row level security;
+
+create policy "Changelog is publicly readable"
+  on public.city_data_changelog for select using (true);

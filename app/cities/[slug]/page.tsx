@@ -1,4 +1,5 @@
-import { cities } from "@/data/cities"
+import { getAllCities, getCityBySlug } from "@/lib/cities-db"
+import { cities as staticCities } from "@/data/cities"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import CityHero from "@/components/CityHero"
@@ -16,12 +17,13 @@ import CityPageTracker from "@/components/CityPageTracker"
 import { FISBreakdown } from "@/components/FISScore"
 import CityIntelligence from "@/components/CityIntelligence"
 
-export function generateStaticParams() {
-  return cities.map((city) => ({ slug: city.slug }))
+export async function generateStaticParams() {
+  // Use static data for build-time generation (DB may not be available)
+  return staticCities.map((city) => ({ slug: city.slug }))
 }
 
 export function generateMetadata({ params }: { params: { slug: string } }) {
-  const city = cities.find((c) => c.slug === params.slug)
+  const city = staticCities.find((c) => c.slug === params.slug)
   if (!city) return { title: "City not found" }
   const title = `${city.name}, ${city.country} — Family Travel Guide | Uncomun`
   const description = `Family Score ${city.scores.family}/100. ${city.description} Estimated family cost: €${city.cost.familyMonthly}/month for a family of 4.`
@@ -43,11 +45,12 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   }
 }
 
-export default function CityPage({ params }: { params: { slug: string } }) {
-  const city = cities.find((c) => c.slug === params.slug)
+export default async function CityPage({ params }: { params: { slug: string } }) {
+  const city = await getCityBySlug(params.slug)
   if (!city) notFound()
 
-  const relatedCities = cities
+  const allCities = await getAllCities()
+  const relatedCities = allCities
     .filter((c) => c.continent === city.continent && c.slug !== city.slug)
     .slice(0, 3)
 

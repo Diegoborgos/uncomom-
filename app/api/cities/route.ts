@@ -1,4 +1,4 @@
-import { cities } from "@/data/cities"
+import { getAllCities } from "@/lib/cities-db"
 import { NextResponse } from "next/server"
 
 /**
@@ -7,6 +7,7 @@ import { NextResponse } from "next/server"
  * Returns clean JSON with all city data.
  */
 export async function GET() {
+  const cities = await getAllCities()
   const data = cities.map((city) => ({
     name: city.name,
     country: city.country,
