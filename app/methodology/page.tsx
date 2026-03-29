@@ -19,16 +19,16 @@ const DIMENSIONS = [
 ]
 
 const DATA_SOURCES = [
-  "Numbeo \u2014 Cost of living and crime indices",
-  "WHO \u2014 Traffic fatality rates, healthcare system quality, air/water quality",
-  "IQAir \u2014 Real-time and historical air quality data",
-  "Ookla Speedtest \u2014 Internet speed and reliability",
-  "Global Peace Index \u2014 Political stability",
-  "EF English Proficiency Index \u2014 English proficiency by country",
-  "Environmental Performance Index \u2014 Environmental quality",
-  "CDC/WHO \u2014 Disease risk data (dengue, malaria)",
+  "Numbeo \u2014 Cost of living and crime indices (reference)",
+  "WHO \u2014 Traffic fatality rates, healthcare system quality, air/water quality (reference)",
+  "IQAir \u2014 Air quality data (reference)",
+  "Ookla Speedtest \u2014 Internet speed and reliability (reference)",
+  "Global Peace Index \u2014 Political stability (reference)",
+  "EF English Proficiency Index \u2014 English proficiency by country (reference)",
+  "Environmental Performance Index \u2014 Environmental quality (reference)",
+  "CDC/WHO \u2014 Disease risk data (reference)",
+  "Google Places \u2014 Schools, restaurants, activities, ratings, reviews (live API)",
   "Uncomun Member Field Reports \u2014 Family experience data (collected as members contribute)",
-  "Uncomun Platform Data \u2014 Trip logs, community activity (grows with membership)",
 ]
 
 export default function MethodologyPage() {
@@ -135,6 +135,10 @@ export default function MethodologyPage() {
       {/* Data Sources */}
       <section className="mb-12">
         <h2 className="font-serif text-2xl font-bold mb-4">Data Sources</h2>
+        <p className="text-sm text-[var(--text-secondary)] mb-4">
+          City scores are researched using the following public sources as references.
+          Sources marked &ldquo;live API&rdquo; are integrated directly. Sources marked &ldquo;reference&rdquo; were used during manual research.
+        </p>
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
           <ul className="space-y-2">
             {DATA_SOURCES.map((s) => (
@@ -152,7 +156,7 @@ export default function MethodologyPage() {
         <h2 className="font-serif text-2xl font-bold mb-6">FAQ</h2>
         <div className="space-y-6">
           <FAQ q="Can cities pay to improve their score?" a="No. Never. The FIS is calculated algorithmically from public data and member reports. No city, tourism board, or commercial partner can influence a score." />
-          <FAQ q="How often is data updated?" a="Field reports trigger nightly aggregation — new reports are reflected in city scores within 24 hours. Public data sources (Numbeo, IQAir) are refreshed monthly. Every signal tracks its source, freshness, and confidence level." />
+          <FAQ q="How often is data updated?" a="City scores are based on manually researched data from public sources listed above. Google Places data (schools, places) is refreshed periodically via live API. As members submit field reports, their data replaces estimated values within 24 hours." />
           <FAQ q="Why does my personal FIS differ from the default?" a="The personal FIS recalibrates dimension weights based on your family's profile, kids' ages, education approach, and behavioral signals from your platform usage." />
           <FAQ q="How many field reports does a city need for reliable scores?" a="We consider a city's FIS robust after 10+ field reports from different families. Below that, we rely more heavily on public data sources and flag the lower data confidence." />
           <FAQ q="Can I see how my FIS was calculated?" a="Yes. Your personal FIS breakdown shows exactly which dimensions were weighted up or down and why, based on your family profile." />
