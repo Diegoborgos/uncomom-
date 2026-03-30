@@ -220,7 +220,7 @@ export default function SchoolsPage() {
                       {school.school_type}
                     </button>
                   )}
-                  {school.curriculum && (
+                  {school.curriculum && school.curriculum !== school.school_type && (
                     <button
                       onClick={() => setCurriculumFilter(school.curriculum)}
                       className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
