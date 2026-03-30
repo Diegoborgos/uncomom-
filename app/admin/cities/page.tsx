@@ -217,7 +217,7 @@ export default function AdminCitiesPage() {
                   <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
                     <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">City Photo</p>
                     {Boolean(cityData.photo) && (
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={String(cityData.photo)} alt={String(cityData.name)} className="w-full h-32 object-cover rounded-lg mb-3" />
                     )}
                     <input
