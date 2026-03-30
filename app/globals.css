@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   --bg: #0d1a14;
@@ -77,4 +79,68 @@ h1, h2, h3, h4, h5, h6 {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* ============================================================
+   V2 Design System — scoped to homepage only via .theme-v2
+   Apply this class to a wrapper div to override all CSS vars.
+   Remove the wrapper to instantly revert to the forest theme.
+   ============================================================ */
+
+.theme-v2 {
+  --bg: #000000;
+  --surface: #1A1A1A;
+  --surface-elevated: #2A2A2A;
+  --border: #333333;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --accent-green: #EBFF00;
+  --accent-warm: #EBFF00;
+  --score-high: #EBFF00;
+  --score-mid: #FFB800;
+  --score-low: #FF4444;
+  background: var(--bg);
+}
+
+.theme-v2 h1,
+.theme-v2 h2,
+.theme-v2 h3,
+.theme-v2 h4 {
+  font-family: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+.theme-v2 p,
+.theme-v2 span,
+.theme-v2 button,
+.theme-v2 a,
+.theme-v2 select,
+.theme-v2 input {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Glass effect for filter bar */
+.theme-v2 .glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Larger border radius for cards */
+.theme-v2 .rounded-xl {
+  border-radius: 24px;
+}
+
+/* Pill buttons */
+.theme-v2 .rounded-lg {
+  border-radius: 16px;
+}
+
+/* Override scrollbar for v2 */
+.theme-v2::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+.theme-v2::-webkit-scrollbar-thumb {
+  background: #333333;
 }
