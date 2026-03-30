@@ -7,7 +7,7 @@ import { countryCodeToFlag, formatEuro } from "@/lib/scores"
 import { track } from "@/lib/tracking"
 import { calculateDefaultFIS, getFISColor, DIMENSION_LABELS } from "@/lib/fis"
 
-export default function CityCard({ city, rank }: { city: City; rank?: number }) {
+export default function CityCard({ city }: { city: City }) {
   const flag = countryCodeToFlag(city.countryCode)
   const router = useRouter()
   const [saved, setSaved] = useState(false)
