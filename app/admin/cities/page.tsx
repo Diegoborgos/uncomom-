@@ -261,13 +261,24 @@ export default function AdminCitiesPage() {
               {activeTab === "pipeline" && (
                 <div className="space-y-3">
                   <PipelineButton
+                    label="Test Google Places API"
+                    description="One test call to verify your API key works. No cost, no DB writes."
+                    color="warm"
+                    onClick={async () => {
+                      const result = await runPipeline("/api/places/refresh", { citySlug: selectedCity, test: true })
+                      alert(JSON.stringify(result, null, 2))
+                    }}
+                  />
+                  <PipelineButton
                     label="Fetch Google Places"
                     description={`~11 API calls (~$0.37) for ${selectedCityName}. 24h cooldown.`}
                     color="green"
                     onClick={async () => {
                       if (!confirm(`Fetch places for ${selectedCityName}? ~11 API calls (~$0.37)`)) return
                       const result = await runPipeline("/api/places/refresh", { citySlug: selectedCity })
-                      alert(result.error || `${result.fetched || 0} places fetched, ${result.inserted || 0} saved`)
+                      alert(result.error
+                        ? `ERROR: ${result.error}\n\n${result.allErrors ? result.allErrors.join('\n') : ''}`
+                        : `${result.fetched || 0} places fetched, ${result.inserted || 0} saved${result.apiErrors ? '\n\nPartial errors:\n' + result.apiErrors.join('\n') : ''}`)
                     }}
                   />
                   <PipelineButton

@@ -142,9 +142,10 @@ export async function fetchPlacesForCity(
   lat: number,
   lng: number,
   categories: PlaceCategory[] = PLACE_CATEGORIES
-): Promise<(GooglePlace & { category: string })[]> {
+): Promise<{ places: (GooglePlace & { category: string })[]; errors: string[] }> {
   const allPlaces: (GooglePlace & { category: string })[] = []
   const seenIds = new Set<string>()
+  const errors: string[] = []
 
   for (const cat of categories) {
     try {
@@ -156,9 +157,11 @@ export async function fetchPlacesForCity(
         allPlaces.push({ ...place, category: cat.label })
       }
     } catch (err) {
-      console.error(`Failed to fetch ${cat.label}:`, err)
+      const msg = `${cat.label}: ${String(err)}`
+      console.error(msg)
+      errors.push(msg)
     }
   }
 
-  return allPlaces
+  return { places: allPlaces, errors }
 }

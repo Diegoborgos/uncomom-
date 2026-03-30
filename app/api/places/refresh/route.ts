@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const supabase = createClient(url, key, { auth: { persistSession: false } })
 
-  const { citySlug } = await req.json()
+  const body = await req.json()
+  const citySlug = body.citySlug
   if (!citySlug) {
     return NextResponse.json({ error: "citySlug required" }, { status: 400 })
   }
@@ -54,6 +55,30 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Test mode — single API call, return raw result
+    const testMode = body?.test === true
+    if (testMode) {
+      try {
+        const testResults = await textSearch(`restaurant ${city.name}`, city.lat, city.lng)
+        return NextResponse.json({
+          test: true,
+          city: citySlug,
+          apiKeySet: !!process.env.GOOGLE_PLACES_API_KEY,
+          apiKeyPrefix: process.env.GOOGLE_PLACES_API_KEY?.slice(0, 8) + "...",
+          results: testResults.length,
+          firstResult: testResults[0]?.name || null,
+        })
+      } catch (err) {
+        return NextResponse.json({
+          test: true,
+          city: citySlug,
+          apiKeySet: !!process.env.GOOGLE_PLACES_API_KEY,
+          apiKeyPrefix: process.env.GOOGLE_PLACES_API_KEY?.slice(0, 8) + "...",
+          error: String(err),
+        }, { status: 500 })
+      }
+    }
+
     // Rate limit: skip if this city was refreshed in the last 24 hours
     const { data: existing } = await supabase
       .from("city_places")
@@ -74,7 +99,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const places = await fetchPlacesForCity(city.lat, city.lng)
+    const { places, errors: apiErrors } = await fetchPlacesForCity(city.lat, city.lng)
+
+    // If ALL categories failed, surface the first error
+    if (places.length === 0 && apiErrors.length > 0) {
+      return NextResponse.json({
+        error: `Google Places API failed: ${apiErrors[0]}`,
+        allErrors: apiErrors,
+        city: citySlug,
+        apiKeySet: !!process.env.GOOGLE_PLACES_API_KEY,
+      }, { status: 502 })
+    }
 
     let inserted = 0
     let errors = 0
@@ -138,6 +173,7 @@ export async function POST(req: NextRequest) {
       fetched: places.length,
       inserted,
       errors,
+      apiErrors: apiErrors.length > 0 ? apiErrors : undefined,
       cityPhotoUpdated,
     })
   } catch (error) {
