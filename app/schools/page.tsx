@@ -165,9 +165,9 @@ export default function SchoolsPage() {
                 key={school.id}
                 className="rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden hover:border-[var(--accent-green)] transition-colors"
               >
-                <div className="flex">
-                  {/* Photo — left side, fixed width */}
-                  <div className="w-48 shrink-0 bg-[var(--surface-elevated)]">
+                <div className="flex flex-col sm:flex-row">
+                  {/* Photo */}
+                  <div className="h-48 sm:h-auto sm:w-48 shrink-0 bg-[var(--surface-elevated)]">
                     {school.photo_urls?.[0] ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={school.photo_urls[0]} alt={school.name} className="w-full h-full object-cover" />
@@ -180,14 +180,13 @@ export default function SchoolsPage() {
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
-                    <h3 className="font-serif text-xl font-bold mb-1">{school.name}</h3>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-secondary)]">
+                    <h3 className="font-serif text-lg font-bold mb-1 line-clamp-2">{school.name}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
                       <Link href={`/cities/${school.city_slug}`} className="hover:text-[var(--accent-green)] transition-colors">
                         {cityInfo.flag} {cityInfo.name}
                       </Link>
-                      {school.school_type && <><span>·</span><span>{school.school_type}</span></>}
-                      {school.curriculum && <><span>·</span><span>{school.curriculum}</span></>}
-                      {school.age_range && <><span>·</span><span>Ages {school.age_range}</span></>}
+                      {school.school_type && <><span className="hidden sm:inline">·</span><span>{school.school_type}</span></>}
+                      {school.curriculum && <><span className="hidden sm:inline">·</span><span>{school.curriculum}</span></>}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
@@ -214,7 +213,7 @@ export default function SchoolsPage() {
                       {formatEuro(school.monthly_fee)}/mo
                     </span>
                   )}
-                  {school.tags.filter((t) => !USELESS_TAGS.includes(t)).slice(0, 5).map((tag) => (
+                  {school.tags.filter((t) => !USELESS_TAGS.includes(t)).slice(0, 3).map((tag) => (
                     <button
                       key={tag}
                       onClick={() => setSearch(tag.replace(/_/g, " "))}
@@ -226,17 +225,17 @@ export default function SchoolsPage() {
                 </div>
 
                 {/* CTA buttons */}
-                <div className="flex gap-3 mb-4">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {school.google_maps_url && (
                     <a href={school.google_maps_url} target="_blank" rel="noopener noreferrer"
-                      className="text-xs px-4 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity">
-                      View on Google Maps
+                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity">
+                      Google Maps
                     </a>
                   )}
                   {school.website && (
                     <a href={school.website} target="_blank" rel="noopener noreferrer"
-                      className="text-xs px-4 py-2 rounded-lg border border-[var(--accent-green)] text-[var(--accent-green)] font-medium hover:bg-[var(--accent-green)]/10 transition-colors">
-                      Visit Website
+                      className="text-xs px-3 py-1.5 rounded-lg border border-[var(--accent-green)] text-[var(--accent-green)] font-medium hover:bg-[var(--accent-green)]/10 transition-colors">
+                      Website
                     </a>
                   )}
                 </div>
