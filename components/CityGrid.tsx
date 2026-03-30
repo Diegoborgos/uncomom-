@@ -15,7 +15,7 @@ export default function CityGrid({ cities }: { cities: City[] }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {cities.map((city, index) => (
+      {cities.map((city) => (
         <CityCard key={city.id} city={city} />
       ))}
     </div>
