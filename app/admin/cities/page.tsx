@@ -300,6 +300,16 @@ export default function AdminCitiesPage() {
                     <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">Monthly Refresh — Free APIs (all cities)</p>
                     <div className="space-y-3">
                       <PipelineButton
+                        label="Migrate ALL City Photos to Supabase Storage"
+                        description="Downloads current photos and uploads to Supabase Storage. Skips already-migrated cities. Free, one-time."
+                        color="green"
+                        onClick={async () => {
+                          if (!confirm("Migrate all city photos to Supabase Storage? This downloads each photo and re-uploads it. One-time operation.")) return
+                          const result = await runPipeline("/api/admin/migrate-images")
+                          alert(result.error || `Done! ${result.success} migrated, ${result.skipped} skipped, ${result.failed} failed.`)
+                        }}
+                      />
+                      <PipelineButton
                         label="Refresh ALL Cities — Free APIs"
                         description="Open-Meteo + REST Countries + Teleport + World Bank + AQICN. All 45 cities. $0 cost. Run monthly."
                         color="green"
