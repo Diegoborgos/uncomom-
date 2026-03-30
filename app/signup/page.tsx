@@ -33,6 +33,8 @@ export default function SignupPage() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        skipBrowserRedirect: false,
+        queryParams: { prompt: "select_account" },
       },
     })
     if (error) {

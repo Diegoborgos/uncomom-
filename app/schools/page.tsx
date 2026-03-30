@@ -213,15 +213,22 @@ export default function SchoolsPage() {
                       {formatEuro(school.monthly_fee)}/mo
                     </span>
                   )}
-                  {school.tags.filter((t) => !USELESS_TAGS.includes(t)).slice(0, 3).map((tag) => (
+                  {school.school_type && (
                     <button
-                      key={tag}
-                      onClick={() => setSearch(tag.replace(/_/g, " "))}
+                      onClick={() => setTypeFilter(school.school_type)}
                       className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
                     >
-                      {tag.replace(/_/g, " ")}
+                      {school.school_type}
                     </button>
-                  ))}
+                  )}
+                  {school.curriculum && (
+                    <button
+                      onClick={() => setCurriculumFilter(school.curriculum)}
+                      className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
+                    >
+                      {school.curriculum}
+                    </button>
+                  )}
                 </div>
 
                 {/* CTA buttons */}
