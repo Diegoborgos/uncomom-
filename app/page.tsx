@@ -28,7 +28,7 @@ function HomeContent() {
   )
 
   return (
-    <div className="theme-v2">
+    <>
       {/* Show hero only when no filters active (landing state) */}
       {!hasFilters && <Hero />}
 
@@ -39,7 +39,7 @@ function HomeContent() {
         </p>
         <CityGrid cities={filtered} />
       </div>
-    </div>
+    </>
   )
 }
 
