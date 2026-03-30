@@ -213,6 +213,41 @@ export default function AdminCitiesPage() {
               {activeTab === "editor" && cityData && (
                 <div className="space-y-4">
                   {/* Scores */}
+                  {/* Photo */}
+                  <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                    <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">City Photo</p>
+                    {Boolean(cityData.photo) && (
+                      <img src={String(cityData.photo)} alt={String(cityData.name)} className="w-full h-32 object-cover rounded-lg mb-3" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/webp,image/png"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file || !selectedCity) return
+                        const { data: { session } } = await supabase.auth.getSession()
+                        if (!session?.access_token) return
+                        const formData = new FormData()
+                        formData.append("file", file)
+                        formData.append("citySlug", selectedCity)
+                        const res = await fetch("/api/admin/upload-city-photo", {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${session.access_token}` },
+                          body: formData,
+                        })
+                        const result = await res.json()
+                        if (result.url) {
+                          setCityData({ ...cityData, photo: result.url })
+                          alert("Photo updated!")
+                        } else {
+                          alert(`Upload failed: ${result.error}`)
+                        }
+                      }}
+                      className="w-full text-xs text-[var(--text-secondary)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-[var(--border)] file:text-xs file:text-[var(--text-secondary)] file:bg-[var(--surface)] cursor-pointer"
+                    />
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-1">JPEG, WebP or PNG · Max 5MB</p>
+                  </div>
+
                   <FieldGroup title="Scores (0-100)">
                     {EDITABLE_FIELDS.filter((f) => f.group === "scores").map((field) => (
                       <FieldInput key={field.key} field={field} cityData={cityData} edits={edits} setEdits={setEdits} />

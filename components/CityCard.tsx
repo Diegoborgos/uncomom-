@@ -65,11 +65,12 @@ export default function CityCard({ city }: { city: City }) {
     >
       <div className="relative aspect-[4/5] overflow-hidden">
         {/* City photo */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={city.photo}
-          alt={city.name}
+          src={city.photo || ""}
+          alt={`${city.name}, ${city.country}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+          decoding="async"
           onError={(e) => {
             const target = e.target as HTMLImageElement
             target.style.display = "none"

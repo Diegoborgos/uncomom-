@@ -9,11 +9,11 @@ export default function CityHero({ city }: { city: City }) {
 
   return (
     <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={city.photo}
-        alt={city.name}
+        src={city.photo || ""}
+        alt={`${city.name}, ${city.country}`}
         className="w-full h-full object-cover"
+        fetchPriority="high"
         onError={(e) => {
           const target = e.target as HTMLImageElement
           target.style.display = "none"

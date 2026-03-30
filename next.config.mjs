@@ -14,6 +14,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "places.googleapis.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
   async headers() {
