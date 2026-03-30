@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Rate limit: skip if this city was refreshed in the last 24 hours
+    // Rate limit: skip if refreshed in last 1 hour (prevents accidental spam)
     const { data: existing } = await supabase
       .from("city_places")
       .select("cached_at")
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     if (existing?.cached_at) {
       const hoursSince = (Date.now() - new Date(existing.cached_at).getTime()) / (1000 * 60 * 60)
-      if (hoursSince < 24) {
+      if (hoursSince < 1) {
         return NextResponse.json({
           error: `Places were refreshed ${Math.round(hoursSince)}h ago. Wait 24h between refreshes to control API costs.`,
           city: citySlug,

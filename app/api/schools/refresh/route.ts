@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     if (existing?.cached_at) {
       const hoursSince = (Date.now() - new Date(existing.cached_at).getTime()) / (1000 * 60 * 60)
-      if (hoursSince < 24) {
+      if (hoursSince < 1) {
         return NextResponse.json({
           error: `Schools were refreshed ${Math.round(hoursSince)}h ago. Wait 24h between refreshes to control API costs.`,
           city: citySlug,
