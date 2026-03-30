@@ -9,6 +9,7 @@ export default function CityHero({ city }: { city: City }) {
 
   return (
     <div className="relative w-full h-[50vh] min-h-[400px] overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={city.photo || ""}
         alt={`${city.name}, ${city.country}`}

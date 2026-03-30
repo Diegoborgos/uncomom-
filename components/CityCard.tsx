@@ -65,6 +65,7 @@ export default function CityCard({ city }: { city: City }) {
     >
       <div className="relative aspect-[4/5] overflow-hidden">
         {/* City photo */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={city.photo || ""}
           alt={`${city.name}, ${city.country}`}

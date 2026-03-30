@@ -29,7 +29,6 @@ type SchoolRow = {
 
 const SCHOOL_TYPES = ["International", "British", "American", "Montessori", "Waldorf", "Bilingual", "Forest School", "Alternative", "Private"]
 const CURRICULA = ["IB", "British", "American", "French", "Montessori", "Waldorf"]
-const USELESS_TAGS = ["point_of_interest", "establishment", "service", "political", "premise", "locality", "sublocality", "administrative_area_level_1", "administrative_area_level_2", "country", "geocode"]
 
 export default function SchoolsPage() {
   const [schools, setSchools] = useState<SchoolRow[]>([])
