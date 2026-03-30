@@ -349,7 +349,7 @@ export default function AdminCitiesPage() {
                           let done = 0, failed = 0
                           for (const c of cities) {
                             const r = await runPipeline("/api/places/refresh", { citySlug: c.slug as string })
-                            r.error ? failed++ : done++
+                            if (r.error) { failed++ } else { done++ }
                           }
                           alert(`Places: ${done} done, ${failed} failed/skipped.`)
                         }}
@@ -365,7 +365,7 @@ export default function AdminCitiesPage() {
                           let done = 0, failed = 0
                           for (const c of cities) {
                             const r = await runPipeline("/api/schools/refresh", { citySlug: c.slug as string })
-                            r.error ? failed++ : done++
+                            if (r.error) { failed++ } else { done++ }
                           }
                           alert(`Schools: ${done} done, ${failed} failed/skipped.`)
                         }}
