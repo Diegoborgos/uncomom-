@@ -241,12 +241,9 @@ function MobileMenu({
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 h-16 shrink-0">
-        <Link href="/" onClick={() => setMobileOpen(false)} className="flex flex-col">
-          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
+        <Link href="/" onClick={() => setMobileOpen(false)}>
+          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight">
             Uncomun
-          </span>
-          <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
-            City intelligence for traveling families
           </span>
         </Link>
         <button
