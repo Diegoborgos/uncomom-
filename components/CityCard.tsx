@@ -26,12 +26,6 @@ export default function CityCard({ city }: { city: City }) {
     }
   }, [showPreview, city.slug, city.name, router])
 
-  const dismissPreview = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setShowPreview(false)
-  }
-
   // Top 5 FIS dimensions for hover bars
   const dimensionBars = useMemo(() => {
     const keys = ["childSafety", "educationAccess", "familyCost", "healthcare", "nature"] as const
