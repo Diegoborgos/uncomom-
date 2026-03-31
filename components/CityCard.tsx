@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { City } from "@/lib/types"
 import { countryCodeToFlag, formatEuro } from "@/lib/scores"
 import { track } from "@/lib/tracking"
-import { calculateDefaultFIS, getFISColor, DIMENSION_LABELS } from "@/lib/fis"
+import { calculateDefaultFIS, DIMENSION_LABELS } from "@/lib/fis"
 
 export default function CityCard({ city }: { city: City }) {
   const flag = countryCodeToFlag(city.countryCode)
@@ -88,13 +88,13 @@ export default function CityCard({ city }: { city: City }) {
           </h3>
         </div>
 
-        {/* HOVER/TAP OVERLAY — FIS dimension bars */}
-        <div className={`absolute inset-0 transition-opacity duration-200 ${
+        {/* HOVER/TAP OVERLAY */}
+        <div className={`absolute inset-0 transition-opacity duration-200 flex flex-col ${
           showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
         }`} style={{ backgroundColor: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}>
 
-          {/* City info at top of overlay */}
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+          {/* City info */}
+          <div className="px-4 pt-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-white/60">{flag} {city.country}</p>
               <h4 className="text-lg font-bold text-white" style={{ fontFamily: "'Instrument Serif', serif" }}>
@@ -106,22 +106,8 @@ export default function CityCard({ city }: { city: City }) {
             </span>
           </div>
 
-          {showPreview && (
-            <div className="absolute top-4 right-16">
-              <button
-                onClick={dismissPreview}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
-                  <path d="M4 4l8 8M12 4l-8 8" />
-                </svg>
-              </button>
-            </div>
-          )}
-
-          {/* FIS dimension score bars */}
-          <div className="absolute bottom-4 left-4 right-4 space-y-2">
-            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Family Intelligence Score&trade;</p>
+          {/* Score bars — right below city info */}
+          <div className="px-4 pt-4 space-y-2">
             {dimensionBars.map((d) => (
               <div key={d.label} className="flex items-center gap-3">
                 <span className="text-[11px] text-white/70 w-20 shrink-0">{d.label}</span>
@@ -130,17 +116,13 @@ export default function CityCard({ city }: { city: City }) {
                     className="h-full rounded-full"
                     style={{
                       width: `${d.value}%`,
-                      backgroundColor: getFISColor(d.value),
+                      backgroundColor: d.value >= 70 ? "#4ADE80" : d.value >= 50 ? "#EBFF00" : "#FF4444",
                     }}
                   />
                 </div>
                 <span className="text-[10px] font-mono text-white/50 w-6 text-right">{d.value}</span>
               </div>
             ))}
-
-            {showPreview && (
-              <p className="text-[10px] text-white/30 text-center pt-2">Tap again to view city →</p>
-            )}
           </div>
         </div>
       </div>

@@ -45,9 +45,8 @@ export const DIMENSION_LABELS: Record<FISDimensionKey, string> = {
 // ============================================================
 
 export function getFISColor(score: number): string {
-  if (score >= 80) return "#EBFF00"
-  if (score >= 70) return "#FFB800"
-  if (score >= 60) return "#FF8C00"
+  if (score >= 70) return "#4ADE80"
+  if (score >= 50) return "#EBFF00"
   return "#FF4444"
 }
 
