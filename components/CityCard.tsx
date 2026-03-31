@@ -61,25 +61,23 @@ export default function CityCard({ city }: { city: City }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
         {/* FIS score badge — top left */}
-        <div className="absolute top-4 left-4">
-          <span className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold bg-[var(--accent-green)] text-black">
+        <div className="absolute top-3 left-3">
+          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-mono font-bold bg-[var(--accent-green)] text-black">
             {fis.score} FIS&trade;
           </span>
         </div>
 
-        {/* Cost — top right */}
-        <div className="absolute top-4 right-4">
-          <span className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold bg-black/50 backdrop-blur-sm text-white">
-            {formatEuro(city.cost.familyMonthly)}/mo
-          </span>
-        </div>
-
-        {/* City name + country — bottom */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <p className="text-sm text-white/90 mb-1">{flag} {city.country}</p>
-          <h3 className="text-2xl font-bold text-white" style={{ fontFamily: "'Instrument Serif', serif" }}>
-            {city.name}
-          </h3>
+        {/* City name + country + cost — bottom */}
+        <div className="absolute bottom-3 left-3 right-3">
+          <p className="text-xs text-white/90 mb-0.5">{flag} {city.country}</p>
+          <div className="flex items-end justify-between">
+            <h3 className="text-xl font-bold text-white leading-tight" style={{ fontFamily: "'Instrument Serif', serif" }}>
+              {city.name}
+            </h3>
+            <span className="text-xs font-mono text-white/80 shrink-0 ml-2">
+              {formatEuro(city.cost.familyMonthly)}/mo
+            </span>
+          </div>
         </div>
 
         {/* HOVER/TAP OVERLAY */}
