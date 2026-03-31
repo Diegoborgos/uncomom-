@@ -64,18 +64,15 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-[var(--surface)] transition-all duration-200 ${
-        scrolled ? "border-b border-[var(--border)] backdrop-blur-sm" : ""
+      className={`sticky top-0 z-50 bg-[var(--bg)] transition-all duration-200 ${
+        scrolled ? "border-b border-[var(--border)]" : ""
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* LEFT — Logo */}
-        <Link href="/" className="flex flex-col shrink-0">
-          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
+        <Link href="/" className="shrink-0">
+          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight">
             Uncomun
-          </span>
-          <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
-            City intelligence for traveling families
           </span>
         </Link>
 
@@ -240,7 +237,7 @@ function MobileMenu({
   return createPortal(
     <div
       className="fixed inset-0 flex flex-col md:hidden"
-      style={{ backgroundColor: "#0d1a14", zIndex: 99999 }}
+      style={{ backgroundColor: "var(--bg)", zIndex: 99999 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 h-16 shrink-0">

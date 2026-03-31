@@ -69,7 +69,7 @@ export default function CityCard({ city }: { city: City }) {
         {/* FIS score badge — top left */}
         <div className="absolute top-4 left-4">
           <span className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold bg-[var(--accent-green)] text-black">
-            {fis.score} FIS
+            {fis.score} FIS&trade;
           </span>
         </div>
 
@@ -121,7 +121,7 @@ export default function CityCard({ city }: { city: City }) {
 
           {/* FIS dimension score bars */}
           <div className="absolute bottom-4 left-4 right-4 space-y-2">
-            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Family Intelligence Score</p>
+            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Family Intelligence Score&trade;</p>
             {dimensionBars.map((d) => (
               <div key={d.label} className="flex items-center gap-3">
                 <span className="text-[11px] text-white/70 w-20 shrink-0">{d.label}</span>
