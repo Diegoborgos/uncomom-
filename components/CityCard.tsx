@@ -83,25 +83,25 @@ export default function CityCard({ city }: { city: City }) {
         </div>
 
         {/* HOVER/TAP OVERLAY */}
-        <div className={`absolute inset-0 transition-opacity duration-200 flex flex-col ${
+        <div className={`absolute inset-0 transition-opacity duration-200 flex flex-col justify-center ${
           showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
         }`} style={{ backgroundColor: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}>
 
-          {/* City info */}
-          <div className="px-4 pt-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-white/60">{flag} {city.country}</p>
-              <h4 className="text-lg font-bold text-white" style={{ fontFamily: "'Instrument Serif', serif" }}>
-                {city.name}
-              </h4>
+          {/* City info + scores — vertically centered */}
+          <div className="px-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-xs text-white/60">{flag} {city.country}</p>
+                <h4 className="text-lg font-bold text-white" style={{ fontFamily: "'Instrument Serif', serif" }}>
+                  {city.name}
+                </h4>
+              </div>
+              <span className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold bg-[var(--accent-green)] text-black">
+                {fis.score} FIS&trade;
+              </span>
             </div>
-            <span className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold bg-[var(--accent-green)] text-black">
-              {fis.score}
-            </span>
-          </div>
 
-          {/* Score bars — right below city info */}
-          <div className="px-4 pt-4 space-y-2">
+            <div className="space-y-2">
             {dimensionBars.map((d) => (
               <div key={d.label} className="flex items-center gap-3">
                 <span className="text-[11px] text-white/70 w-20 shrink-0">{d.label}</span>
@@ -117,6 +117,7 @@ export default function CityCard({ city }: { city: City }) {
                 <span className="text-[10px] font-mono text-white/50 w-6 text-right">{d.value}</span>
               </div>
             ))}
+            </div>
           </div>
         </div>
       </div>
