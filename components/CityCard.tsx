@@ -16,12 +16,8 @@ export default function CityCard({ city }: { city: City }) {
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     track("city_card_clicked", { citySlug: city.slug, cityName: city.name })
-    // Desktop: always navigate
-    if (window.matchMedia("(hover: hover)").matches) {
-      router.push(`/cities/${city.slug}`)
-      return
-    }
-    // Mobile: first tap → preview, second tap → navigate
+    // First tap/click → show preview. Second → navigate.
+    // On desktop, hover already shows the overlay, so click always navigates.
     if (!showPreview) {
       e.preventDefault()
       setShowPreview(true)
@@ -73,7 +69,7 @@ export default function CityCard({ city }: { city: City }) {
         {/* FIS score badge — top left */}
         <div className="absolute top-4 left-4">
           <span className="inline-flex items-center rounded-full px-2.5 py-1 text-sm font-mono font-bold bg-[var(--accent-green)] text-black">
-            ★ {fis.score}
+            {fis.score} FIS
           </span>
         </div>
 
