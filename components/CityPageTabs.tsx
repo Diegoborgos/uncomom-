@@ -83,18 +83,18 @@ export default function CityPageTabs({
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">{city.description}</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {city.tags.map((tag) => (
-                  <span key={tag} className="text-xs px-2.5 py-1 rounded-full text-[var(--accent-green)] border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/10">
+                  <Link
+                    key={tag}
+                    href={`/?tags=${encodeURIComponent(tag)}`}
+                    className="text-xs px-2.5 py-1 rounded-full text-[var(--accent-green)] border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/10 hover:bg-[var(--accent-green)]/20 transition-colors"
+                  >
                     {tag}
-                  </span>
+                  </Link>
                 ))}
               </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs text-[var(--text-secondary)]">Best months:</span>
-                {city.meta.bestMonths.map((m) => (
-                  <span key={m} className="text-xs px-2.5 py-1 rounded-full bg-[var(--surface-elevated)] text-[var(--text-primary)] border border-[var(--border)]">
-                    {m}
-                  </span>
-                ))}
+              <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                <span>Best months:</span>
+                <span className="text-[var(--text-primary)]">{city.meta.bestMonths.join(", ")}</span>
               </div>
             </section>
 
