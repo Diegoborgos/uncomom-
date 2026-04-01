@@ -286,7 +286,7 @@ function TagRow({ label, tags }: { label: string; tags: string[] }) {
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => (
           <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20">
-            {tag}
+            {tag.charAt(0).toUpperCase() + tag.slice(1)}
           </span>
         ))}
       </div>

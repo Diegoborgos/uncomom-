@@ -87,7 +87,7 @@ export default function CityPageTabs({
                     href={`/?tags=${encodeURIComponent(tag)}`}
                     className="text-xs px-2.5 py-1 rounded-full text-[var(--accent-green)] border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/10 hover:bg-[var(--accent-green)]/20 transition-colors"
                   >
-                    {tag}
+                    {tag.charAt(0).toUpperCase() + tag.slice(1)}
                   </Link>
                 ))}
               </div>
