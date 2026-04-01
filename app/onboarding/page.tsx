@@ -234,24 +234,23 @@ export default function OnboardingPage() {
   const progress = Math.min(100, (fieldsExtracted / 9) * 100)
 
   return (
-    <div className="max-w-lg mx-auto min-h-[calc(100vh-64px)] flex flex-col">
-      {/* Progress bar */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="h-1.5 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+    <div className="max-w-lg mx-auto min-h-[calc(100vh-64px)] flex flex-col justify-end">
+      {/* Progress — compact inline */}
+      <div className="px-4 pt-3 pb-1">
+        <div className="h-1 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
           <div className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-700" style={{ width: `${progress}%` }} />
         </div>
-        <div className="flex justify-between mt-1.5">
-          <p className="text-[10px] text-[var(--text-secondary)]">{fieldsExtracted}/9 profile fields</p>
-          {messages.length > 2 && !profile.done && (
-            <button onClick={() => { setProfile({ ...profile, done: true }) }} className="text-[10px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-              Skip and save what I have →
+        {messages.length > 2 && !profile.done && (
+          <div className="text-right mt-1">
+            <button onClick={() => { setProfile({ ...profile, done: true }) }} className="text-[10px] text-[var(--text-secondary)] hover:text-[var(--accent-green)]">
+              Skip →
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div className="px-4 py-2 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in`}>
             <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
@@ -280,10 +279,10 @@ export default function OnboardingPage() {
       </div>
 
       {/* Error */}
-      {error && <p className="text-xs text-center text-[var(--score-low)] px-4 mb-2">{error}</p>}
+      {error && <p className="text-xs text-center text-[var(--score-low)] mb-2">{error}</p>}
 
-      {/* Input or Save */}
-      <div className="px-4 pb-6 pt-2 border-t border-[var(--border)]">
+      {/* Input — directly below messages, no gap */}
+      <div className="pb-4 pt-2">
         {showCityPicker ? (
           <div className="space-y-3">
             {/* Continent selector */}
