@@ -38,6 +38,8 @@ export default function CityCard({ city }: { city: City }) {
   return (
     <div
       onClick={handleClick}
+      onMouseEnter={() => setShowPreview(true)}
+      onMouseLeave={() => setShowPreview(false)}
       className="group rounded-3xl overflow-hidden bg-[var(--bg)] hover:-translate-y-1 transition-all duration-200 cursor-pointer"
     >
       <div className="relative aspect-[4/5] overflow-hidden">
@@ -82,7 +84,7 @@ export default function CityCard({ city }: { city: City }) {
 
         {/* HOVER/TAP OVERLAY */}
         <div className={`absolute inset-0 transition-opacity duration-200 flex flex-col justify-center ${
-          showPreview ? "opacity-100" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+          showPreview ? "opacity-100" : "opacity-0 pointer-events-none"
         }`} style={{ backgroundColor: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}>
 
           {/* City info + scores — vertically centered */}
