@@ -5,6 +5,7 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import { City } from "@/lib/types"
 import { getScoreColor, countryCodeToFlag, formatEuro } from "@/lib/scores"
+import { TILE_URL, LABELS_URL, MAP_DEFAULTS, MAP_STYLES } from "@/lib/map-config"
 
 export default function CityMap({ cities }: { cities: City[] }) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -13,18 +14,10 @@ export default function CityMap({ cities }: { cities: City[] }) {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return
 
-    const map = L.map(mapRef.current, {
-      center: [25, 10],
-      zoom: 2,
-      zoomControl: true,
-      scrollWheelZoom: true,
-      attributionControl: false,
-    })
+    const map = L.map(mapRef.current, { ...MAP_DEFAULTS, zoomControl: true })
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      maxZoom: 18,
-    }).addTo(map)
+    L.tileLayer(TILE_URL, { maxZoom: 18 }).addTo(map)
+    L.tileLayer(LABELS_URL, { maxZoom: 18, pane: "overlayPane" }).addTo(map)
 
     cities.forEach((city) => {
       const color = getScoreColor(city.scores.family)
@@ -102,33 +95,7 @@ export default function CityMap({ cities }: { cities: City[] }) {
 
   return (
     <>
-      <style jsx global>{`
-        .custom-popup .leaflet-popup-content-wrapper {
-          background: #1A1A1A;
-          border: 1px solid #333333;
-          border-radius: 10px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        .custom-popup .leaflet-popup-tip {
-          background: #1A1A1A;
-          border: 1px solid #333333;
-        }
-        .custom-popup .leaflet-popup-close-button {
-          color: #A1A1AA !important;
-        }
-        .leaflet-control-zoom a {
-          background: #1A1A1A !important;
-          color: #FFFFFF !important;
-          border-color: #333333 !important;
-        }
-        .custom-popup .leaflet-popup-content {
-          margin: 0;
-        }
-        .custom-marker {
-          background: transparent !important;
-          border: none !important;
-        }
-      `}</style>
+      <style jsx global>{MAP_STYLES}</style>
       <div ref={mapRef} className="w-full h-full" />
     </>
   )

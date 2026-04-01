@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import { TILE_URL, LABELS_URL, MAP_DEFAULTS, MAP_STYLES } from "@/lib/map-config"
 
 type FamilyLocation = {
   family_name: string
@@ -46,20 +47,11 @@ export default function MemberMapContent() {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return
 
-    const map = L.map(mapRef.current, {
-      center: [25, 10],
-      zoom: 2,
-      scrollWheelZoom: true,
-      attributionControl: false,
-      zoomControl: false,
-    })
+    const map = L.map(mapRef.current, MAP_DEFAULTS)
 
-    // Add zoom control to top-left
     L.control.zoom({ position: "topleft" }).addTo(map)
-
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 18,
-    }).addTo(map)
+    L.tileLayer(TILE_URL, { maxZoom: 18 }).addTo(map)
+    L.tileLayer(LABELS_URL, { maxZoom: 18, pane: "overlayPane" }).addTo(map)
 
     // Group families by city
     const byCitySlug: Record<string, FamilyLocation[]> = {}
@@ -151,39 +143,7 @@ export default function MemberMapContent() {
 
   return (
     <>
-      <style jsx global>{`
-        .member-popup .leaflet-popup-content-wrapper {
-          background: #1A1A1A;
-          border: 1px solid #333;
-          border-radius: 16px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-        }
-        .member-popup .leaflet-popup-tip {
-          background: #1A1A1A;
-          border: 1px solid #333;
-        }
-        .member-popup .leaflet-popup-close-button {
-          color: #A1A1AA !important;
-          font-size: 18px !important;
-          top: 8px !important;
-          right: 10px !important;
-        }
-        .member-popup .leaflet-popup-content {
-          margin: 0;
-        }
-        .leaflet-control-zoom a {
-          background: #1A1A1A !important;
-          color: #fff !important;
-          border-color: #333 !important;
-        }
-        .leaflet-control-zoom a:hover {
-          background: #333 !important;
-        }
-        .custom-marker {
-          background: transparent !important;
-          border: none !important;
-        }
-      `}</style>
+      <style jsx global>{MAP_STYLES}</style>
 
       <div ref={mapRef} className="w-full h-full" />
 

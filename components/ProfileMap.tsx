@@ -5,6 +5,7 @@ import { cities } from "@/data/cities"
 import { Trip } from "@/lib/database.types"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import { TILE_URL, LABELS_URL, MAP_DEFAULTS, MAP_STYLES } from "@/lib/map-config"
 
 export default function ProfileMap({ trips }: { trips: Trip[] }) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -14,17 +15,13 @@ export default function ProfileMap({ trips }: { trips: Trip[] }) {
     if (!mapRef.current || mapInstanceRef.current) return
 
     const map = L.map(mapRef.current, {
-      center: [25, 10],
-      zoom: 2,
+      ...MAP_DEFAULTS,
       scrollWheelZoom: false,
-      zoomControl: false,
-      attributionControl: false,
       dragging: true,
     })
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 18,
-    }).addTo(map)
+    L.tileLayer(TILE_URL, { maxZoom: 18 }).addTo(map)
+    L.tileLayer(LABELS_URL, { maxZoom: 18, pane: "overlayPane" }).addTo(map)
 
     // Group trips by city
     const tripCities = new Map<string, { status: string; count: number }>()
@@ -88,7 +85,7 @@ export default function ProfileMap({ trips }: { trips: Trip[] }) {
   return (
     <>
       <style jsx global>{`
-        .profile-marker { background: transparent !important; border: none !important; }
+        ${MAP_STYLES}
         .profile-tooltip {
           background: #1A1A1A !important;
           border: 1px solid #333 !important;
