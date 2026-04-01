@@ -172,7 +172,7 @@ export default function Header() {
                   Sign in
                 </Link>
                 <Link
-                  href="/signup"
+                  href="/join"
                   className="text-sm px-4 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
                 >
                   Sign up
@@ -305,7 +305,7 @@ function MobileMenu({
         ) : (
           <>
             <Link
-              href="/signup"
+              href="/join"
               onClick={() => setMobileOpen(false)}
               className="block text-center py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium text-lg"
             >

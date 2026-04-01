@@ -19,7 +19,7 @@ export default function ContributePrompt({ label }: { label?: string }) {
           Update with your experience →
         </button>
       ) : (
-        <Link href="/signup" className="text-[10px] text-[var(--accent-green)] hover:underline">
+        <Link href="/join" className="text-[10px] text-[var(--accent-green)] hover:underline">
           Sign up to contribute →
         </Link>
       )}

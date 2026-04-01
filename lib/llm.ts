@@ -35,3 +35,59 @@ export async function chatCompletion(messages: Message[]): Promise<string> {
   const data = await res.json()
   return data.choices?.[0]?.message?.content || ""
 }
+
+/** Streaming chat completion — returns a ReadableStream of SSE chunks */
+export async function chatCompletionStream(messages: Message[]): Promise<Response> {
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) throw new Error("GROQ_API_KEY not set")
+
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages,
+      temperature: 0.7,
+      max_tokens: 500,
+      stream: true,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`LLM API error ${res.status}: ${err}`)
+  }
+
+  return res
+}
+
+/** Short extraction call with low temperature for structured output */
+export async function extractionCompletion(messages: Message[]): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) throw new Error("GROQ_API_KEY not set")
+
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages,
+      temperature: 0.1,
+      max_tokens: 800,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`LLM API error ${res.status}: ${err}`)
+  }
+
+  const data = await res.json()
+  return data.choices?.[0]?.message?.content || ""
+}

@@ -12,6 +12,7 @@ import { countryCodeToFlag } from "@/lib/scores"
 import { openJoinOverlay } from "@/components/JoinOverlay"
 import ConciergeCard from "@/components/ConciergeCard"
 import FamilyMatches from "@/components/FamilyMatches"
+import FamilyMatch from "@/components/FamilyMatch"
 
 const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
   ssr: false,
@@ -202,6 +203,9 @@ export default function DashboardPage() {
           <StatCard value={reviews.length} label="Reviews" />
           <StatCard value={currentTrips.length} label="Here now" accent={currentTrips.length > 0} />
         </div>
+
+        {/* AI-matched family introduction */}
+        <FamilyMatch />
 
         {/* Currently in */}
         {currentTrips.length > 0 && (

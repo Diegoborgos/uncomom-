@@ -25,7 +25,7 @@ export default function Hero() {
 
         {/* CTA — yellow pill */}
         <Link
-          href="/signup"
+          href="/join"
           className="px-8 py-3.5 rounded-full bg-[var(--accent-green)] text-black font-semibold hover:opacity-90 transition-opacity text-sm"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >

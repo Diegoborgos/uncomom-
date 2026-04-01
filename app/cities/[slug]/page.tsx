@@ -7,6 +7,7 @@ import BookmarkButton from "@/components/BookmarkButton"
 import { cityJsonLd } from "@/lib/structured-data"
 import CityPageTracker from "@/components/CityPageTracker"
 import CityPageTabs from "@/components/CityPageTabs"
+import TrajectoryPanel from "@/components/TrajectoryPanel"
 
 export async function generateStaticParams() {
   return staticCities.map((city) => ({ slug: city.slug }))
@@ -68,6 +69,10 @@ export default async function CityPage({ params }: { params: { slug: string } })
       </div>
 
       <CityPageTabs city={city} relatedCities={relatedCities} />
+
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <TrajectoryPanel citySlug={city.slug} />
+      </div>
     </div>
   )
 }

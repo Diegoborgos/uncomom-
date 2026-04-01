@@ -70,7 +70,7 @@ export function PaywallGate({ feature }: { feature: string }) {
         </button>
       ) : (
         <Link
-          href="/signup"
+          href="/join"
           className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
         >
           Join Uncomun
@@ -141,7 +141,7 @@ export default function Paywall({
               </button>
             ) : (
               <Link
-                href="/signup"
+                href="/join"
                 className="block text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
               >
                 Join Uncomun
@@ -187,7 +187,7 @@ export function PaywallInline({ feature }: { feature: string }) {
         </button>
       ) : (
         <Link
-          href="/signup"
+          href="/join"
           className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
         >
           Join
