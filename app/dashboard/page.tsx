@@ -10,6 +10,8 @@ import { Trip, Review } from "@/lib/database.types"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
 import { openJoinOverlay } from "@/components/JoinOverlay"
+import ConciergeCard from "@/components/ConciergeCard"
+import FamilyMatches from "@/components/FamilyMatches"
 
 const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
   ssr: false,
@@ -182,6 +184,12 @@ export default function DashboardPage() {
             )}
           </div>
         )}
+
+        {/* AI Concierge — personalized recommendations */}
+        <ConciergeCard />
+
+        {/* Family Matches */}
+        <FamilyMatches />
 
         {/* Stats grid */}
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-8">

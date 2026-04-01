@@ -311,6 +311,15 @@ export default function AdminCitiesPage() {
                         }}
                       />
                       <PipelineButton
+                        label="Update Family Intelligence"
+                        description="Process events → update family_intelligence for all families. Free."
+                        color="green"
+                        onClick={async () => {
+                          const result = await runPipeline("/api/intelligence/update")
+                          alert(result.error || `Done! ${result.processed || 0} families processed.`)
+                        }}
+                      />
+                      <PipelineButton
                         label="Refresh ALL Cities — Free APIs"
                         description="Open-Meteo + REST Countries + Teleport + World Bank + AQICN. All 45 cities. $0 cost. Run monthly."
                         color="green"
