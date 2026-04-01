@@ -54,7 +54,7 @@ export default function OnboardingPage() {
     if (messages.length === 0 && user && !loading) {
       setMessages([{
         role: "assistant",
-        content: "Hey! I'm setting up your Uncomun profile. Tell me about your family — where are you from, how many kids, and what's your travel style? Just talk naturally, I'll pick it up."
+        content: "Hey! Tell me about your family — where are you from?"
       }])
       setTimeout(() => inputRef.current?.focus(), 300)
     }
@@ -108,12 +108,16 @@ export default function OnboardingPage() {
           }
         }
       }
-      const hasBasicFields = updatedProfile.family_name && updatedProfile.home_country && updatedProfile.travel_style
-      const cityKeywords = ["cities", "city", "visited", "lived", "been to", "traveled", "travel"]
-      const mentionsCities = cityKeywords.some((kw) => data.reply.toLowerCase().includes(kw))
+      // Show city picker ONLY after core fields are all collected
+      const hasAllCore = updatedProfile.home_country
+        && updatedProfile.kids_ages.length > 0
+        && updatedProfile.parent_work_type
+        && updatedProfile.education_approach
+        && updatedProfile.travel_style
 
-      if ((hasBasicFields || mentionsCities) && !updatedProfile.cities_visited.length && !showCityPicker) {
+      if (hasAllCore && !updatedProfile.cities_visited.length && !showCityPicker) {
         setShowCityPicker(true)
+        setMessages((prev) => [...prev, { role: "assistant", content: "Now the fun part — which cities have you explored as a family? Tap to select." }])
       } else {
         setTimeout(() => inputRef.current?.focus(), 100)
       }
