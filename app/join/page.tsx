@@ -9,7 +9,7 @@ type Message = { role: "user" | "assistant"; content: string }
 
 const FIRST_MESSAGE: Message = {
   role: "assistant",
-  content: "Welcome. I'm here to help your family figure out where to go next — and connect you with families who've made the exact same move.\n\nTell me where you are in your journey. Are you still dreaming about this, actively planning, or already close to moving?"
+  content: "Hey! Tell me about your family — where are you from, and what's got you thinking about living abroad?"
 }
 
 export default function JoinPage() {
@@ -17,17 +17,19 @@ export default function JoinPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
-  const [initialized, setInitialized] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [matchData, setMatchData] = useState<Record<string, unknown> | null>(null)
   const [trajectoryData, setTrajectoryData] = useState<Record<string, unknown> | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const hasInitialized = useRef(false)
 
   // Load saved chat history or show first message
+  // Key fix: depend on `family` so it re-runs when family loads
   useEffect(() => {
-    if (initialized || authLoading) return
-    setInitialized(true)
+    if (authLoading) return
+    if (hasInitialized.current) return
+    hasInitialized.current = true
 
     const saved = family?.chat_history as Message[] | null
     if (saved && Array.isArray(saved) && saved.length > 0) {
@@ -40,7 +42,7 @@ export default function JoinPage() {
       setMessages([FIRST_MESSAGE])
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, initialized])
+  }, [authLoading, family])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -106,10 +108,8 @@ export default function JoinPage() {
         }
       }
 
-      // Always refresh family — might have been created by the API
       if (user) await refreshFamily()
 
-      // Show results after enough conversation or natural transition
       const shouldShow = text.toLowerCase().includes("show you which cities") ||
         text.toLowerCase().includes("based on what you") ||
         text.toLowerCase().includes("good sense of") ||
@@ -128,7 +128,7 @@ export default function JoinPage() {
   const top5 = matchData?.top5 as CityMatch[] | undefined
   const trajectory = trajectoryData as { narrative?: string; insights?: Array<{ statement: string; basedOn: number }> } | null
 
-  // Progress based on extracted fields
+  // Progress bar — same as onboarding
   const fields = [
     family?.family_name && family.family_name !== "My Family",
     family?.home_country,
@@ -142,20 +142,19 @@ export default function JoinPage() {
   ]
   const progress = Math.min(100, Math.round((fields.filter(Boolean).length / fields.length) * 100))
 
+  if (authLoading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
+
   return (
-    <div className="max-w-lg mx-auto flex flex-col min-h-[calc(100vh-64px)]">
-      {/* Progress bar */}
+    <div className="max-w-lg mx-auto">
+      {/* Progress — compact inline, same as onboarding */}
       <div className="px-4 pt-3 pb-1">
         <div className="h-1 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
-          <div
-            className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-700"
-            style={{ width: `${progress}%` }}
-          />
+          <div className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-700" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 px-4 py-2 space-y-3 overflow-y-auto">
+      {/* Messages — same style as onboarding */}
+      <div className="px-4 py-2 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
@@ -164,20 +163,25 @@ export default function JoinPage() {
                 : "bg-[var(--surface)] text-[var(--text-primary)] rounded-2xl rounded-bl-md"
             }`}>
               {msg.content}
-              {loading && i === messages.length - 1 && msg.role === "assistant" && !msg.content && (
-                <span className="inline-flex gap-1">
-                  {[0, 150, 300].map(d => (
-                    <span key={d} className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
-                  ))}
-                </span>
-              )}
             </div>
           </div>
         ))}
 
-        {/* Results panel */}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-[var(--surface)] px-4 py-3 rounded-2xl rounded-bl-md">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Results panel — inline with messages */}
         {showResults && (
-          <div className="space-y-3 pt-2">
+          <>
             {trajectory?.narrative && (
               <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
                 <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2 font-medium">Families like yours</p>
@@ -220,13 +224,13 @@ export default function JoinPage() {
                 </Link>
               </div>
             )}
-          </div>
+          </>
         )}
 
         <div ref={bottomRef} />
       </div>
 
-      {/* Input — pinned to bottom */}
+      {/* Input — same position as onboarding */}
       <div className="px-4 pb-4 pt-2">
         <div className="flex gap-2">
           <input
