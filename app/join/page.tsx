@@ -156,8 +156,8 @@ export default function JoinPage() {
           {top5 && top5.length > 0 && (
             <div className="rounded-xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-4">
               <p className="text-[10px] text-[var(--accent-green)] uppercase tracking-wider mb-3 font-medium">Your top cities</p>
-              {matchData?.personalIntro && (
-                <p className="text-xs text-[var(--text-secondary)] italic mb-3">{matchData.personalIntro as string}</p>
+              {typeof matchData?.personalIntro === "string" && matchData.personalIntro && (
+                <p className="text-xs text-[var(--text-secondary)] italic mb-3">{matchData.personalIntro}</p>
               )}
               <div className="space-y-2">
                 {top5.map((city, i) => (
