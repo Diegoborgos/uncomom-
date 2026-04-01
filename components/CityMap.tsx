@@ -56,35 +56,32 @@ export default function CityMap({ cities }: { cities: City[] }) {
 
       marker.bindPopup(`
         <div style="
-          background: #132018;
-          color: #FFFFFF;
-          padding: 12px;
-          border-radius: 8px;
+          padding: 16px;
           min-width: 200px;
-          font-family: system-ui, sans-serif;
+          font-family: 'Inter', system-ui, sans-serif;
         ">
-          <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: bold; margin-bottom: 4px;">
+          <div style="font-family: 'Instrument Serif', serif; font-size: 18px; font-weight: bold; margin-bottom: 2px; color: #fff;">
             ${flag} ${city.name}
           </div>
-          <div style="font-size: 12px; color: #A1A1AA; margin-bottom: 8px;">
+          <div style="font-size: 12px; color: #A1A1AA; margin-bottom: 10px;">
             ${city.country} · ${city.continent}
           </div>
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <span style="background: ${color}33; color: ${color}; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-family: monospace;">
-              Family ${city.scores.family}
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span style="background: #EBFF00; color: #000; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-family: monospace; font-weight: 700;">
+              ${city.scores.family} FIS™
             </span>
-            <span style="font-size: 11px; color: #A1A1AA;">
-              ~${formatEuro(city.cost.familyMonthly)}/mo
+            <span style="font-size: 12px; color: #fff; font-family: monospace;">
+              ${formatEuro(city.cost.familyMonthly)}/mo
             </span>
-          </div>
-          <div style="font-size: 11px; color: #EBFF00;">
-            ${city.meta.familiesNow > 0 ? `${city.meta.familiesNow} families here now` : "No families checked in yet"}
           </div>
           <a href="/cities/${city.slug}" style="
             display: inline-block;
-            margin-top: 8px;
-            font-size: 11px;
-            color: #EBFF00;
+            padding: 8px 16px;
+            background: #EBFF00;
+            color: #000;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
             text-decoration: none;
           ">View city →</a>
         </div>
