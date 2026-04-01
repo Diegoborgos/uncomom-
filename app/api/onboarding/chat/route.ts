@@ -70,24 +70,44 @@ export async function POST(req: NextRequest) {
     let reply = response
     let profile: Partial<ExtractedProfile> = {}
 
+    // Try structured format first: ---REPLY--- ... ---PROFILE--- ...
     const replyMatch = response.match(/---REPLY---\s*([\s\S]*?)(?=---PROFILE---|$)/)
     const profileMatch = response.match(/---PROFILE---\s*([\s\S]*)/)
 
     if (replyMatch) {
       reply = replyMatch[1].trim()
+    } else if (profileMatch) {
+      // No ---REPLY--- marker, but ---PROFILE--- exists
+      // Split on ---PROFILE--- and take everything before as the reply
+      reply = response.split("---PROFILE---")[0].replace("---REPLY---", "").trim()
     }
 
+    // Extract profile JSON
     if (profileMatch) {
       try {
         profile = JSON.parse(profileMatch[1].trim())
       } catch {
-        // If JSON parsing fails, try to extract from the whole response
-        const jsonMatch = response.match(/\{[\s\S]*"done"\s*:\s*(true|false)[\s\S]*\}/)
+        const jsonMatch = profileMatch[1].match(/\{[\s\S]*\}/)
         if (jsonMatch) {
           try { profile = JSON.parse(jsonMatch[0]) } catch { /* ignore */ }
         }
       }
+    } else {
+      // No markers at all — try to find JSON anywhere in the response
+      const jsonMatch = response.match(/\{[\s\S]*"done"\s*:\s*(true|false)[\s\S]*\}/)
+      if (jsonMatch) {
+        try {
+          profile = JSON.parse(jsonMatch[0])
+          // Remove the JSON from the reply
+          reply = response.replace(jsonMatch[0], "").trim()
+        } catch { /* ignore */ }
+      }
     }
+
+    // Clean up any remaining markers from the reply
+    reply = reply.replace(/---REPLY---/g, "").replace(/---PROFILE---/g, "").trim()
+    // Remove any JSON that leaked into the reply
+    reply = reply.replace(/\{[^}]*"done"\s*:\s*(true|false)[^}]*\}/g, "").trim()
 
     return NextResponse.json({ reply, profile })
   } catch (error) {
