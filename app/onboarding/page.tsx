@@ -99,10 +99,20 @@ export default function OnboardingPage() {
 
       setMessages([...newMessages, { role: "assistant", content: data.reply }])
 
-      // Detect if LLM is asking about cities → show picker instead of text input
-      const cityKeywords = ["cities", "city", "visited", "lived in", "been to", "traveled"]
-      const askingAboutCities = cityKeywords.some((kw) => data.reply.toLowerCase().includes(kw)) && !profile.cities_visited.length
-      if (askingAboutCities) {
+      // After enough fields extracted and no cities yet → show city picker
+      const updatedProfile = { ...profile }
+      if (data.profile) {
+        for (const [key, value] of Object.entries(data.profile)) {
+          if (value && (typeof value === "string" ? value.length > 0 : Array.isArray(value) ? (value as unknown[]).length > 0 : value === true)) {
+            (updatedProfile as Record<string, unknown>)[key] = value
+          }
+        }
+      }
+      const hasBasicFields = updatedProfile.family_name && updatedProfile.home_country && updatedProfile.travel_style
+      const cityKeywords = ["cities", "city", "visited", "lived", "been to", "traveled", "travel"]
+      const mentionsCities = cityKeywords.some((kw) => data.reply.toLowerCase().includes(kw))
+
+      if ((hasBasicFields || mentionsCities) && !updatedProfile.cities_visited.length && !showCityPicker) {
         setShowCityPicker(true)
       } else {
         setTimeout(() => inputRef.current?.focus(), 100)
