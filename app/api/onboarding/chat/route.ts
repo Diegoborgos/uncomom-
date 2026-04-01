@@ -116,6 +116,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply, profile })
   } catch (error) {
     console.error("Onboarding chat error:", error)
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    const errMsg = String(error)
+    const userMessage = errMsg.includes("rate_limit") || errMsg.includes("429")
+      ? "We're experiencing high demand. Please try again in a few minutes."
+      : "Something went wrong. Please try again."
+    return NextResponse.json({ error: userMessage }, { status: 500 })
   }
 }

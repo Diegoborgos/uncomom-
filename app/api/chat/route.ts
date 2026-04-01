@@ -54,8 +54,23 @@ export async function POST(req: NextRequest) {
   let streamRes: Response
   try {
     streamRes = await chatCompletionStream(llmMessages)
-  } catch {
-    return NextResponse.json({ error: "AI unavailable" }, { status: 500 })
+  } catch (err) {
+    const errMsg = String(err)
+    const userMessage = errMsg.includes("rate_limit") || errMsg.includes("429")
+      ? "We're experiencing high demand right now. Please try again in a few minutes."
+      : "Something went wrong. Please try again."
+    // Return as SSE so the client can parse it
+    const encoder = new TextEncoder()
+    const errorStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: userMessage })}\n\n`))
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"))
+        controller.close()
+      }
+    })
+    return new Response(errorStream, {
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+    })
   }
 
   const encoder = new TextEncoder()

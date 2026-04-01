@@ -139,7 +139,16 @@ export default function OnboardingPage() {
       })
 
       const data = await res.json()
-      if (data.error) { setError(data.error); setSending(false); return }
+      if (data.error) {
+        const msg = typeof data.error === "string" && data.error.includes("rate_limit")
+          ? "We're getting a lot of traffic right now. Please try again in a few minutes."
+          : typeof data.error === "string" && data.error.length > 100
+          ? "Something went wrong. Please try again."
+          : data.error
+        setError(msg)
+        setSending(false)
+        return
+      }
 
       // Merge extracted profile
       if (data.profile) {
