@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Check if user has completed onboarding — new users go to /join
+      // Check if user has completed onboarding — new users go to /onboarding
       if (next === "/dashboard") {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
             .eq("user_id", user.id)
             .maybeSingle()
           if (!family || !family.onboarding_complete) {
-            return NextResponse.redirect(`${origin}/join`)
+            return NextResponse.redirect(`${origin}/onboarding`)
           }
         }
       }
