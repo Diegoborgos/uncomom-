@@ -58,10 +58,13 @@ CREATE INDEX IF NOT EXISTS idx_trajectories_passport ON public.family_trajectori
 CREATE INDEX IF NOT EXISTS idx_trajectories_anxiety ON public.family_trajectories(primary_anxiety);
 
 ALTER TABLE public.family_trajectories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Trajectories are publicly readable" ON public.family_trajectories FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Families can insert their own trajectory" ON public.family_trajectories
+DROP POLICY IF EXISTS "Trajectories are publicly readable" ON public.family_trajectories;
+CREATE POLICY "Trajectories are publicly readable" ON public.family_trajectories FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Families can insert their own trajectory" ON public.family_trajectories;
+CREATE POLICY "Families can insert their own trajectory" ON public.family_trajectories
   FOR INSERT WITH CHECK (family_id IN (SELECT id FROM public.families WHERE user_id = auth.uid()));
-CREATE POLICY IF NOT EXISTS "Families can update their own trajectory" ON public.family_trajectories
+DROP POLICY IF EXISTS "Families can update their own trajectory" ON public.family_trajectories;
+CREATE POLICY "Families can update their own trajectory" ON public.family_trajectories
   FOR UPDATE USING (family_id IN (SELECT id FROM public.families WHERE user_id = auth.uid()));
 
 -- ============================================================
@@ -85,7 +88,8 @@ CREATE INDEX IF NOT EXISTS idx_matches_family_b ON public.family_matches(family_
 CREATE INDEX IF NOT EXISTS idx_matches_status ON public.family_matches(status);
 
 ALTER TABLE public.family_matches ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Families can see their own matches"
+DROP POLICY IF EXISTS "Families can see their own matches" ON public.family_matches;
+CREATE POLICY "Families can see their own matches"
   ON public.family_matches FOR SELECT USING (
     family_a_id IN (SELECT id FROM public.families WHERE user_id = auth.uid()) OR
     family_b_id IN (SELECT id FROM public.families WHERE user_id = auth.uid())
@@ -110,7 +114,8 @@ CREATE TABLE IF NOT EXISTS public.collective_intelligence (
 );
 
 ALTER TABLE public.collective_intelligence ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Collective intelligence is public" ON public.collective_intelligence FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Collective intelligence is public" ON public.collective_intelligence;
+CREATE POLICY "Collective intelligence is public" ON public.collective_intelligence FOR SELECT USING (true);
 
 -- ============================================================
 -- CITY COLLECTIVE SIGNALS
@@ -134,7 +139,8 @@ CREATE TABLE IF NOT EXISTS public.city_collective_signals (
 );
 
 ALTER TABLE public.city_collective_signals ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "City signals are public" ON public.city_collective_signals FOR SELECT USING (true);
+DROP POLICY IF EXISTS "City signals are public" ON public.city_collective_signals;
+CREATE POLICY "City signals are public" ON public.city_collective_signals FOR SELECT USING (true);
 
 -- ============================================================
 -- COMPANION CHECKINS
@@ -150,7 +156,8 @@ CREATE TABLE IF NOT EXISTS public.companion_checkins (
 );
 
 ALTER TABLE public.companion_checkins ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Families can read their checkins"
+DROP POLICY IF EXISTS "Families can read their checkins" ON public.companion_checkins;
+CREATE POLICY "Families can read their checkins"
   ON public.companion_checkins FOR SELECT USING (
     family_id IN (SELECT id FROM public.families WHERE user_id = auth.uid())
   );
