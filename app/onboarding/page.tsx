@@ -215,6 +215,17 @@ export default function OnboardingPage() {
       updated_at: new Date().toISOString(),
     }
 
+    // Auto-generate username from family_name if not set
+    if (payload.family_name && !family?.username) {
+      const base = payload.family_name
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .slice(0, 20) || "family"
+      const { data: existing } = await supabase.from("families").select("id").eq("username", base).maybeSingle()
+      const username = existing ? base + Math.floor(Math.random() * 999) : base
+      Object.assign(payload, { username })
+    }
+
     if (family) {
       await supabase.from("families").update(payload).eq("id", family.id)
     } else {

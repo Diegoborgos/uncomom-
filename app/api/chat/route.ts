@@ -156,6 +156,21 @@ export async function POST(req: NextRequest) {
               if (extracted.family_name || extracted.kids_ages || extracted.primary_anxiety) {
                 updatePayload.onboarding_complete = true
               }
+
+              // Auto-generate username from family_name if not set yet
+              if (extracted.family_name && !family.username) {
+                const base = extracted.family_name
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, "")
+                  .slice(0, 20) || "family"
+                // Check if taken, add random suffix if so
+                const { data: existing } = await db.from("families").select("id").eq("username", base).maybeSingle()
+                if (existing) {
+                  updatePayload.username = base + Math.floor(Math.random() * 999)
+                } else {
+                  updatePayload.username = base
+                }
+              }
             }
 
             await db.from("families").update(updatePayload).eq("id", family.id)

@@ -32,25 +32,14 @@ export default function JoinPage() {
     const saved = family?.chat_history as Message[] | null
     if (saved && Array.isArray(saved) && saved.length > 0) {
       setMessages(saved)
-      // If enough conversation happened, show results
       if (saved.length >= 14 || family?.primary_anxiety) {
         setShowResults(true)
-        const loadAsync = async () => {
-          const { data: { session } } = await supabase.auth.getSession()
-          const headers: Record<string, string> = { "Content-Type": "application/json" }
-          if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`
-          const [matchRes, trajRes] = await Promise.all([
-            fetch("/api/match-cities", { method: "POST", headers }),
-            fetch("/api/trajectory", { method: "POST", headers, body: JSON.stringify({}) }),
-          ])
-          if (matchRes.ok) setMatchData(await matchRes.json())
-          if (trajRes.ok) setTrajectoryData(await trajRes.json())
-        }
-        loadAsync()
+        loadResults()
       }
     } else {
       setMessages([FIRST_MESSAGE])
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [family, authLoading, initialized])
 
   useEffect(() => {
@@ -133,120 +122,139 @@ export default function JoinPage() {
     } finally {
       setLoading(false)
     }
-  }, [input, loading, messages, family, refreshFamily, showResults, loadResults])
+  }, [input, loading, messages, family, user, refreshFamily, showResults, loadResults])
 
   type CityMatch = { slug: string; name: string; country: string; score: number; personalizedInsight: string; photo: string }
   const top5 = matchData?.top5 as CityMatch[] | undefined
   const trajectory = trajectoryData as { narrative?: string; insights?: Array<{ statement: string; basedOn: number }> } | null
 
+  // Progress based on extracted fields
+  const fields = [
+    family?.family_name && family.family_name !== "My Family",
+    family?.home_country,
+    family?.kids_ages?.length,
+    family?.parent_work_type,
+    family?.education_approach,
+    family?.travel_style,
+    family?.primary_anxiety,
+    family?.real_budget_max,
+    family?.bio,
+  ]
+  const progress = Math.min(100, Math.round((fields.filter(Boolean).length / fields.length) * 100))
+
   return (
-    <div className="min-h-screen flex flex-col max-w-2xl mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="font-serif text-3xl font-bold mb-2">Find where your family belongs</h1>
-        <p className="text-sm text-[var(--text-secondary)]">
-          Tell us about your family. We&apos;ll match you with cities and families who&apos;ve made the same move.
-        </p>
+    <div className="max-w-lg mx-auto flex flex-col min-h-[calc(100vh-64px)]">
+      {/* Progress bar */}
+      <div className="px-4 pt-3 pb-1">
+        <div className="h-1 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+          <div
+            className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-700"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
-      <div className="flex-1 space-y-4 mb-6">
+      {/* Messages */}
+      <div className="flex-1 px-4 py-2 space-y-3 overflow-y-auto">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+            <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
               msg.role === "user"
-                ? "bg-[var(--accent-green)] text-black rounded-br-sm"
-                : "bg-[var(--surface)] border border-[var(--border)] rounded-bl-sm"
+                ? "bg-[var(--accent-green)] text-black rounded-2xl rounded-br-md"
+                : "bg-[var(--surface)] text-[var(--text-primary)] rounded-2xl rounded-bl-md"
             }`}>
               {msg.content}
               {loading && i === messages.length - 1 && msg.role === "assistant" && !msg.content && (
-                <span className="inline-flex gap-1 ml-1">
+                <span className="inline-flex gap-1">
                   {[0, 150, 300].map(d => (
-                    <span key={d} className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                    <span key={d} className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
                   ))}
                 </span>
               )}
             </div>
           </div>
         ))}
+
+        {/* Results panel */}
+        {showResults && (
+          <div className="space-y-3 pt-2">
+            {trajectory?.narrative && (
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2 font-medium">Families like yours</p>
+                <p className="text-sm leading-relaxed text-[var(--text-primary)]">{trajectory.narrative}</p>
+                {trajectory.insights?.slice(0, 2).map((ins, i) => (
+                  <p key={i} className="text-xs text-[var(--text-secondary)] mt-1.5">→ {ins.statement}</p>
+                ))}
+              </div>
+            )}
+
+            {top5 && top5.length > 0 && (
+              <div className="rounded-xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-4">
+                <p className="text-[10px] text-[var(--accent-green)] uppercase tracking-wider mb-3 font-medium">Your top cities</p>
+                {typeof matchData?.personalIntro === "string" && matchData.personalIntro && (
+                  <p className="text-xs text-[var(--text-secondary)] italic mb-3">{matchData.personalIntro}</p>
+                )}
+                <div className="space-y-2">
+                  {top5.map((city, i) => (
+                    <Link key={city.slug} href={`/cities/${city.slug}`}
+                      className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent-green)] transition-colors">
+                      <span className="font-mono text-sm font-bold text-[var(--accent-warm)] w-4">{i + 1}</span>
+                      {city.photo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={city.photo} alt={city.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">{city.name}, {city.country}</p>
+                        {city.personalizedInsight && (
+                          <p className="text-[10px] text-[var(--text-secondary)] truncate">{city.personalizedInsight}</p>
+                        )}
+                      </div>
+                      <span className="font-mono text-sm font-bold shrink-0" style={{
+                        color: city.score >= 80 ? "var(--accent-green)" : "var(--accent-warm)"
+                      }}>{city.score}</span>
+                    </Link>
+                  ))}
+                </div>
+                <Link href="/" className="block text-center mt-3 py-2.5 rounded-lg bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
+                  See your full personalised ranking →
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
-      {/* Results panel — appears after enough conversation */}
-      {showResults && (
-        <div className="mb-6 space-y-4">
-          {/* Trajectory insights */}
-          {trajectory?.narrative && (
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-              <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2 font-medium">Families like yours</p>
-              <p className="text-sm leading-relaxed text-[var(--text-primary)]">{trajectory.narrative}</p>
-              {trajectory.insights?.slice(0, 2).map((ins, i) => (
-                <p key={i} className="text-xs text-[var(--text-secondary)] mt-1.5">→ {ins.statement}</p>
-              ))}
-            </div>
-          )}
-
-          {/* City matches */}
-          {top5 && top5.length > 0 && (
-            <div className="rounded-xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-4">
-              <p className="text-[10px] text-[var(--accent-green)] uppercase tracking-wider mb-3 font-medium">Your top cities</p>
-              {typeof matchData?.personalIntro === "string" && matchData.personalIntro && (
-                <p className="text-xs text-[var(--text-secondary)] italic mb-3">{matchData.personalIntro}</p>
-              )}
-              <div className="space-y-2">
-                {top5.map((city, i) => (
-                  <Link key={city.slug} href={`/cities/${city.slug}`}
-                    className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent-green)] transition-colors">
-                    <span className="font-mono text-sm font-bold text-[var(--accent-warm)] w-4">{i + 1}</span>
-                    {city.photo && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={city.photo} alt={city.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{city.name}, {city.country}</p>
-                      {city.personalizedInsight && (
-                        <p className="text-[10px] text-[var(--text-secondary)] truncate">{city.personalizedInsight}</p>
-                      )}
-                    </div>
-                    <span className="font-mono text-sm font-bold shrink-0" style={{
-                      color: city.score >= 80 ? "var(--accent-green)" : "var(--accent-warm)"
-                    }}>{city.score}</span>
-                  </Link>
-                ))}
-              </div>
-              <Link href="/" className="block text-center mt-3 py-2.5 rounded-lg bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
-                See your full personalised ranking →
-              </Link>
-            </div>
-          )}
+      {/* Input — pinned to bottom */}
+      <div className="px-4 pb-4 pt-2">
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
+            disabled={loading}
+            placeholder={loading ? "..." : "Tell me about your family..."}
+            className="flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm outline-none focus:border-[var(--accent-green)] transition-colors disabled:opacity-50"
+          />
+          <button
+            onClick={send}
+            disabled={loading || !input.trim()}
+            className="px-5 py-3 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            →
+          </button>
         </div>
-      )}
 
-      {/* Input */}
-      <div className="flex gap-2">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
-          disabled={loading}
-          placeholder={loading ? "..." : "Your answer..."}
-          className="flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm outline-none focus:border-[var(--accent-green)] transition-colors disabled:opacity-50"
-        />
-        <button
-          onClick={send}
-          disabled={loading || !input.trim()}
-          className="px-5 py-3 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-40"
-        >
-          →
-        </button>
+        {!user && (
+          <p className="text-center text-xs text-[var(--text-secondary)] mt-2">
+            <Link href="/signup" className="text-[var(--accent-green)] hover:underline">Create an account</Link>
+            {" "}to save your profile and get matched with families
+          </p>
+        )}
       </div>
-
-      {!user && (
-        <p className="text-center text-xs text-[var(--text-secondary)] mt-3">
-          <Link href="/signup" className="text-[var(--accent-green)] hover:underline">Create an account</Link>
-          {" "}to save your profile and get matched with families
-        </p>
-      )}
     </div>
   )
 }
