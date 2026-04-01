@@ -52,14 +52,19 @@ export type ExtractedProfile = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json()
+    const { messages, existingProfile } = await req.json()
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "messages required" }, { status: 400 })
     }
 
+    let systemPrompt = SYSTEM_PROMPT
+    if (existingProfile) {
+      systemPrompt += `\n\nIMPORTANT: This is a RETURNING user. They already have this profile:\n${JSON.stringify(existingProfile, null, 2)}\n\nDo NOT re-ask for fields that are already filled. Only update what the user explicitly wants to change. If they say "change name to X", update family_name and keep everything else.`
+    }
+
     const llmMessages = [
-      { role: "system" as const, content: SYSTEM_PROMPT },
+      { role: "system" as const, content: systemPrompt },
       ...messages,
     ]
 

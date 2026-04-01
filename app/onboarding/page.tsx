@@ -110,7 +110,20 @@ export default function OnboardingPage() {
       const res = await fetch("/api/onboarding/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: newMessages,
+          existingProfile: family?.onboarding_complete ? {
+            family_name: family.family_name,
+            home_country: family.home_country,
+            kids_ages: family.kids_ages,
+            parent_work_type: family.parent_work_type,
+            education_approach: family.education_approach,
+            travel_style: family.travel_style,
+            languages: family.languages,
+            interests: family.interests,
+            bio: family.bio,
+          } : undefined,
+        }),
       })
 
       const data = await res.json()
@@ -147,7 +160,9 @@ export default function OnboardingPage() {
         && updatedProfile.education_approach
         && updatedProfile.travel_style
 
-      if (hasAllCore && !updatedProfile.cities_visited.length && !showCityPicker) {
+      // Only auto-trigger city picker for NEW users (not returning ones editing their profile)
+      const isNewUser = !family?.onboarding_complete
+      if (isNewUser && hasAllCore && !updatedProfile.cities_visited.length && !showCityPicker) {
         setShowCityPicker(true)
         setMessages((prev) => [...prev, { role: "assistant", content: "Now the fun part — which cities have you explored as a family? Tap to select." }])
       } else {

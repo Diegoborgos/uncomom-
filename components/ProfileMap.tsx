@@ -1,27 +1,33 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import mapboxgl from "mapbox-gl"
+import "mapbox-gl/dist/mapbox-gl.css"
 import { cities } from "@/data/cities"
 import { Trip } from "@/lib/database.types"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
-import { TILE_URL, LABELS_URL, MAP_DEFAULTS, MAP_STYLES } from "@/lib/map-config"
+import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG } from "@/lib/map-config"
+
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 
 export default function ProfileMap({ trips }: { trips: Trip[] }) {
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<L.Map | null>(null)
+  const mapInstanceRef = useRef<mapboxgl.Map | null>(null)
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return
+    if (!mapRef.current || mapInstanceRef.current || !mapboxgl.accessToken) return
 
-    const map = L.map(mapRef.current, {
-      ...MAP_DEFAULTS,
-      scrollWheelZoom: false,
-      dragging: true,
+    const map = new mapboxgl.Map({
+      container: mapRef.current,
+      style: MAPBOX_STYLE,
+      center: MAP_CENTER,
+      zoom: MAP_ZOOM,
+      projection: GLOBE_CONFIG.projection,
+      attributionControl: false,
     })
 
-    L.tileLayer(TILE_URL, { maxZoom: 18 }).addTo(map)
-    L.tileLayer(LABELS_URL, { maxZoom: 18, pane: "overlayPane" }).addTo(map)
+    map.on("style.load", () => {
+      map.setFog(GLOBE_CONFIG.fog as mapboxgl.FogSpecification)
+    })
 
     // Group trips by city
     const tripCities = new Map<string, { status: string; count: number }>()
@@ -35,68 +41,44 @@ export default function ProfileMap({ trips }: { trips: Trip[] }) {
       }
     })
 
-    const bounds: [number, number][] = []
-
+    // Add markers
     tripCities.forEach((data, slug) => {
       const city = cities.find((c) => c.slug === slug)
       if (!city) return
 
       const isHereNow = data.status === "here_now"
+      const color = isHereNow ? "#EBFF00" : "#4ADE80"
       const size = isHereNow ? 14 : 10
 
-      bounds.push([city.coords.lat, city.coords.lng])
+      const el = document.createElement("div")
+      el.style.width = `${size}px`
+      el.style.height = `${size}px`
+      el.style.borderRadius = "50%"
+      el.style.backgroundColor = color
+      if (isHereNow) el.style.boxShadow = `0 0 10px ${color}`
 
-      const icon = L.divIcon({
-        className: "profile-marker",
-        html: `<div style="
-          background: ${isHereNow ? "#EBFF00" : "#4ADE80"};
-          width: ${size}px; height: ${size}px; border-radius: 50%;
-          ${isHereNow ? "box-shadow: 0 0 10px rgba(235,255,0,0.6);" : ""}
-        "></div>`,
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
-      })
-
-      const marker = L.marker([city.coords.lat, city.coords.lng], { icon }).addTo(map)
-
-      marker.bindTooltip(`
-        <span style="font-size:12px;font-weight:600;color:#fff;">${city.name}</span>
-        <span style="font-size:10px;color:#A1A1AA;margin-left:4px;">${isHereNow ? "now" : `${data.count} trip${data.count > 1 ? "s" : ""}`}</span>
-      `, {
-        className: "profile-tooltip",
-        direction: "top",
-        offset: [0, -8],
-      })
-
-      // Draw lines between cities in chronological order
+      new mapboxgl.Marker({ element: el })
+        .setLngLat([city.coords.lng, city.coords.lat])
+        .addTo(map)
     })
 
-    // Fit bounds if there are trips
-    if (bounds.length > 1) {
-      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 5 })
-    } else if (bounds.length === 1) {
-      map.setView(bounds[0], 4)
+    // Fit bounds if trips exist
+    if (tripCities.size > 1) {
+      const bounds = new mapboxgl.LngLatBounds()
+      tripCities.forEach((_, slug) => {
+        const city = cities.find((c) => c.slug === slug)
+        if (city) bounds.extend([city.coords.lng, city.coords.lat])
+      })
+      map.fitBounds(bounds, { padding: 60, maxZoom: 4 })
     }
 
     mapInstanceRef.current = map
     return () => { map.remove(); mapInstanceRef.current = null }
   }, [trips])
 
-  return (
-    <>
-      <style jsx global>{`
-        ${MAP_STYLES}
-        .profile-tooltip {
-          background: #1A1A1A !important;
-          border: 1px solid #333 !important;
-          border-radius: 8px !important;
-          color: #fff !important;
-          padding: 4px 10px !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-        }
-        .profile-tooltip::before { border-top-color: #1A1A1A !important; }
-      `}</style>
-      <div ref={mapRef} className="w-full h-full rounded-2xl overflow-hidden" />
-    </>
-  )
+  if (!mapboxgl.accessToken) {
+    return <div className="w-full h-full bg-black flex items-center justify-center text-[var(--text-secondary)] text-xs">Map loading...</div>
+  }
+
+  return <div ref={mapRef} className="w-full h-full" />
 }

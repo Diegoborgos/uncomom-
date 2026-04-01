@@ -1,101 +1,98 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
+import mapboxgl from "mapbox-gl"
+import "mapbox-gl/dist/mapbox-gl.css"
 import { City } from "@/lib/types"
 import { getScoreColor, countryCodeToFlag, formatEuro } from "@/lib/scores"
-import { TILE_URL, LABELS_URL, MAP_DEFAULTS, MAP_STYLES } from "@/lib/map-config"
+import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG } from "@/lib/map-config"
+
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 
 export default function CityMap({ cities }: { cities: City[] }) {
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<L.Map | null>(null)
+  const mapInstanceRef = useRef<mapboxgl.Map | null>(null)
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return
+    if (!mapRef.current || mapInstanceRef.current || !mapboxgl.accessToken) return
 
-    const map = L.map(mapRef.current, { ...MAP_DEFAULTS, zoomControl: true })
+    const map = new mapboxgl.Map({
+      container: mapRef.current,
+      style: MAPBOX_STYLE,
+      center: MAP_CENTER,
+      zoom: MAP_ZOOM,
+      projection: GLOBE_CONFIG.projection,
+      attributionControl: false,
+    })
 
-    L.tileLayer(TILE_URL, { maxZoom: 18 }).addTo(map)
-    L.tileLayer(LABELS_URL, { maxZoom: 18, pane: "overlayPane" }).addTo(map)
+    map.addControl(new mapboxgl.NavigationControl(), "top-left")
+
+    map.on("style.load", () => {
+      map.setFog(GLOBE_CONFIG.fog as mapboxgl.FogSpecification)
+    })
 
     cities.forEach((city) => {
       const color = getScoreColor(city.scores.family)
       const flag = countryCodeToFlag(city.countryCode)
 
-      const icon = L.divIcon({
-        className: "custom-marker",
-        html: `<div style="
-          background: ${color};
-          color: #fff;
-          font-family: monospace;
-          font-size: 12px;
-          font-weight: bold;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid rgba(255,255,255,0.3);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-          cursor: pointer;
-        ">${city.scores.family}</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-      })
+      const el = document.createElement("div")
+      el.style.width = "32px"
+      el.style.height = "32px"
+      el.style.borderRadius = "50%"
+      el.style.backgroundColor = color
+      el.style.display = "flex"
+      el.style.alignItems = "center"
+      el.style.justifyContent = "center"
+      el.style.color = "#000"
+      el.style.fontSize = "11px"
+      el.style.fontWeight = "bold"
+      el.style.fontFamily = "monospace"
+      el.style.cursor = "pointer"
+      el.textContent = String(city.scores.family)
 
-      const marker = L.marker([city.coords.lat, city.coords.lng], { icon }).addTo(map)
+      const popup = new mapboxgl.Popup({ offset: 20, closeButton: true, maxWidth: "280px" })
+        .setHTML(`
+          <div style="padding:16px;font-family:'Inter',sans-serif;">
+            <div style="font-family:'Instrument Serif',serif;font-size:18px;font-weight:bold;color:#fff;margin-bottom:2px;">
+              ${flag} ${city.name}
+            </div>
+            <div style="font-size:12px;color:#A1A1AA;margin-bottom:10px;">${city.country} · ${city.continent}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="background:#EBFF00;color:#000;padding:3px 10px;border-radius:20px;font-size:11px;font-family:monospace;font-weight:700;">
+                ${city.scores.family} FIS™
+              </span>
+              <span style="font-size:12px;color:#fff;font-family:monospace;">${formatEuro(city.cost.familyMonthly)}/mo</span>
+            </div>
+            <a href="/cities/${city.slug}" style="display:inline-block;padding:8px 16px;background:#EBFF00;color:#000;border-radius:10px;font-size:12px;font-weight:600;text-decoration:none;">
+              View city →
+            </a>
+          </div>
+        `)
 
-      marker.bindPopup(`
-        <div style="
-          padding: 16px;
-          min-width: 200px;
-          font-family: 'Inter', system-ui, sans-serif;
-        ">
-          <div style="font-family: 'Instrument Serif', serif; font-size: 18px; font-weight: bold; margin-bottom: 2px; color: #fff;">
-            ${flag} ${city.name}
-          </div>
-          <div style="font-size: 12px; color: #A1A1AA; margin-bottom: 10px;">
-            ${city.country} · ${city.continent}
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-            <span style="background: #EBFF00; color: #000; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-family: monospace; font-weight: 700;">
-              ${city.scores.family} FIS™
-            </span>
-            <span style="font-size: 12px; color: #fff; font-family: monospace;">
-              ${formatEuro(city.cost.familyMonthly)}/mo
-            </span>
-          </div>
-          <a href="/cities/${city.slug}" style="
-            display: inline-block;
-            padding: 8px 16px;
-            background: #EBFF00;
-            color: #000;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 600;
-            text-decoration: none;
-          ">View city →</a>
-        </div>
-      `, {
-        className: "custom-popup",
-        closeButton: true,
-        maxWidth: 280,
-      })
+      new mapboxgl.Marker({ element: el })
+        .setLngLat([city.coords.lng, city.coords.lat])
+        .setPopup(popup)
+        .addTo(map)
     })
 
     mapInstanceRef.current = map
-
-    return () => {
-      map.remove()
-      mapInstanceRef.current = null
-    }
+    return () => { map.remove(); mapInstanceRef.current = null }
   }, [cities])
+
+  if (!mapboxgl.accessToken) {
+    return <div className="w-full h-full bg-black flex items-center justify-center text-[var(--text-secondary)]">Map loading...</div>
+  }
 
   return (
     <>
-      <style jsx global>{MAP_STYLES}</style>
+      <style jsx global>{`
+        .mapboxgl-popup-content { background: #1A1A1A !important; border: 1px solid #333 !important; border-radius: 16px !important; padding: 0 !important; }
+        .mapboxgl-popup-tip { border-top-color: #1A1A1A !important; }
+        .mapboxgl-popup-close-button { color: #A1A1AA !important; font-size: 18px !important; padding: 4px 8px !important; }
+        .mapboxgl-ctrl-group { background: #1A1A1A !important; border-color: #333 !important; }
+        .mapboxgl-ctrl-group button { color: #fff !important; }
+        .mapboxgl-ctrl-group button + button { border-top-color: #333 !important; }
+      `}</style>
       <div ref={mapRef} className="w-full h-full" />
     </>
   )
