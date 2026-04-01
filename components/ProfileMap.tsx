@@ -5,7 +5,7 @@ import mapboxgl from "mapbox-gl"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { cities } from "@/data/cities"
 import { Trip } from "@/lib/database.types"
-import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG } from "@/lib/map-config"
+import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG, MAP_HIDE_BRANDING } from "@/lib/map-config"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 
@@ -23,6 +23,8 @@ export default function ProfileMap({ trips }: { trips: Trip[] }) {
       zoom: MAP_ZOOM,
       projection: GLOBE_CONFIG.projection,
       attributionControl: false,
+      interactive: false, // Fixed — no zoom/pan
+      logoPosition: "bottom-right",
     })
 
     map.on("style.load", () => {
@@ -62,16 +64,6 @@ export default function ProfileMap({ trips }: { trips: Trip[] }) {
         .addTo(map)
     })
 
-    // Fit bounds if trips exist
-    if (tripCities.size > 1) {
-      const bounds = new mapboxgl.LngLatBounds()
-      tripCities.forEach((_, slug) => {
-        const city = cities.find((c) => c.slug === slug)
-        if (city) bounds.extend([city.coords.lng, city.coords.lat])
-      })
-      map.fitBounds(bounds, { padding: 60, maxZoom: 4 })
-    }
-
     mapInstanceRef.current = map
     return () => { map.remove(); mapInstanceRef.current = null }
   }, [trips])
@@ -80,5 +72,10 @@ export default function ProfileMap({ trips }: { trips: Trip[] }) {
     return <div className="w-full h-full bg-black flex items-center justify-center text-[var(--text-secondary)] text-xs">Map loading...</div>
   }
 
-  return <div ref={mapRef} className="w-full h-full" />
+  return (
+    <>
+      <style jsx global>{MAP_HIDE_BRANDING}</style>
+      <div ref={mapRef} className="w-full h-full" />
+    </>
+  )
 }

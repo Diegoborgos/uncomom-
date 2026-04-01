@@ -5,7 +5,7 @@ import mapboxgl from "mapbox-gl"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { City } from "@/lib/types"
 import { getScoreColor, countryCodeToFlag, formatEuro } from "@/lib/scores"
-import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG } from "@/lib/map-config"
+import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG, MAP_HIDE_BRANDING } from "@/lib/map-config"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 
@@ -86,6 +86,7 @@ export default function CityMap({ cities }: { cities: City[] }) {
   return (
     <>
       <style jsx global>{`
+        ${MAP_HIDE_BRANDING}
         .mapboxgl-popup-content { background: #1A1A1A !important; border: 1px solid #333 !important; border-radius: 16px !important; padding: 0 !important; }
         .mapboxgl-popup-tip { border-top-color: #1A1A1A !important; }
         .mapboxgl-popup-close-button { color: #A1A1AA !important; font-size: 18px !important; padding: 4px 8px !important; }

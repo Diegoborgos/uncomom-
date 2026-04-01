@@ -21,5 +21,9 @@ export const GLOBE_CONFIG = {
   },
 }
 
-// Shared CSS for map containers
-export const MAP_CONTAINER_STYLE = "w-full h-full"
+// Hide Mapbox logo + attribution globally
+export const MAP_HIDE_BRANDING = `
+  .mapboxgl-ctrl-logo { display: none !important; }
+  .mapboxgl-ctrl-attrib { display: none !important; }
+  .mapboxgl-compact-show { display: none !important; }
+`
