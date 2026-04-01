@@ -138,7 +138,7 @@ export default function DashboardPage() {
           </div>
           {/* Action buttons */}
           <div className="flex justify-center gap-2 mt-4">
-            <Link href="/onboarding" className="px-4 py-2 rounded-xl bg-[var(--accent-green)] text-black text-xs font-medium hover:opacity-90 transition-opacity">
+            <Link href="/join" className="px-4 py-2 rounded-xl bg-[var(--accent-green)] text-black text-xs font-medium hover:opacity-90 transition-opacity">
               Edit profile
             </Link>
           </div>
@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
         {/* Onboarding prompt */}
         {needsOnboarding && (
-          <Link href="/onboarding" className="block rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5 mb-6 text-center hover:bg-[var(--accent-green)]/10 transition-colors">
+          <Link href="/join" className="block rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5 mb-6 text-center hover:bg-[var(--accent-green)]/10 transition-colors">
             <p className="font-medium text-[var(--accent-green)] mb-1">Complete your profile</p>
             <p className="text-xs text-[var(--text-secondary)]">Quick chat — helps families find and connect with you.</p>
           </Link>
@@ -166,7 +166,7 @@ export default function DashboardPage() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">Profile details</span>
-              <Link href="/onboarding" className="text-[10px] text-[var(--accent-green)] hover:underline">Edit all →</Link>
+              <Link href="/join" className="text-[10px] text-[var(--accent-green)] hover:underline">Edit all →</Link>
             </div>
             <div className="space-y-3">
               {family.parent_work_type && <TagRow label="Work" tags={[family.parent_work_type]} />}
@@ -179,7 +179,7 @@ export default function DashboardPage() {
 
             {/* Data collection prompts — ask for missing fields */}
             {(!family.parent_work_type || !family.education_approach || !family.travel_style || !family.languages?.length || !family.interests?.length) && (
-              <Link href="/onboarding" className="block mt-4 rounded-xl border border-dashed border-[var(--border)] p-4 text-center hover:border-[var(--accent-green)] transition-colors">
+              <Link href="/join" className="block mt-4 rounded-xl border border-dashed border-[var(--border)] p-4 text-center hover:border-[var(--accent-green)] transition-colors">
                 <p className="text-xs text-[var(--text-secondary)]">
                   Your profile is {Math.round(([family.parent_work_type, family.education_approach, family.travel_style, family.languages?.length, family.interests?.length, family.bio, family.kids_ages?.length].filter(Boolean).length / 7) * 100)}% complete —{" "}
                   <span className="text-[var(--accent-green)]">add more to get better matches</span>

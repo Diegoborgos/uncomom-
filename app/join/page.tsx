@@ -13,15 +13,45 @@ const FIRST_MESSAGE: Message = {
 }
 
 export default function JoinPage() {
-  const { user, family, refreshFamily } = useAuth()
-  const [messages, setMessages] = useState<Message[]>([FIRST_MESSAGE])
+  const { user, family, refreshFamily, loading: authLoading } = useAuth()
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [initialized, setInitialized] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [matchData, setMatchData] = useState<Record<string, unknown> | null>(null)
   const [trajectoryData, setTrajectoryData] = useState<Record<string, unknown> | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Load saved chat history or show first message
+  useEffect(() => {
+    if (initialized || authLoading) return
+    setInitialized(true)
+
+    const saved = family?.chat_history as Message[] | null
+    if (saved && Array.isArray(saved) && saved.length > 0) {
+      setMessages(saved)
+      // If enough conversation happened, show results
+      if (saved.length >= 14 || family?.primary_anxiety) {
+        setShowResults(true)
+        const loadAsync = async () => {
+          const { data: { session } } = await supabase.auth.getSession()
+          const headers: Record<string, string> = { "Content-Type": "application/json" }
+          if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`
+          const [matchRes, trajRes] = await Promise.all([
+            fetch("/api/match-cities", { method: "POST", headers }),
+            fetch("/api/trajectory", { method: "POST", headers, body: JSON.stringify({}) }),
+          ])
+          if (matchRes.ok) setMatchData(await matchRes.json())
+          if (trajRes.ok) setTrajectoryData(await trajRes.json())
+        }
+        loadAsync()
+      }
+    } else {
+      setMessages([FIRST_MESSAGE])
+    }
+  }, [family, authLoading, initialized])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })

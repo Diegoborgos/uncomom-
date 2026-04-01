@@ -60,7 +60,7 @@ VALID ACTION URLS:
 - City page: /cities/{slug} (use exact slugs from the list above)
 - Log a trip: /cities/{slug} (they can log trips from the city page)
 - Write a review: /cities/{slug} (review form is on the city page)
-- Edit profile: /onboarding
+- Edit profile: /join
 - Browse cities: /
 - Schools: /schools
 - Visas: /visas
