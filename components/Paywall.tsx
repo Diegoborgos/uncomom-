@@ -30,13 +30,13 @@ export function PaywallBlur({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative">
-      <div className="select-none pointer-events-none" style={{ filter: "blur(5px)", opacity: 0.4 }}>
+      <div className="select-none pointer-events-none max-h-48 overflow-hidden" style={{ filter: "blur(5px)", opacity: 0.4 }}>
         {children}
       </div>
       <div className="absolute inset-0 flex items-end justify-center pb-2">
         <button
           onClick={openJoinOverlay}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium bg-[var(--accent-warm)] text-[var(--bg)] hover:opacity-90 transition-opacity shadow-lg"
+          className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold bg-[var(--accent-warm)] text-[var(--bg)] hover:opacity-90 transition-opacity shadow-xl"
         >
           🔒 Unlock details
         </button>
