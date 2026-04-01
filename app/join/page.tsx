@@ -90,6 +90,7 @@ export default function JoinPage() {
         body: JSON.stringify({
           messages: newMessages,
           familyId: family?.id || null,
+          userId: user?.id || null,
         }),
       })
 
@@ -116,7 +117,8 @@ export default function JoinPage() {
         }
       }
 
-      if (family?.id) await refreshFamily()
+      // Always refresh family — might have been created by the API
+      if (user) await refreshFamily()
 
       // Show results after enough conversation or natural transition
       const shouldShow = text.toLowerCase().includes("show you which cities") ||

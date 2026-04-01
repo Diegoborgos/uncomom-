@@ -37,7 +37,7 @@ function adminClient() {
 }
 
 export async function POST(req: NextRequest) {
-  const { messages, familyId } = await req.json()
+  const { messages, familyId, userId } = await req.json()
 
   if (!Array.isArray(messages)) {
     return NextResponse.json({ error: "Invalid" }, { status: 400 })
@@ -59,7 +59,6 @@ export async function POST(req: NextRequest) {
     const userMessage = errMsg.includes("rate_limit") || errMsg.includes("429")
       ? "We're experiencing high demand right now. Please try again in a few minutes."
       : "Something went wrong. Please try again."
-    // Return as SSE so the client can parse it
     const encoder = new TextEncoder()
     const errorStream = new ReadableStream({
       start(controller) {
@@ -103,30 +102,63 @@ export async function POST(req: NextRequest) {
         reader.releaseLock()
       }
 
-      // Silent extraction after streaming completes
-      if (familyId && fullText) {
+      // Save chat history + extract intelligence after streaming
+      const activeUserId = userId || null
+      const activeFamilyId = familyId || null
+
+      if ((activeUserId || activeFamilyId) && fullText) {
         try {
           const db = adminClient()
-          const { data: family } = await db.from("families").select("*").eq("id", familyId).single()
-
           const allMessages = [...messages, { role: "assistant", content: fullText }]
-          const extracted = await extractFromConversation(allMessages, {
-            primary_anxiety: family?.primary_anxiety,
-            real_budget_max: family?.real_budget_max,
-            passport_tier: family?.passport_tier,
-            decision_stage: family?.decision_stage,
-          })
 
-          if (Object.keys(extracted).length > 0) {
+          // Find or create the family row
+          let family = null
+          if (activeFamilyId) {
+            const { data } = await db.from("families").select("*").eq("id", activeFamilyId).single()
+            family = data
+          } else if (activeUserId) {
+            const { data } = await db.from("families").select("*").eq("user_id", activeUserId).maybeSingle()
+            if (data) {
+              family = data
+            } else {
+              // Create family row for new user
+              const { data: newFamily } = await db.from("families").insert({
+                user_id: activeUserId,
+                family_name: "My Family",
+                chat_history: allMessages.slice(-30),
+                ai_conversation_turns: 1,
+                updated_at: new Date().toISOString(),
+              }).select().single()
+              family = newFamily
+            }
+          }
+
+          if (family) {
+            // Always save chat history
             const updatePayload: Record<string, unknown> = {
-              ...extracted,
-              ai_conversation_turns: (family?.ai_conversation_turns || 0) + 1,
-              ai_last_extracted: new Date().toISOString(),
               chat_history: allMessages.slice(-30),
-              onboarding_complete: true,
+              ai_conversation_turns: (family.ai_conversation_turns || 0) + 1,
+              ai_last_extracted: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             }
-            await db.from("families").update(updatePayload).eq("id", familyId)
+
+            // Extract intelligence from conversation
+            const extracted = await extractFromConversation(allMessages, {
+              primary_anxiety: family.primary_anxiety,
+              real_budget_max: family.real_budget_max,
+              passport_tier: family.passport_tier,
+              decision_stage: family.decision_stage,
+            })
+
+            if (Object.keys(extracted).length > 0) {
+              Object.assign(updatePayload, extracted)
+              // Mark onboarding complete if we extracted enough
+              if (extracted.family_name || extracted.kids_ages || extracted.primary_anxiety) {
+                updatePayload.onboarding_complete = true
+              }
+            }
+
+            await db.from("families").update(updatePayload).eq("id", family.id)
           }
         } catch (err) {
           console.error("Extraction error:", err)
