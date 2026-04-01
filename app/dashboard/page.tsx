@@ -43,7 +43,6 @@ export default function DashboardPage() {
   if (!user) return null
 
   const currentTrips = trips.filter((t) => t.status === "here_now")
-  const pastTrips = trips.filter((t) => t.status === "been_here")
   const uniqueCities = new Set(trips.map((t) => t.city_slug))
   const uniqueCountries = new Set(
     trips.map((t) => cities.find((c) => c.slug === t.city_slug)?.country).filter(Boolean)

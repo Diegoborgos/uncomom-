@@ -6,7 +6,6 @@
 import { chatCompletion } from "./llm"
 import { cities } from "@/data/cities"
 
-const CITY_SLUGS = cities.map((c) => c.slug).join(", ")
 const CITY_NAMES = cities.map((c) => `${c.name} (/cities/${c.slug})`).join(", ")
 
 export type Recommendation = {
