@@ -21,6 +21,23 @@ export type Database = {
           membership_paid_at: string | null
           username: string | null
           onboarding_complete: boolean
+          primary_anxiety: string | null
+          secondary_anxiety: string | null
+          real_budget_min: number | null
+          real_budget_max: number | null
+          passport_tier: string | null
+          next_destination_candidates: string[]
+          departure_horizon: string | null
+          decision_stage: string | null
+          top_priorities: string[]
+          deal_breakers: string[]
+          ai_profile_summary: string | null
+          ai_conversation_turns: number
+          ai_last_extracted: string | null
+          chat_history: unknown
+          companion_last_checkin: string | null
+          companion_next_question: string | null
+          open_to_introductions: boolean
           created_at: string
           updated_at: string
         }
@@ -43,6 +60,23 @@ export type Database = {
           membership_paid_at?: string | null
           username?: string | null
           onboarding_complete?: boolean
+          primary_anxiety?: string | null
+          secondary_anxiety?: string | null
+          real_budget_min?: number | null
+          real_budget_max?: number | null
+          passport_tier?: string | null
+          next_destination_candidates?: string[]
+          departure_horizon?: string | null
+          decision_stage?: string | null
+          top_priorities?: string[]
+          deal_breakers?: string[]
+          ai_profile_summary?: string | null
+          ai_conversation_turns?: number
+          ai_last_extracted?: string | null
+          chat_history?: unknown
+          companion_last_checkin?: string | null
+          companion_next_question?: string | null
+          open_to_introductions?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -63,6 +97,23 @@ export type Database = {
           membership_paid_at?: string | null
           username?: string | null
           onboarding_complete?: boolean
+          primary_anxiety?: string | null
+          secondary_anxiety?: string | null
+          real_budget_min?: number | null
+          real_budget_max?: number | null
+          passport_tier?: string | null
+          next_destination_candidates?: string[]
+          departure_horizon?: string | null
+          decision_stage?: string | null
+          top_priorities?: string[]
+          deal_breakers?: string[]
+          ai_profile_summary?: string | null
+          ai_conversation_turns?: number
+          ai_last_extracted?: string | null
+          chat_history?: unknown
+          companion_last_checkin?: string | null
+          companion_next_question?: string | null
+          open_to_introductions?: boolean
           updated_at?: string
         }
       }
