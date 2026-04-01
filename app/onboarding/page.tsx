@@ -8,7 +8,7 @@ import { cities } from "@/data/cities"
 
 type Message = { role: "user" | "assistant"; content: string }
 
-type ExtractedProfile = {
+type ProfileFields = {
   family_name: string
   home_country: string
   country_code: string
@@ -23,7 +23,7 @@ type ExtractedProfile = {
   done: boolean
 }
 
-const emptyProfile: ExtractedProfile = {
+const emptyProfile: ProfileFields = {
   family_name: "", home_country: "", country_code: "",
   kids_ages: [], parent_work_type: "", education_approach: "",
   travel_style: "", languages: [], interests: [],
@@ -36,26 +36,27 @@ export default function OnboardingPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
-  const [profile, setProfile] = useState<ExtractedProfile>(emptyProfile)
+  const [profile, setProfile] = useState<ProfileFields>(emptyProfile)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!loading && !user) router.push("/login")
   }, [user, loading, router])
 
-  // Start the conversation
+  // Start conversation
   useEffect(() => {
     if (messages.length === 0 && user && !loading) {
-      const greeting = family?.onboarding_complete
-        ? { role: "assistant" as const, content: "Welcome back! Want to update your profile? Just tell me what's changed." }
-        : { role: "assistant" as const, content: "Hey! I'm here to set up your Uncomun profile. Tell me about your family — who you are, where you're from, how you travel. Just talk naturally." }
-      setMessages([greeting])
+      setMessages([{
+        role: "assistant",
+        content: "Hey! I'm setting up your Uncomun profile. Tell me about your family — where are you from, how many kids, and what's your travel style? Just talk naturally, I'll pick it up."
+      }])
+      setTimeout(() => inputRef.current?.focus(), 300)
     }
-  }, [user, loading, family]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
@@ -78,19 +79,14 @@ export default function OnboardingPage() {
       })
 
       const data = await res.json()
+      if (data.error) { setError(data.error); setSending(false); return }
 
-      if (data.error) {
-        setError(data.error)
-        setSending(false)
-        return
-      }
-
-      // Merge extracted profile fields
+      // Merge extracted profile
       if (data.profile) {
         setProfile((prev) => {
           const merged = { ...prev }
           for (const [key, value] of Object.entries(data.profile)) {
-            if (value && (typeof value === "string" ? value.length > 0 : Array.isArray(value) ? value.length > 0 : value === true)) {
+            if (value && (typeof value === "string" ? value.length > 0 : Array.isArray(value) ? (value as unknown[]).length > 0 : value === true)) {
               (merged as Record<string, unknown>)[key] = value
             }
           }
@@ -99,8 +95,9 @@ export default function OnboardingPage() {
       }
 
       setMessages([...newMessages, { role: "assistant", content: data.reply }])
+      setTimeout(() => inputRef.current?.focus(), 100)
     } catch {
-      setError("Something went wrong. Try again.")
+      setError("Connection error. Try again.")
     } finally {
       setSending(false)
     }
@@ -131,19 +128,18 @@ export default function OnboardingPage() {
       await supabase.from("families").insert({ user_id: user.id, ...payload })
     }
 
-    // Auto-log cities mentioned as "been_here" trips
-    if (profile.cities_visited.length > 0 && family) {
+    // Auto-log cities as trips
+    const familyId = family?.id
+    if (profile.cities_visited.length > 0 && familyId) {
       for (const cityName of profile.cities_visited) {
-        // Match city name to our city slugs
-        const matchedCity = cities.find((c) =>
+        const matched = cities.find((c) =>
           c.name.toLowerCase() === cityName.toLowerCase() ||
           c.slug === cityName.toLowerCase().replace(/\s+/g, "-")
         )
-        if (matchedCity) {
-          // Insert trip — ignore if already exists
+        if (matched) {
           await supabase.from("trips").insert({
-            family_id: family.id,
-            city_slug: matchedCity.slug,
+            family_id: familyId,
+            city_slug: matched.slug,
             status: "been_here" as const,
           })
         }
@@ -155,100 +151,104 @@ export default function OnboardingPage() {
     router.push("/dashboard")
   }
 
-  if (loading) return <div className="max-w-lg mx-auto px-4 py-20 text-center text-[var(--text-secondary)]">Loading...</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
   if (!user) return null
 
-  // Count extracted fields for progress
-  const fieldCount = [
+  const fieldsExtracted = [
     profile.family_name, profile.home_country, profile.kids_ages.length > 0,
     profile.parent_work_type, profile.education_approach, profile.travel_style,
     profile.languages.length > 0, profile.cities_visited.length > 0, profile.bio,
   ].filter(Boolean).length
-  const progress = Math.min(100, (fieldCount / 9) * 100)
+  const progress = Math.min(100, (fieldsExtracted / 9) * 100)
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 min-h-screen flex flex-col">
-      {/* Progress */}
-      <div className="mb-4">
-        <div className="h-1 rounded-full bg-[var(--surface-elevated)]">
-          <div className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-500" style={{ width: `${progress}%` }} />
+    <div className="max-w-lg mx-auto min-h-[calc(100vh-64px)] flex flex-col">
+      {/* Progress bar */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="h-1.5 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+          <div className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-700" style={{ width: `${progress}%` }} />
         </div>
-        {fieldCount > 0 && (
-          <p className="text-[10px] text-[var(--text-secondary)] mt-1">{fieldCount} of 9 profile fields captured</p>
-        )}
+        <div className="flex justify-between mt-1.5">
+          <p className="text-[10px] text-[var(--text-secondary)]">{fieldsExtracted}/9 profile fields</p>
+          {messages.length > 2 && !profile.done && (
+            <button onClick={() => { setProfile({ ...profile, done: true }) }} className="text-[10px] text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+              Skip and save what I have →
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Chat */}
-      <div className="flex-1 space-y-3 mb-4 overflow-y-auto">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in`}>
+            <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
               msg.role === "user"
-                ? "bg-[var(--accent-green)] text-black rounded-br-sm"
-                : "bg-[var(--surface)] text-[var(--text-primary)] rounded-bl-sm"
+                ? "bg-[var(--accent-green)] text-black rounded-2xl rounded-br-md"
+                : "bg-[var(--surface)] text-[var(--text-primary)] rounded-2xl rounded-bl-md"
             }`}>
               {msg.content}
             </div>
           </div>
         ))}
+
         {sending && (
           <div className="flex justify-start">
-            <div className="bg-[var(--surface)] text-[var(--text-secondary)] px-4 py-3 rounded-2xl rounded-bl-sm text-sm">
-              Thinking...
+            <div className="bg-[var(--surface)] px-4 py-3 rounded-2xl rounded-bl-md">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
             </div>
           </div>
         )}
+
         <div ref={bottomRef} />
       </div>
 
       {/* Error */}
-      {error && (
-        <p className="text-xs text-[var(--score-low)] text-center mb-2">{error}</p>
-      )}
+      {error && <p className="text-xs text-center text-[var(--score-low)] px-4 mb-2">{error}</p>}
 
       {/* Input or Save */}
-      {profile.done ? (
-        <div className="sticky bottom-0 bg-[var(--bg)] pt-4 pb-4 space-y-3">
-          {/* Preview extracted data */}
-          <div className="rounded-xl bg-[var(--surface)] p-4 text-xs space-y-1">
-            <p className="text-[var(--text-secondary)] font-medium mb-2">Your profile:</p>
-            {profile.family_name && <p><span className="text-[var(--text-secondary)]">Family:</span> {profile.family_name}</p>}
-            {profile.home_country && <p><span className="text-[var(--text-secondary)]">From:</span> {profile.home_country}</p>}
-            {profile.kids_ages.length > 0 && <p><span className="text-[var(--text-secondary)]">Kids:</span> {profile.kids_ages.join(", ")}</p>}
-            {profile.travel_style && <p><span className="text-[var(--text-secondary)]">Style:</span> {profile.travel_style}</p>}
-            {profile.cities_visited.length > 0 && <p><span className="text-[var(--text-secondary)]">Cities:</span> {profile.cities_visited.join(", ")}</p>}
-            {profile.bio && <p className="italic text-[var(--text-primary)] mt-2">&ldquo;{profile.bio}&rdquo;</p>}
+      <div className="px-4 pb-6 pt-2 border-t border-[var(--border)]">
+        {profile.done ? (
+          <div className="space-y-3">
+            {/* Profile summary */}
+            <div className="rounded-xl bg-[var(--surface)] p-4 space-y-2 text-xs">
+              <p className="text-[var(--text-secondary)] font-medium uppercase tracking-wider text-[10px]">Your profile</p>
+              {profile.family_name && <p><strong>Family:</strong> {profile.family_name}</p>}
+              {profile.home_country && <p><strong>From:</strong> {profile.home_country}</p>}
+              {profile.kids_ages.length > 0 && <p><strong>Kids:</strong> ages {profile.kids_ages.join(", ")}</p>}
+              {profile.parent_work_type && <p><strong>Work:</strong> {profile.parent_work_type}</p>}
+              {profile.education_approach && <p><strong>Education:</strong> {profile.education_approach}</p>}
+              {profile.travel_style && <p><strong>Travel:</strong> {profile.travel_style}</p>}
+              {profile.cities_visited.length > 0 && <p><strong>Cities:</strong> {profile.cities_visited.join(", ")}</p>}
+              {profile.bio && <p className="italic text-[var(--text-primary)] pt-1 border-t border-[var(--border)]">&ldquo;{profile.bio}&rdquo;</p>}
+            </div>
+            <button onClick={handleSave} disabled={saving}
+              className="w-full py-4 rounded-xl bg-[var(--accent-green)] text-black font-semibold text-sm disabled:opacity-50 hover:opacity-90 transition-opacity">
+              {saving ? "Setting up..." : "Save profile →"}
+            </button>
           </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-4 rounded-xl bg-[var(--accent-green)] text-black font-semibold text-sm disabled:opacity-50"
-          >
-            {saving ? "Setting up your profile..." : "Looks good — let's go →"}
-          </button>
-        </div>
-      ) : (
-        <div className="sticky bottom-0 bg-[var(--bg)] pt-4 pb-4">
+        ) : (
           <form onSubmit={(e) => { e.preventDefault(); sendMessage() }} className="flex gap-2">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type here..."
-              autoFocus
+              placeholder="Tell me about your family..."
               disabled={sending}
-              className="flex-1 px-4 py-3 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm outline-none focus:border-[var(--accent-green)] transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm outline-none focus:border-[var(--accent-green)] transition-colors disabled:opacity-50 placeholder-[var(--text-secondary)]"
             />
-            <button
-              type="submit"
-              disabled={!input.trim() || sending}
-              className="px-5 py-3 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm disabled:opacity-30"
-            >
+            <button type="submit" disabled={!input.trim() || sending}
+              className="px-5 py-3.5 rounded-xl bg-[var(--accent-green)] text-black font-bold text-sm disabled:opacity-20 hover:opacity-90 transition-opacity">
               →
             </button>
           </form>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

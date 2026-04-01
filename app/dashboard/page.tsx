@@ -13,7 +13,7 @@ import { openJoinOverlay } from "@/components/JoinOverlay"
 
 const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
   ssr: false,
-  loading: () => <div className="w-full h-full bg-[var(--surface)] rounded-2xl animate-pulse" />,
+  loading: () => <div className="w-full h-full bg-black animate-pulse" />,
 })
 
 export default function DashboardPage() {
@@ -37,7 +37,7 @@ export default function DashboardPage() {
     }
   }, [family])
 
-  if (loading) return <div className="max-w-4xl mx-auto px-4 py-20 text-center text-[var(--text-secondary)]">Loading...</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
   if (!user) return null
 
   const currentTrips = trips.filter((t) => t.status === "here_now")
@@ -63,222 +63,246 @@ export default function DashboardPage() {
     ? family.family_name.slice(0, 2).toUpperCase()
     : user.email?.slice(0, 2).toUpperCase() ?? ""
 
+  const memberSince = family?.created_at
+    ? new Date(family.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    : ""
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-
-      {/* Onboarding prompt */}
-      {needsOnboarding && (
-        <Link href="/onboarding" className="block rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5 mb-6 hover:bg-[var(--accent-green)]/10 transition-colors">
-          <p className="font-medium text-[var(--accent-green)] mb-1">Set up your profile</p>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Quick chat — 60 seconds. Helps families find and connect with you.
-          </p>
-        </Link>
-      )}
-
-      {/* Trip map — full width */}
-      {trips.length > 0 && (
-        <div className="h-72 mb-6 rounded-2xl overflow-hidden border border-[var(--border)]">
+    <div>
+      {/* Map hero — full width, like Nomad List globe */}
+      <div className="relative w-full h-[300px] bg-black">
+        {trips.length > 0 ? (
           <ProfileMap trips={trips} />
-        </div>
-      )}
-
-      {/* Profile header */}
-      <div className="flex items-start gap-4 mb-6">
-        <div className="w-20 h-20 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-2xl font-bold shrink-0">
-          {initials}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <h1 className="font-serif text-3xl font-bold truncate">
-              {family?.family_name || "My Family"}
-            </h1>
-            <Link href="/onboarding" className="text-xs text-[var(--accent-green)] hover:underline shrink-0 ml-2">
-              Edit profile
-            </Link>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <p className="text-sm text-[var(--text-secondary)]">Your travel map will appear here</p>
           </div>
+        )}
+        {/* Overlay gradient */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[var(--bg)] to-transparent" />
+      </div>
+
+      {/* Profile section */}
+      <div className="max-w-3xl mx-auto px-4 -mt-12 relative z-10">
+        {/* Avatar + name */}
+        <div className="text-center mb-6">
+          <div className="w-24 h-24 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-3xl font-bold mx-auto mb-3 border-4 border-[var(--bg)]">
+            {initials}
+          </div>
+          <h1 className="font-serif text-3xl font-bold">
+            {family?.family_name || "My Family"}
+          </h1>
           {family?.home_country && (
             <p className="text-sm text-[var(--text-secondary)] mt-1">
               {family.country_code ? countryCodeToFlag(family.country_code) + " " : ""}
               {family.home_country}
-              {uniqueCities.size > 0 && ` · ${uniqueCities.size} cities · ${uniqueCountries.size} countries`}
             </p>
           )}
-          {family?.bio && (
-            <p className="text-sm text-[var(--text-secondary)] italic mt-2 leading-relaxed">{family.bio}</p>
-          )}
+          {/* Member stats */}
+          <div className="flex justify-center gap-6 mt-3 text-xs text-[var(--text-secondary)]">
+            {memberSince && <span>Joined {memberSince}</span>}
+            {uniqueCities.size > 0 && <span>{uniqueCities.size} cities</span>}
+            {uniqueCountries.size > 0 && <span>{uniqueCountries.size} countries</span>}
+            {totalDays > 0 && <span>{totalDays} days abroad</span>}
+          </div>
+          {/* Action buttons */}
+          <div className="flex justify-center gap-2 mt-4">
+            <Link href="/onboarding" className="px-4 py-2 rounded-xl bg-[var(--accent-green)] text-black text-xs font-medium hover:opacity-90 transition-opacity">
+              Edit profile
+            </Link>
+          </div>
         </div>
-      </div>
 
-      {/* Tags */}
-      {family && (family.travel_style || family.education_approach || family.parent_work_type) && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {family.travel_style && (
-            <span className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">
-              {family.travel_style}
-            </span>
-          )}
-          {family.education_approach && (
-            <span className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">
-              {family.education_approach}
-            </span>
-          )}
-          {family.parent_work_type && (
-            <span className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">
-              {family.parent_work_type}
-            </span>
-          )}
-          {family.kids_ages && family.kids_ages.length > 0 && (
-            <span className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">
-              Kids: {family.kids_ages.join(", ")}
-            </span>
-          )}
-          {family.languages && family.languages.length > 0 && (
-            <span className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">
-              {family.languages.join(", ")}
-            </span>
-          )}
-        </div>
-      )}
+        {/* Bio */}
+        {family?.bio && (
+          <div className="text-center mb-6">
+            <p className="text-sm text-[var(--text-secondary)] italic max-w-lg mx-auto leading-relaxed">
+              &ldquo;{family.bio}&rdquo;
+            </p>
+          </div>
+        )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-        <StatCard value={uniqueCities.size} label="Cities" />
-        <StatCard value={uniqueCountries.size} label="Countries" />
-        <StatCard value={totalDays} label="Days traveling" />
-        <StatCard value={reviews.length} label="Reviews" />
-        <StatCard value={currentTrips.length} label="Here now" accent={currentTrips.length > 0} />
-      </div>
-
-      {/* No trips CTA */}
-      {trips.length === 0 && (
-        <div className="rounded-2xl border border-[var(--accent-green)]/20 bg-[var(--surface)] p-8 mb-8 text-center">
-          <h3 className="font-serif text-xl font-bold mb-2">Where have you been?</h3>
-          <p className="text-sm text-[var(--text-secondary)] mb-4 max-w-md mx-auto">
-            Log your travels to build your family map. Every trip you log helps other families make better decisions about where to go next.
-          </p>
-          <Link href="/" className="inline-block px-6 py-3 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
-            Find a city and log your first trip →
+        {/* Onboarding prompt */}
+        {needsOnboarding && (
+          <Link href="/onboarding" className="block rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5 mb-6 text-center hover:bg-[var(--accent-green)]/10 transition-colors">
+            <p className="font-medium text-[var(--accent-green)] mb-1">Complete your profile</p>
+            <p className="text-xs text-[var(--text-secondary)]">Quick chat — helps families find and connect with you.</p>
           </Link>
+        )}
+
+        {/* Tags — organized by category like Nomad List */}
+        {family && (
+          <div className="space-y-4 mb-8">
+            {family.parent_work_type && (
+              <TagRow label="Work" tags={[family.parent_work_type]} />
+            )}
+            {family.education_approach && (
+              <TagRow label="Education" tags={[family.education_approach]} />
+            )}
+            {family.travel_style && (
+              <TagRow label="Travel" tags={[family.travel_style]} />
+            )}
+            {family.kids_ages && family.kids_ages.length > 0 && (
+              <TagRow label="Kids" tags={family.kids_ages.map((a) => `${a} years`)} />
+            )}
+            {family.languages && family.languages.length > 0 && (
+              <TagRow label="Languages" tags={family.languages} />
+            )}
+            {family.interests && family.interests.length > 0 && (
+              <TagRow label="Interests" tags={family.interests} />
+            )}
+          </div>
+        )}
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-8">
+          <StatCard value={uniqueCities.size} label="Cities" />
+          <StatCard value={uniqueCountries.size} label="Countries" />
+          <StatCard value={totalDays} label="Days" />
+          <StatCard value={reviews.length} label="Reviews" />
+          <StatCard value={currentTrips.length} label="Here now" accent={currentTrips.length > 0} />
         </div>
-      )}
 
-      {/* Current location */}
-      {currentTrips.length > 0 && (
-        <section className="mb-8">
-          <h2 className="font-serif text-xl font-bold mb-3">Currently in</h2>
-          {currentTrips.map((trip) => {
-            const info = getCityInfo(trip.city_slug)
-            return (
-              <Link key={trip.id} href={`/cities/${trip.city_slug}`}
-                className="flex items-center justify-between rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5 hover:bg-[var(--accent-green)]/10 transition-colors">
-                <div>
-                  <p className="font-serif text-lg font-bold">{info.flag} {info.name}</p>
-                  <p className="text-xs text-[var(--text-secondary)]">{info.country}</p>
-                </div>
-                {trip.arrived_at && (
-                  <div className="text-right">
-                    <p className="text-xs text-[var(--text-secondary)]">Since</p>
-                    <p className="text-sm font-mono">{new Date(trip.arrived_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+        {/* Currently in */}
+        {currentTrips.length > 0 && (
+          <section className="mb-8">
+            <SectionTitle>Currently in</SectionTitle>
+            {currentTrips.map((trip) => {
+              const info = getCityInfo(trip.city_slug)
+              return (
+                <Link key={trip.id} href={`/cities/${trip.city_slug}`}
+                  className="flex items-center justify-between rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-4 hover:bg-[var(--accent-green)]/10 transition-colors">
+                  <div>
+                    <p className="font-serif text-lg font-bold">{info.flag} {info.name}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{info.country}</p>
                   </div>
-                )}
-              </Link>
-            )
-          })}
-        </section>
-      )}
+                  {trip.arrived_at && (
+                    <span className="text-xs text-[var(--text-secondary)]">
+                      Since {new Date(trip.arrived_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </section>
+        )}
 
-      {/* Travel timeline */}
-      {pastTrips.length > 0 && (
-        <section className="mb-8">
-          <h2 className="font-serif text-xl font-bold mb-3">Travel timeline</h2>
-          <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-4 top-0 bottom-0 w-px bg-[var(--border)]" />
+        {/* No trips */}
+        {trips.length === 0 && (
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 mb-8 text-center">
+            <h3 className="font-serif text-xl font-bold mb-2">Where have you been?</h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-4 max-w-md mx-auto">
+              Log your travels to build your map. Every trip helps other families decide where to go next.
+            </p>
+            <Link href="/" className="inline-block px-6 py-3 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
+              Find a city →
+            </Link>
+          </div>
+        )}
 
-            <div className="space-y-4">
-              {pastTrips.map((trip) => {
-                const info = getCityInfo(trip.city_slug)
-                const days = trip.arrived_at && trip.left_at
-                  ? Math.ceil((new Date(trip.left_at).getTime() - new Date(trip.arrived_at).getTime()) / (1000 * 60 * 60 * 24))
-                  : null
-                return (
-                  <Link key={trip.id} href={`/cities/${trip.city_slug}`}
-                    className="flex items-start gap-4 pl-8 relative hover:opacity-80 transition-opacity">
-                    {/* Dot on timeline */}
-                    <div className="absolute left-3 top-1.5 w-3 h-3 rounded-full bg-[var(--accent-green)] border-2 border-[var(--bg)]" />
-                    <div className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">{info.flag} {info.name}</span>
-                        {days && <span className="text-xs text-[var(--text-secondary)]">{days} days</span>}
+        {/* Travel timeline */}
+        {pastTrips.length > 0 && (
+          <section className="mb-8">
+            <SectionTitle>Travel timeline</SectionTitle>
+            <div className="relative pl-6">
+              <div className="absolute left-2 top-0 bottom-0 w-px bg-[var(--border)]" />
+              <div className="space-y-3">
+                {pastTrips.map((trip) => {
+                  const info = getCityInfo(trip.city_slug)
+                  const days = trip.arrived_at && trip.left_at
+                    ? Math.ceil((new Date(trip.left_at).getTime() - new Date(trip.arrived_at).getTime()) / (1000 * 60 * 60 * 24))
+                    : null
+                  return (
+                    <Link key={trip.id} href={`/cities/${trip.city_slug}`} className="block relative">
+                      <div className="absolute -left-4 top-3 w-2.5 h-2.5 rounded-full bg-[var(--accent-green)] border-2 border-[var(--bg)]" />
+                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent-green)] transition-colors">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{info.flag} {info.name}</span>
+                          {days && <span className="text-[10px] text-[var(--text-secondary)]">{days}d</span>}
+                        </div>
+                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                          {trip.arrived_at ? new Date(trip.arrived_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}
+                          {trip.left_at && ` → ${new Date(trip.left_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
+                        </p>
                       </div>
-                      <p className="text-xs text-[var(--text-secondary)] mt-1">
-                        {trip.arrived_at ? new Date(trip.arrived_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}
-                        {trip.left_at && ` → ${new Date(trip.left_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
-                      </p>
-                      {trip.notes && <p className="text-xs text-[var(--text-secondary)] mt-1 italic">{trip.notes}</p>}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Reviews */}
+        {reviews.length > 0 && (
+          <section className="mb-8">
+            <SectionTitle>Reviews</SectionTitle>
+            <div className="space-y-2">
+              {reviews.map((review) => {
+                const info = getCityInfo(review.city_slug)
+                return (
+                  <Link key={review.id} href={`/cities/${review.city_slug}`}
+                    className="block rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent-green)] transition-colors">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium">{info.flag} {info.name}</span>
+                      <span className="text-xs font-mono text-[var(--accent-green)]">{"★".repeat(review.rating)}</span>
                     </div>
+                    <p className="text-xs text-[var(--text-secondary)] line-clamp-2">{review.text}</p>
                   </Link>
                 )
               })}
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* Reviews */}
-      {reviews.length > 0 && (
-        <section className="mb-8">
-          <h2 className="font-serif text-xl font-bold mb-3">Your reviews</h2>
-          <div className="space-y-3">
-            {reviews.map((review) => {
-              const info = getCityInfo(review.city_slug)
-              return (
-                <Link key={review.id} href={`/cities/${review.city_slug}`}
-                  className="block rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 hover:border-[var(--accent-green)] transition-colors">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">{info.flag} {info.name}</span>
-                    <span className="text-xs font-mono text-[var(--accent-green)]">
-                      {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--text-secondary)] line-clamp-2">{review.text}</p>
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Membership */}
-      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center mb-8">
-        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Membership</p>
-        {isPaid ? (
-          <>
-            <div className="w-10 h-10 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center text-lg mx-auto mb-3">✓</div>
-            <p className="font-serif text-lg font-bold mb-1">Uncomun Member</p>
-            <p className="text-sm text-[var(--text-secondary)]">Lifetime access. Thank you for being part of the society.</p>
-          </>
-        ) : (
-          <>
-            <p className="font-serif text-lg font-bold mb-1">Free Explorer</p>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">Join to unlock full city intelligence, community, and more.</p>
-            <button onClick={() => openJoinOverlay()}
-              className="inline-block px-5 py-2.5 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
-              Unlock details
-            </button>
-          </>
+          </section>
         )}
-      </section>
+
+        {/* Membership */}
+        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center mb-12">
+          {isPaid ? (
+            <>
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-[var(--accent-green)]/20 text-[var(--accent-green)] mb-2">Member</span>
+              <p className="font-serif text-lg font-bold">Uncomun Member</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">Lifetime access</p>
+            </>
+          ) : (
+            <>
+              <p className="font-serif text-lg font-bold mb-1">Free Explorer</p>
+              <p className="text-xs text-[var(--text-secondary)] mb-3">Unlock full city intelligence and community.</p>
+              <button onClick={() => openJoinOverlay()}
+                className="px-5 py-2.5 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
+                Unlock details
+              </button>
+            </>
+          )}
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function TagRow({ label, tags }: { label: string; tags: string[] }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider w-16 shrink-0 pt-1.5">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map((tag) => (
+          <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20">
+            {tag}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
 
 function StatCard({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-center">
+    <div className="rounded-xl bg-[var(--surface)] p-3 text-center">
       <p className={`font-mono text-xl font-bold ${accent ? "text-[var(--accent-green)]" : ""}`}>{value}</p>
-      <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">{label}</p>
+      <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
     </div>
   )
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="font-serif text-lg font-bold mb-3">{children}</h2>
 }
