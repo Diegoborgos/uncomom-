@@ -38,7 +38,7 @@ export default function JoinPage() {
         setShowResults(true)
         loadResults()
       }
-    } else if (family?.onboarding_complete) {
+    } else if (family && (family.onboarding_complete || (family.family_name && family.family_name !== "My Family"))) {
       // Returning user with a profile but no chat history — show profile summary
       const parts: string[] = []
       if (family.family_name) parts.push(`Family: ${family.family_name}`)
