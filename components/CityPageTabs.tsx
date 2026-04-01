@@ -116,7 +116,7 @@ export default function CityPageTabs({
             {/* Trip Tracker */}
             <TripTracker citySlug={city.slug} />
 
-            {/* Related Cities — compact cards, not full CityCard */}
+            {/* Related Cities */}
             {relatedCities.length > 0 && (
               <section>
                 <h2 className="font-serif text-xl font-bold mb-4">Other cities in {city.continent}</h2>
@@ -125,10 +125,25 @@ export default function CityPageTabs({
                     const relFlag = c.countryCode.toUpperCase().split("").map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("")
                     return (
                       <Link key={c.id} href={`/cities/${c.slug}`}
-                        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 hover:border-[var(--accent-green)] transition-colors">
-                        <p className="text-xs text-[var(--text-secondary)] mb-1">{relFlag} {c.country}</p>
-                        <p className="font-serif font-bold">{c.name}</p>
-                        <p className="text-xs text-[var(--text-secondary)] mt-1">{formatEuro(c.cost.familyMonthly)}/mo</p>
+                        className="rounded-2xl overflow-hidden bg-[var(--surface)] hover:opacity-90 transition-opacity">
+                        {/* Image */}
+                        <div className="relative h-36 bg-black">
+                          {c.photo && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={c.photo} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                          <span className="absolute top-2 left-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-mono font-bold bg-[var(--accent-green)] text-black">
+                            {c.scores.family} FIS&trade;
+                          </span>
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <p className="text-[10px] text-white/80">{relFlag} {c.country}</p>
+                            <p className="text-sm font-bold text-white">{c.name}</p>
+                          </div>
+                          <span className="absolute bottom-2 right-2 text-[10px] font-mono text-white/70">
+                            {formatEuro(c.cost.familyMonthly)}/mo
+                          </span>
+                        </div>
                       </Link>
                     )
                   })}
