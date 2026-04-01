@@ -1,7 +1,7 @@
 export function getScoreColor(score: number): string {
-  if (score >= 80) return "var(--score-high)"
-  if (score >= 60) return "var(--score-mid)"
-  return "var(--score-low)"
+  if (score >= 70) return "#4ADE80"
+  if (score >= 50) return "#EBFF00"
+  return "#FF4444"
 }
 
 export function getScoreLabel(score: number): string {

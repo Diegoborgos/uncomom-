@@ -57,7 +57,7 @@ export default function CityMap({ cities }: { cities: City[] }) {
       marker.bindPopup(`
         <div style="
           background: #132018;
-          color: #f0ece0;
+          color: #FFFFFF;
           padding: 12px;
           border-radius: 8px;
           min-width: 200px;
@@ -66,25 +66,25 @@ export default function CityMap({ cities }: { cities: City[] }) {
           <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: bold; margin-bottom: 4px;">
             ${flag} ${city.name}
           </div>
-          <div style="font-size: 12px; color: #8a9e8d; margin-bottom: 8px;">
+          <div style="font-size: 12px; color: #A1A1AA; margin-bottom: 8px;">
             ${city.country} · ${city.continent}
           </div>
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
             <span style="background: ${color}33; color: ${color}; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-family: monospace;">
               Family ${city.scores.family}
             </span>
-            <span style="font-size: 11px; color: #8a9e8d;">
+            <span style="font-size: 11px; color: #A1A1AA;">
               ~${formatEuro(city.cost.familyMonthly)}/mo
             </span>
           </div>
-          <div style="font-size: 11px; color: #d4874a;">
+          <div style="font-size: 11px; color: #EBFF00;">
             ${city.meta.familiesNow > 0 ? `${city.meta.familiesNow} families here now` : "No families checked in yet"}
           </div>
           <a href="/cities/${city.slug}" style="
             display: inline-block;
             margin-top: 8px;
             font-size: 11px;
-            color: #4caf7d;
+            color: #EBFF00;
             text-decoration: none;
           ">View city →</a>
         </div>
@@ -107,17 +107,22 @@ export default function CityMap({ cities }: { cities: City[] }) {
     <>
       <style jsx global>{`
         .custom-popup .leaflet-popup-content-wrapper {
-          background: #132018;
-          border: 1px solid #2a3d2e;
+          background: #1A1A1A;
+          border: 1px solid #333333;
           border-radius: 10px;
           box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
         .custom-popup .leaflet-popup-tip {
-          background: #132018;
-          border: 1px solid #2a3d2e;
+          background: #1A1A1A;
+          border: 1px solid #333333;
         }
         .custom-popup .leaflet-popup-close-button {
-          color: #8a9e8d !important;
+          color: #A1A1AA !important;
+        }
+        .leaflet-control-zoom a {
+          background: #1A1A1A !important;
+          color: #FFFFFF !important;
+          border-color: #333333 !important;
         }
         .custom-popup .leaflet-popup-content {
           margin: 0;
