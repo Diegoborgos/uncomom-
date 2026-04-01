@@ -38,7 +38,7 @@ export default function CityCard({ city }: { city: City }) {
   return (
     <div
       onClick={handleClick}
-      className="group rounded-3xl overflow-hidden bg-[var(--surface)] hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+      className="group rounded-3xl overflow-hidden bg-[var(--bg)] hover:-translate-y-1 transition-all duration-200 cursor-pointer"
     >
       <div className="relative aspect-[4/5] overflow-hidden">
         {/* City photo */}

@@ -75,8 +75,6 @@ export default function FilterBar({
       {/* Main toolbar row — Nomad List style */}
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center gap-2 h-12 overflow-x-auto scrollbar-hide">
-          {/* Logo icon */}
-          <span className="font-serif text-lg font-bold text-[var(--accent-green)] shrink-0 mr-1">U</span>
 
           {/* Filters toggle */}
           <button
