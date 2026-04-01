@@ -99,7 +99,7 @@ export default function OnboardingPage() {
       }
 
       setMessages([...newMessages, { role: "assistant", content: data.reply }])
-    } catch (err) {
+    } catch {
       setError("Something went wrong. Try again.")
     } finally {
       setSending(false)
