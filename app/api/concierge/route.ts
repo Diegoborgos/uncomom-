@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     .from("family_intelligence")
     .select("*")
     .eq("family_id", family.id)
-    .single()
+    .maybeSingle()
 
   // Get trips
   const { data: trips } = await supabase

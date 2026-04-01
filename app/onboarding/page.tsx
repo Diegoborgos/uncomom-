@@ -102,6 +102,18 @@ export default function OnboardingPage() {
     setInput("")
     setError("")
 
+    // Intercept city-related messages — show picker directly
+    const cityWords = ["cities", "city", "traveled", "travelled", "visited", "been to", "places"]
+    if (cityWords.some((w) => userMsg.toLowerCase().includes(w)) && !showCityPicker) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: userMsg },
+        { role: "assistant", content: "Let's add your cities — tap to select the ones you've been to." },
+      ])
+      setShowCityPicker(true)
+      return
+    }
+
     const newMessages: Message[] = [...messages, { role: "user", content: userMsg }]
     setMessages(newMessages)
     setSending(true)
