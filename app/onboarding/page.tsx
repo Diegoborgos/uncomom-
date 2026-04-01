@@ -39,6 +39,9 @@ export default function OnboardingPage() {
   const [profile, setProfile] = useState<ProfileFields>(emptyProfile)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [showCityPicker, setShowCityPicker] = useState(false)
+  const [selectedCities, setSelectedCities] = useState<string[]>([])
+  const [cityPickerContinent, setCityPickerContinent] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -95,7 +98,15 @@ export default function OnboardingPage() {
       }
 
       setMessages([...newMessages, { role: "assistant", content: data.reply }])
-      setTimeout(() => inputRef.current?.focus(), 100)
+
+      // Detect if LLM is asking about cities → show picker instead of text input
+      const cityKeywords = ["cities", "city", "visited", "lived in", "been to", "traveled"]
+      const askingAboutCities = cityKeywords.some((kw) => data.reply.toLowerCase().includes(kw)) && !profile.cities_visited.length
+      if (askingAboutCities) {
+        setShowCityPicker(true)
+      } else {
+        setTimeout(() => inputRef.current?.focus(), 100)
+      }
     } catch {
       setError("Connection error. Try again.")
     } finally {
@@ -149,6 +160,57 @@ export default function OnboardingPage() {
     await refreshFamily()
     setSaving(false)
     router.push("/dashboard")
+  }
+
+  // Group cities by continent
+  const continents = Array.from(new Set(cities.map((c) => c.continent))).sort()
+  const citiesByContinent = continents.reduce((acc, cont) => {
+    acc[cont] = cities.filter((c) => c.continent === cont).sort((a, b) => a.name.localeCompare(b.name))
+    return acc
+  }, {} as Record<string, typeof cities>)
+
+  const toggleCity = (cityName: string) => {
+    setSelectedCities((prev) =>
+      prev.includes(cityName) ? prev.filter((c) => c !== cityName) : [...prev, cityName]
+    )
+  }
+
+  const submitCities = () => {
+    const cityNames = selectedCities
+    setProfile((prev) => ({ ...prev, cities_visited: cityNames }))
+    setShowCityPicker(false)
+    setCityPickerContinent(null)
+
+    // Add as user message and continue conversation
+    const cityText = cityNames.length > 0 ? cityNames.join(", ") : "None yet"
+    const newMessages: Message[] = [...messages, { role: "user", content: `I've been to: ${cityText}` }]
+    setMessages(newMessages)
+
+    // Send to LLM to continue
+    setSending(true)
+    fetch("/api/onboarding/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: newMessages }),
+    }).then((res) => res.json()).then((data) => {
+      if (data.profile) {
+        setProfile((prev) => {
+          const merged = { ...prev }
+          for (const [key, value] of Object.entries(data.profile)) {
+            if (value && (typeof value === "string" ? value.length > 0 : Array.isArray(value) ? (value as unknown[]).length > 0 : value === true)) {
+              (merged as Record<string, unknown>)[key] = value
+            }
+          }
+          return merged
+        })
+      }
+      setMessages([...newMessages, { role: "assistant", content: data.reply }])
+      setSending(false)
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }).catch(() => {
+      setError("Connection error.")
+      setSending(false)
+    })
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
@@ -212,7 +274,61 @@ export default function OnboardingPage() {
 
       {/* Input or Save */}
       <div className="px-4 pb-6 pt-2 border-t border-[var(--border)]">
-        {profile.done ? (
+        {showCityPicker ? (
+          <div className="space-y-3">
+            {/* Continent selector */}
+            {!cityPickerContinent ? (
+              <>
+                <p className="text-xs text-[var(--text-secondary)] mb-2">Tap a continent to see cities:</p>
+                <div className="flex flex-wrap gap-2">
+                  {continents.map((cont) => (
+                    <button key={cont} onClick={() => setCityPickerContinent(cont)}
+                      className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors">
+                      {cont}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <button onClick={() => setCityPickerContinent(null)} className="text-xs text-[var(--accent-green)]">&larr; All continents</button>
+                  <p className="text-xs text-[var(--text-secondary)]">{selectedCities.length} selected</p>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {citiesByContinent[cityPickerContinent]?.map((c) => {
+                    const selected = selectedCities.includes(c.name)
+                    const flag = c.countryCode.toUpperCase().split("").map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("")
+                    return (
+                      <button key={c.slug} onClick={() => toggleCity(c.name)}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between transition-colors ${
+                          selected ? "bg-[var(--accent-green)]/15 text-[var(--accent-green)]" : "text-[var(--text-secondary)] hover:bg-[var(--surface)]"
+                        }`}>
+                        <span>{flag} {c.name}</span>
+                        {selected && <span>✓</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+            {/* Selected cities preview + submit */}
+            {selectedCities.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[var(--border)]">
+                {selectedCities.map((c) => (
+                  <span key={c} onClick={() => toggleCity(c)}
+                    className="text-xs px-2.5 py-1 rounded-full bg-[var(--accent-green)] text-black cursor-pointer hover:opacity-80">
+                    {c} ✕
+                  </span>
+                ))}
+              </div>
+            )}
+            <button onClick={submitCities}
+              className="w-full py-3 rounded-xl bg-[var(--accent-green)] text-black font-semibold text-sm hover:opacity-90 transition-opacity">
+              {selectedCities.length > 0 ? `Continue with ${selectedCities.length} cities` : "Skip — haven't traveled yet"}
+            </button>
+          </div>
+        ) : profile.done ? (
           <div className="space-y-3">
             {/* Profile summary */}
             <div className="rounded-xl bg-[var(--surface)] p-4 space-y-2 text-xs">
