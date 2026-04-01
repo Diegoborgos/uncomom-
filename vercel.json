@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/intelligence/update",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/refresh-public-data",
+      "schedule": "0 3 1 * *"
+    }
+  ]
+}

@@ -8,6 +8,11 @@ import { cities } from "@/data/cities"
  * Trigger via cron or admin panel.
  */
 
+// GET handler for Vercel Cron
+export async function GET(req: NextRequest) {
+  return POST(req)
+}
+
 export async function POST(req: NextRequest) {
   const cronSecret = req.headers.get("x-cron-secret")
   const authHeader = req.headers.get("authorization")
@@ -17,8 +22,8 @@ export async function POST(req: NextRequest) {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } })
 
-  // Auth: cron secret or admin
-  let authorized = cronSecret === process.env.CRON_SECRET
+  // Auth: cron secret (header or bearer) or admin session
+  let authorized = cronSecret === process.env.CRON_SECRET || token === process.env.CRON_SECRET
   if (!authorized && token) {
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const userClient = createClient(supabaseUrl, anonKey, {

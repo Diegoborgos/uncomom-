@@ -19,6 +19,11 @@ type RefreshResult = {
   error?: string
 }
 
+// GET handler for Vercel Cron
+export async function GET(req: NextRequest) {
+  return POST(req)
+}
+
 export async function POST(req: NextRequest) {
   // Auth: cron secret or admin session
   const cronSecret = req.headers.get("x-cron-secret")
