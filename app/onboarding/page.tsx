@@ -49,16 +49,48 @@ export default function OnboardingPage() {
     if (!loading && !user) router.push("/login")
   }, [user, loading, router])
 
-  // Start conversation
+  // Start conversation — different for new vs returning users
   useEffect(() => {
     if (messages.length === 0 && user && !loading) {
-      setMessages([{
-        role: "assistant",
-        content: "Hey! Tell me about your family — where are you from?"
-      }])
+      if (family?.onboarding_complete) {
+        // Returning user — show current profile summary and ask what to change
+        const parts: string[] = []
+        if (family.family_name) parts.push(`Family: ${family.family_name}`)
+        if (family.home_country) parts.push(`From: ${family.home_country}`)
+        if (family.kids_ages?.length) parts.push(`Kids: ages ${family.kids_ages.join(", ")}`)
+        if (family.parent_work_type) parts.push(`Work: ${family.parent_work_type}`)
+        if (family.education_approach) parts.push(`Education: ${family.education_approach}`)
+        if (family.travel_style) parts.push(`Travel: ${family.travel_style}`)
+        if (family.bio) parts.push(`\nBio: "${family.bio}"`)
+
+        setMessages([{
+          role: "assistant",
+          content: `Here's your current profile:\n\n${parts.join("\n")}\n\nWhat would you like to update?`
+        }])
+        // Pre-fill profile state with existing data
+        setProfile({
+          family_name: family.family_name || "",
+          home_country: family.home_country || "",
+          country_code: family.country_code || "",
+          kids_ages: family.kids_ages || [],
+          parent_work_type: family.parent_work_type || "",
+          education_approach: family.education_approach || "",
+          travel_style: family.travel_style || "",
+          languages: family.languages || [],
+          interests: family.interests || [],
+          cities_visited: [],
+          bio: family.bio || "",
+          done: false,
+        })
+      } else {
+        setMessages([{
+          role: "assistant",
+          content: "Hey! Tell me about your family — where are you from?"
+        }])
+      }
       setTimeout(() => inputRef.current?.focus(), 300)
     }
-  }, [user, loading]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, loading, family]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -238,7 +270,7 @@ export default function OnboardingPage() {
   const progress = Math.min(100, (fieldsExtracted / 9) * 100)
 
   return (
-    <div className="max-w-lg mx-auto min-h-[calc(100vh-64px)] flex flex-col justify-end">
+    <div className="max-w-lg mx-auto">
       {/* Progress — compact inline */}
       <div className="px-4 pt-3 pb-1">
         <div className="h-1 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
