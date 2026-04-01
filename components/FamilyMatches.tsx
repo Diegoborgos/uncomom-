@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { countryCodeToFlag } from "@/lib/scores"
@@ -8,6 +9,7 @@ import { cities } from "@/data/cities"
 
 type MatchedFamily = {
   family: {
+    id: string
     family_name: string
     country_code: string
     kids_ages: number[]
@@ -66,7 +68,7 @@ export default function FamilyMatches() {
           const cityName = match.currentCity ? cities.find((c) => c.slug === match.currentCity)?.name : null
 
           return (
-            <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <Link key={i} href={`/profile/${fam.id}`} className="block rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 hover:border-[var(--accent-green)] transition-colors">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-sm font-bold shrink-0">
                   {initials}
@@ -91,7 +93,7 @@ export default function FamilyMatches() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           )
         })}
       </div>

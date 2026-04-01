@@ -4,6 +4,10 @@
  */
 
 import { chatCompletion } from "./llm"
+import { cities } from "@/data/cities"
+
+const CITY_SLUGS = cities.map((c) => c.slug).join(", ")
+const CITY_NAMES = cities.map((c) => `${c.name} (/cities/${c.slug})`).join(", ")
 
 export type Recommendation = {
   type: "city" | "action" | "match" | "prompt"
@@ -49,6 +53,20 @@ RULES:
 5. If they have no trips, encourage logging their travel history
 6. If they're viewing specific cities, give comparative advice
 7. Match families only if there's genuine overlap (same city + similar kids)
+
+AVAILABLE CITIES (ONLY recommend from this list — no others exist):
+${CITY_NAMES}
+
+VALID ACTION URLS:
+- City page: /cities/{slug} (use exact slugs from the list above)
+- Log a trip: /cities/{slug} (they can log trips from the city page)
+- Write a review: /cities/{slug} (review form is on the city page)
+- Edit profile: /onboarding
+- Browse cities: /
+- Schools: /schools
+- Visas: /visas
+
+NEVER link to /dashboard. NEVER recommend cities not in the list above.
 
 RECOMMENDATION TYPES:
 - "city": Suggest a city based on their profile

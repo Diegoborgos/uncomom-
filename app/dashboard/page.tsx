@@ -161,26 +161,30 @@ export default function DashboardPage() {
           </Link>
         )}
 
-        {/* Tags — organized by category like Nomad List */}
+        {/* Tags — organized by category + edit link */}
         {family && (
-          <div className="space-y-4 mb-8">
-            {family.parent_work_type && (
-              <TagRow label="Work" tags={[family.parent_work_type]} />
-            )}
-            {family.education_approach && (
-              <TagRow label="Education" tags={[family.education_approach]} />
-            )}
-            {family.travel_style && (
-              <TagRow label="Travel" tags={[family.travel_style]} />
-            )}
-            {family.kids_ages && family.kids_ages.length > 0 && (
-              <TagRow label="Kids" tags={family.kids_ages.map((a) => `${a} years`)} />
-            )}
-            {family.languages && family.languages.length > 0 && (
-              <TagRow label="Languages" tags={family.languages} />
-            )}
-            {family.interests && family.interests.length > 0 && (
-              <TagRow label="Interests" tags={family.interests} />
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">Profile details</span>
+              <Link href="/onboarding" className="text-[10px] text-[var(--accent-green)] hover:underline">Edit all →</Link>
+            </div>
+            <div className="space-y-3">
+              {family.parent_work_type && <TagRow label="Work" tags={[family.parent_work_type]} />}
+              {family.education_approach && <TagRow label="Education" tags={[family.education_approach]} />}
+              {family.travel_style && <TagRow label="Travel" tags={[family.travel_style]} />}
+              {family.kids_ages && family.kids_ages.length > 0 && <TagRow label="Kids" tags={family.kids_ages.map((a) => `${a} years`)} />}
+              {family.languages && family.languages.length > 0 && <TagRow label="Languages" tags={family.languages} />}
+              {family.interests && family.interests.length > 0 && <TagRow label="Interests" tags={family.interests.map((i) => i.charAt(0).toUpperCase() + i.slice(1))} />}
+            </div>
+
+            {/* Data collection prompts — ask for missing fields */}
+            {(!family.parent_work_type || !family.education_approach || !family.travel_style || !family.languages?.length || !family.interests?.length) && (
+              <Link href="/onboarding" className="block mt-4 rounded-xl border border-dashed border-[var(--border)] p-4 text-center hover:border-[var(--accent-green)] transition-colors">
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Your profile is {Math.round(([family.parent_work_type, family.education_approach, family.travel_style, family.languages?.length, family.interests?.length, family.bio, family.kids_ages?.length].filter(Boolean).length / 7) * 100)}% complete —{" "}
+                  <span className="text-[var(--accent-green)]">add more to get better matches</span>
+                </p>
+              </Link>
             )}
           </div>
         )}
@@ -237,35 +241,46 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Travel timeline */}
-        {pastTrips.length > 0 && (
+        {/* Cities visited — photo grid */}
+        {uniqueCities.size > 0 && (
           <section className="mb-8">
-            <SectionTitle>Travel timeline</SectionTitle>
-            <div className="relative pl-6">
-              <div className="absolute left-2 top-0 bottom-0 w-px bg-[var(--border)]" />
-              <div className="space-y-3">
-                {pastTrips.map((trip) => {
-                  const info = getCityInfo(trip.city_slug)
-                  const days = trip.arrived_at && trip.left_at
-                    ? Math.ceil((new Date(trip.left_at).getTime() - new Date(trip.arrived_at).getTime()) / (1000 * 60 * 60 * 24))
-                    : null
-                  return (
-                    <Link key={trip.id} href={`/cities/${trip.city_slug}`} className="block relative">
-                      <div className="absolute -left-4 top-3 w-2.5 h-2.5 rounded-full bg-[var(--accent-green)] border-2 border-[var(--bg)]" />
-                      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent-green)] transition-colors">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{info.flag} {info.name}</span>
-                          {days && <span className="text-[10px] text-[var(--text-secondary)]">{days}d</span>}
-                        </div>
-                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
-                          {trip.arrived_at ? new Date(trip.arrived_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : ""}
-                          {trip.left_at && ` → ${new Date(trip.left_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
-                        </p>
+            <SectionTitle>Cities visited</SectionTitle>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {Array.from(uniqueCities).map((slug) => {
+                const city = cities.find((c) => c.slug === slug)
+                if (!city) return null
+                const cityFlag = countryCodeToFlag(city.countryCode)
+                return (
+                  <Link key={slug} href={`/cities/${slug}`}
+                    className="rounded-xl overflow-hidden bg-[var(--surface)] hover:opacity-90 transition-opacity">
+                    <div className="relative h-24 bg-black">
+                      {city.photo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={city.photo} alt={city.name} className="w-full h-full object-cover" loading="lazy" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                      <div className="absolute bottom-2 left-2">
+                        <p className="text-[10px] text-white/70">{cityFlag} {city.country}</p>
+                        <p className="text-sm font-bold text-white">{city.name}</p>
                       </div>
-                    </Link>
-                  )
-                })}
-              </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Flags collected */}
+        {uniqueCountries.size > 0 && (
+          <section className="mb-8">
+            <SectionTitle>Flags collected ({uniqueCountries.size})</SectionTitle>
+            <div className="flex flex-wrap gap-3">
+              {Array.from(uniqueCountries).map((country) => {
+                const city = cities.find((c) => c.country === country)
+                const f = city ? countryCodeToFlag(city.countryCode) : ""
+                return <span key={country as string} className="text-3xl" title={country as string}>{f}</span>
+              })}
             </div>
           </section>
         )}
