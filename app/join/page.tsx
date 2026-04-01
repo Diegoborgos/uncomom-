@@ -38,6 +38,20 @@ export default function JoinPage() {
         setShowResults(true)
         loadResults()
       }
+    } else if (family?.onboarding_complete) {
+      // Returning user with a profile but no chat history — show profile summary
+      const parts: string[] = []
+      if (family.family_name) parts.push(`Family: ${family.family_name}`)
+      if (family.home_country) parts.push(`From: ${family.home_country}`)
+      if (family.kids_ages?.length) parts.push(`Kids: ages ${family.kids_ages.join(", ")}`)
+      if (family.parent_work_type) parts.push(`Work: ${family.parent_work_type}`)
+      if (family.education_approach) parts.push(`Education: ${family.education_approach}`)
+      if (family.travel_style) parts.push(`Travel: ${family.travel_style}`)
+      if (family.bio) parts.push(`\nBio: "${family.bio}"`)
+      setMessages([{
+        role: "assistant",
+        content: `Here's your current profile:\n\n${parts.join("\n")}\n\nWhat would you like to update?`
+      }])
     } else {
       setMessages([FIRST_MESSAGE])
     }
