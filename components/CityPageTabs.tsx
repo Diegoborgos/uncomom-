@@ -101,14 +101,6 @@ export default function CityPageTabs({
             {/* Cost + Meta — side by side on desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-                <h3 className="font-serif text-lg font-bold mb-1">Family Cost Estimate</h3>
-                <p className="text-xs text-[var(--text-secondary)] mb-3">Estimated for a family of 4</p>
-                <div className="flex justify-between items-baseline mb-3">
-                  <span className="text-sm text-[var(--text-secondary)]">Total monthly</span>
-                  <span className="font-mono font-bold text-xl text-[var(--accent-warm)]">
-                    {formatEuro(city.cost.familyMonthly)}
-                  </span>
-                </div>
                 <CostPanelGated city={city} />
               </div>
               <MetaPanelGated city={city} />
