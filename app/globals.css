@@ -88,3 +88,75 @@ h1, h2, h3, h4, h5, h6 {
   backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
+
+/* Premium pill buttons */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--surface);
+  transition: all 0.2s;
+}
+.pill:hover {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+.pill-active {
+  background: var(--accent-green);
+  color: #000;
+  border-color: var(--accent-green);
+}
+
+/* Premium search input */
+.search-premium {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 14px 20px 14px 44px;
+  font-size: 15px;
+  color: var(--text-primary);
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-premium:focus {
+  border-color: var(--accent-green);
+}
+.search-premium::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Premium card hover */
+.card-premium {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+.card-premium:hover {
+  border-color: var(--accent-green);
+  transform: translateY(-2px);
+}
+
+/* Hide scrollbar but allow scroll */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Responsive typography — larger on desktop */
+@media (min-width: 768px) {
+  h1 { font-size: 2.5rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.25rem; }
+}
+
+@media (max-width: 767px) {
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1rem; }
+}
