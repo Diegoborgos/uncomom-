@@ -4,7 +4,7 @@ import { City } from "@/lib/types"
 import { useAuth } from "@/lib/auth-context"
 import { getVisaBadgeColor, getHomeschoolBadgeColor } from "@/lib/scores"
 import { PaywallBlur } from "./Paywall"
-import { getPassportTier, personalizedVisa } from "@/lib/personalize"
+import { personalizedVisa } from "@/lib/personalize"
 
 export default function MetaPanelGated({ city }: { city: City }) {
   const { family, isPaid } = useAuth()
