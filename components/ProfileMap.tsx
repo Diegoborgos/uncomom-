@@ -23,7 +23,6 @@ export default function ProfileMap({ trips }: { trips: Trip[] }) {
       zoom: MAP_ZOOM,
       projection: GLOBE_CONFIG.projection,
       attributionControl: false,
-      interactive: false, // Fixed — no zoom/pan
       logoPosition: "bottom-right",
     })
 

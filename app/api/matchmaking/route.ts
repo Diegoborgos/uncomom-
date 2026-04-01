@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
   // Get all other families (with onboarding complete)
   const { data: allFamilies } = await supabase
     .from("families")
-    .select("id, family_name, country_code, kids_ages, travel_style, education_approach, interests, languages, bio")
+    .select("id, username, family_name, country_code, kids_ages, travel_style, education_approach, interests, languages, bio")
     .eq("onboarding_complete", true)
     .neq("id", myFamily.id)
     .limit(100)

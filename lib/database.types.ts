@@ -19,6 +19,7 @@ export type Database = {
           current_city: string
           membership_tier: "free" | "paid"
           membership_paid_at: string | null
+          username: string | null
           onboarding_complete: boolean
           created_at: string
           updated_at: string
@@ -40,6 +41,7 @@ export type Database = {
           current_city?: string
           membership_tier?: "free" | "paid"
           membership_paid_at?: string | null
+          username?: string | null
           onboarding_complete?: boolean
           created_at?: string
           updated_at?: string
@@ -59,6 +61,7 @@ export type Database = {
           current_city?: string
           membership_tier?: "free" | "paid"
           membership_paid_at?: string | null
+          username?: string | null
           onboarding_complete?: boolean
           updated_at?: string
         }

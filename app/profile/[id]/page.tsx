@@ -23,10 +23,12 @@ export default function PublicProfilePage() {
 
   useEffect(() => {
     const fetch = async () => {
+      // Try username first, then fallback to UUID
+      const isUUID = familyId.includes("-") && familyId.length > 30
       const { data: fam } = await supabase
         .from("families")
         .select("id, family_name, home_country, country_code, kids_ages, travel_style, education_approach, interests, languages, bio, avatar_url, created_at")
-        .eq("id", familyId)
+        .eq(isUUID ? "id" : "username", familyId)
         .single()
 
       if (fam) {
