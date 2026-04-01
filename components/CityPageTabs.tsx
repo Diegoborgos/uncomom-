@@ -15,7 +15,6 @@ import TripTracker from "./TripTracker"
 import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
 import FieldReportForm from "./FieldReportForm"
-import CityCard from "./CityCard"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -117,14 +116,22 @@ export default function CityPageTabs({
             {/* Trip Tracker */}
             <TripTracker citySlug={city.slug} />
 
-            {/* Related Cities */}
+            {/* Related Cities — compact cards, not full CityCard */}
             {relatedCities.length > 0 && (
               <section>
                 <h2 className="font-serif text-xl font-bold mb-4">Other cities in {city.continent}</h2>
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                  {relatedCities.map((c) => (
-                    <CityCard key={c.id} city={c} />
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {relatedCities.map((c) => {
+                    const relFlag = c.countryCode.toUpperCase().split("").map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("")
+                    return (
+                      <Link key={c.id} href={`/cities/${c.slug}`}
+                        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 hover:border-[var(--accent-green)] transition-colors">
+                        <p className="text-xs text-[var(--text-secondary)] mb-1">{relFlag} {c.country}</p>
+                        <p className="font-serif font-bold">{c.name}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-1">{formatEuro(c.cost.familyMonthly)}/mo</p>
+                      </Link>
+                    )
+                  })}
                 </div>
               </section>
             )}
