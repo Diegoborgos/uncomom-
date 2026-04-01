@@ -199,60 +199,76 @@ export default function OnboardingPage() {
   const handleSave = async () => {
     if (!user) return
     setSaving(true)
+    setError("")
 
-    const payload = {
-      family_name: profile.family_name || family?.family_name || "My Family",
-      home_country: profile.home_country || family?.home_country || "",
-      country_code: (profile.country_code || family?.country_code || "").toUpperCase(),
-      kids_ages: profile.kids_ages.length > 0 ? profile.kids_ages : family?.kids_ages || [],
-      parent_work_type: profile.parent_work_type || family?.parent_work_type || "",
-      travel_style: profile.travel_style || family?.travel_style || "",
-      education_approach: profile.education_approach || family?.education_approach || "",
-      languages: profile.languages.length > 0 ? profile.languages : family?.languages || [],
-      interests: profile.interests.length > 0 ? profile.interests : family?.interests || [],
-      bio: profile.bio || family?.bio || "",
-      onboarding_complete: true,
-      updated_at: new Date().toISOString(),
-    }
+    try {
+      const payload = {
+        family_name: profile.family_name || family?.family_name || "My Family",
+        home_country: profile.home_country || family?.home_country || "",
+        country_code: (profile.country_code || family?.country_code || "").toUpperCase(),
+        kids_ages: profile.kids_ages.length > 0 ? profile.kids_ages : family?.kids_ages || [],
+        parent_work_type: profile.parent_work_type || family?.parent_work_type || "",
+        travel_style: profile.travel_style || family?.travel_style || "",
+        education_approach: profile.education_approach || family?.education_approach || "",
+        languages: profile.languages.length > 0 ? profile.languages : family?.languages || [],
+        interests: profile.interests.length > 0 ? profile.interests : family?.interests || [],
+        bio: profile.bio || family?.bio || "",
+        onboarding_complete: true,
+        updated_at: new Date().toISOString(),
+      }
 
-    // Auto-generate username from family_name if not set
-    if (payload.family_name && !family?.username) {
-      const base = payload.family_name
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "")
-        .slice(0, 20) || "family"
-      const { data: existing } = await supabase.from("families").select("id").eq("username", base).maybeSingle()
-      const username = existing ? base + Math.floor(Math.random() * 999) : base
-      Object.assign(payload, { username })
-    }
+      // Auto-generate username from family_name if not set
+      if (payload.family_name && !family?.username) {
+        const base = payload.family_name
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+          .slice(0, 20) || "family"
+        const { data: existing } = await supabase.from("families").select("id").eq("username", base).maybeSingle()
+        const username = existing ? base + Math.floor(Math.random() * 999) : base
+        Object.assign(payload, { username })
+      }
 
-    if (family) {
-      await supabase.from("families").update(payload).eq("id", family.id)
-    } else {
-      await supabase.from("families").insert({ user_id: user.id, ...payload })
-    }
+      if (family) {
+        const { error: updateErr } = await supabase.from("families").update(payload).eq("id", family.id)
+        if (updateErr) throw new Error(updateErr.message)
+      } else {
+        const { error: insertErr } = await supabase.from("families").insert({ user_id: user.id, ...payload })
+        if (insertErr) throw new Error(insertErr.message)
+      }
 
-    // Auto-log cities as trips
-    const familyId = family?.id
-    if (profile.cities_visited.length > 0 && familyId) {
-      for (const cityName of profile.cities_visited) {
-        const matched = cities.find((c) =>
-          c.name.toLowerCase() === cityName.toLowerCase() ||
-          c.slug === cityName.toLowerCase().replace(/\s+/g, "-")
-        )
-        if (matched) {
-          await supabase.from("trips").insert({
-            family_id: familyId,
-            city_slug: matched.slug,
-            status: "been_here" as const,
-          })
+      // Auto-log cities as trips — re-fetch family if we just inserted
+      let familyId = family?.id
+      if (!familyId) {
+        const { data: newFam } = await supabase.from("families").select("id").eq("user_id", user.id).single()
+        familyId = newFam?.id
+      }
+      if (profile.cities_visited.length > 0 && familyId) {
+        for (const cityName of profile.cities_visited) {
+          const matched = cities.find((c) =>
+            c.name.toLowerCase() === cityName.toLowerCase() ||
+            c.slug === cityName.toLowerCase().replace(/\s+/g, "-")
+          )
+          if (matched) {
+            const { data: existingTrip } = await supabase.from("trips")
+              .select("id").eq("family_id", familyId).eq("city_slug", matched.slug).maybeSingle()
+            if (!existingTrip) {
+              await supabase.from("trips").insert({
+                family_id: familyId,
+                city_slug: matched.slug,
+                status: "been_here" as const,
+              })
+            }
+          }
         }
       }
-    }
 
-    await refreshFamily()
-    setSaving(false)
-    router.push("/dashboard")
+      await refreshFamily()
+      router.push("/dashboard")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save. Try again.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Group cities by continent
