@@ -174,6 +174,30 @@ export async function POST(req: NextRequest) {
             }
 
             await db.from("families").update(updatePayload).eq("id", family.id)
+
+            // Auto-log mentioned cities as trips
+            const { cities: allCities } = await import("@/data/cities")
+            const citiesToLog = [
+              ...(extracted.cities_visited || []).map(c => ({ name: c, status: "been_here" as const })),
+              ...(extracted.current_city ? [{ name: extracted.current_city, status: "here_now" as const }] : []),
+            ]
+            for (const { name: cityName, status } of citiesToLog) {
+              const matched = allCities.find(c =>
+                c.name.toLowerCase() === cityName.toLowerCase() ||
+                c.slug === cityName.toLowerCase().replace(/\s+/g, "-")
+              )
+              if (matched) {
+                const { data: existingTrip } = await db.from("trips")
+                  .select("id").eq("family_id", family.id).eq("city_slug", matched.slug).maybeSingle()
+                if (!existingTrip) {
+                  await db.from("trips").insert({
+                    family_id: family.id,
+                    city_slug: matched.slug,
+                    status,
+                  })
+                }
+              }
+            }
           }
         } catch (err) {
           console.error("Extraction error:", err)

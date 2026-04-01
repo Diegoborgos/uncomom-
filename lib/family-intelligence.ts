@@ -27,6 +27,7 @@ export type ExtractedIntelligence = {
   deal_breakers?: string[]
   ai_profile_summary?: string
   open_to_introductions?: boolean
+  cities_visited?: string[]
 }
 
 const STRONG_PASSPORTS = ["US","GB","DE","FR","IT","ES","NL","BE","AT","CH","SE","NO","DK","FI","AU","NZ","CA","JP","SG","KR","IL","PT","IE","LU"]
@@ -69,7 +70,8 @@ Possible fields:
   "education_approach": "string",
   "languages": ["strings"],
   "interests": ["strings"],
-  "current_city": "string",
+  "current_city": "string — city they are currently living in",
+  "cities_visited": ["cities they have lived in or traveled to as a family"],
   "primary_anxiety": "school|safety|cost|community|visa|healthcare|financial|relationship",
   "secondary_anxiety": "same options",
   "real_budget_min": integer EUR/month,

@@ -40,7 +40,7 @@ export default function JoinPage() {
       setMessages([FIRST_MESSAGE])
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [family, authLoading, initialized])
+  }, [authLoading, initialized])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
