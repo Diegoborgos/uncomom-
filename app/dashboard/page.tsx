@@ -101,15 +101,19 @@ export default function DashboardPage() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file || !family) return
-                  // Upload to Supabase Storage
-                  const filename = `avatars/${family.id}.jpg`
-                  const { error: uploadErr } = await supabase.storage
-                    .from("city-photos")
-                    .upload(filename, file, { contentType: file.type, upsert: true, cacheControl: "31536000" })
-                  if (uploadErr) { alert(`Upload failed: ${uploadErr.message}`); return }
-                  const { data: { publicUrl } } = supabase.storage.from("city-photos").getPublicUrl(filename)
-                  await supabase.from("families").update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq("id", family.id)
-                  window.location.reload()
+                  const { data: { session } } = await supabase.auth.getSession()
+                  if (!session?.access_token) return
+                  const formData = new FormData()
+                  formData.append("file", file)
+                  formData.append("familyId", family.id)
+                  const res = await fetch("/api/upload-avatar", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                    body: formData,
+                  })
+                  const result = await res.json()
+                  if (result.url) { window.location.reload() }
+                  else { alert(`Upload failed: ${result.error}`) }
                 }}
               />
             </label>
