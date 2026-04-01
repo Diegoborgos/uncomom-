@@ -69,25 +69,50 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* Map hero — full width, like Nomad List globe */}
-      <div className="relative w-full h-[300px] bg-black">
-        {trips.length > 0 ? (
-          <ProfileMap trips={trips} />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <p className="text-sm text-[var(--text-secondary)]">Your travel map will appear here</p>
-          </div>
-        )}
+      {/* Map hero — always show, like Nomad List globe */}
+      <div className="relative w-full h-[400px] bg-black">
+        <ProfileMap trips={trips} />
         {/* Overlay gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[var(--bg)] to-transparent" />
       </div>
 
       {/* Profile section */}
-      <div className="max-w-3xl mx-auto px-4 -mt-12 relative z-10">
+      <div className="max-w-3xl mx-auto px-4 -mt-16 relative z-10">
         {/* Avatar + name */}
         <div className="text-center mb-6">
-          <div className="w-24 h-24 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-3xl font-bold mx-auto mb-3 border-4 border-[var(--bg)]">
-            {initials}
+          <div className="relative w-28 h-28 mx-auto mb-3">
+            {family?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={family.avatar_url} alt={family.family_name || ""} className="w-full h-full rounded-full object-cover border-4 border-[var(--bg)]" />
+            ) : (
+              <div className="w-full h-full rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-3xl font-bold border-4 border-[var(--bg)]">
+                {initials}
+              </div>
+            )}
+            {/* Photo upload overlay */}
+            <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[var(--surface)] border-2 border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--surface-elevated)] transition-colors">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M2 11l4-4 3 3 2-2 3 3" /><rect x="1" y="2" width="14" height="12" rx="2" />
+              </svg>
+              <input
+                type="file"
+                accept="image/jpeg,image/webp,image/png"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file || !family) return
+                  // Upload to Supabase Storage
+                  const filename = `avatars/${family.id}.jpg`
+                  const { error: uploadErr } = await supabase.storage
+                    .from("city-photos")
+                    .upload(filename, file, { contentType: file.type, upsert: true, cacheControl: "31536000" })
+                  if (uploadErr) { alert(`Upload failed: ${uploadErr.message}`); return }
+                  const { data: { publicUrl } } = supabase.storage.from("city-photos").getPublicUrl(filename)
+                  await supabase.from("families").update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq("id", family.id)
+                  window.location.reload()
+                }}
+              />
+            </label>
           </div>
           <h1 className="font-serif text-3xl font-bold">
             {family?.family_name || "My Family"}
