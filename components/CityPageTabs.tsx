@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { City } from "@/lib/types"
+import CityCard from "./CityCard"
 import { formatEuro } from "@/lib/scores"
 import { FISBreakdown } from "./FISScore"
 import CityIntelligence from "./CityIntelligence"
@@ -116,34 +117,35 @@ export default function CityPageTabs({
             {/* Trip Tracker */}
             <TripTracker citySlug={city.slug} />
 
-            {/* Related Cities */}
+            {/* Related Cities — full CityCard on desktop, compact on mobile */}
             {relatedCities.length > 0 && (
               <section>
                 <h2 className="font-serif text-xl font-bold mb-4">Other cities in {city.continent}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Desktop: full CityCards */}
+                <div className="hidden sm:grid sm:grid-cols-3 gap-4">
+                  {relatedCities.map((c) => (
+                    <CityCard key={c.id} city={c} />
+                  ))}
+                </div>
+                {/* Mobile: compact cards */}
+                <div className="sm:hidden space-y-3">
                   {relatedCities.map((c) => {
                     const relFlag = c.countryCode.toUpperCase().split("").map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("")
                     return (
                       <Link key={c.id} href={`/cities/${c.slug}`}
-                        className="rounded-2xl overflow-hidden bg-[var(--surface)] hover:opacity-90 transition-opacity">
-                        {/* Image */}
-                        <div className="relative h-36 bg-black">
+                        className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent-green)] transition-colors">
+                        <div className="w-16 h-16 rounded-lg bg-black shrink-0 overflow-hidden">
                           {c.photo && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={c.photo} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                          <span className="absolute top-2 left-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-mono font-bold bg-[var(--accent-green)] text-black">
-                            {c.scores.family} FIS&trade;
-                          </span>
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-[10px] text-white/80">{relFlag} {c.country}</p>
-                            <p className="text-sm font-bold text-white">{c.name}</p>
-                          </div>
-                          <span className="absolute bottom-2 right-2 text-[10px] font-mono text-white/70">
-                            {formatEuro(c.cost.familyMonthly)}/mo
-                          </span>
                         </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-[var(--text-secondary)]">{relFlag} {c.country}</p>
+                          <p className="font-serif font-bold truncate">{c.name}</p>
+                          <p className="text-xs text-[var(--text-secondary)]">{formatEuro(c.cost.familyMonthly)}/mo</p>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-[var(--accent-green)] shrink-0">{c.scores.family} FIS&trade;</span>
                       </Link>
                     )
                   })}
