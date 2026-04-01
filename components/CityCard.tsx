@@ -42,7 +42,7 @@ export default function CityCard({ city }: { city: City }) {
       onMouseLeave={() => setShowPreview(false)}
       className="group rounded-3xl overflow-hidden bg-[var(--bg)] hover:-translate-y-1 transition-all duration-200 cursor-pointer"
     >
-      <div className="relative aspect-[4/5] overflow-hidden">
+      <div className="relative aspect-[4/5] overflow-hidden bg-black">
         {/* City photo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -59,8 +59,8 @@ export default function CityCard({ city }: { city: City }) {
             }
           }}
         />
-        {/* Stronger gradient for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {/* Gradient — top and bottom for edge blending */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
 
         {/* FIS score badge — top left */}
         <div className="absolute top-3 left-3">
