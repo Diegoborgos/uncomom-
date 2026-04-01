@@ -27,7 +27,7 @@ export default function PublicProfilePage() {
       const isUUID = familyId.includes("-") && familyId.length > 30
       const { data: fam } = await supabase
         .from("families")
-        .select("id, family_name, home_country, country_code, kids_ages, travel_style, education_approach, interests, languages, bio, avatar_url, created_at, membership_tier")
+        .select("id, family_name, home_country, country_code, kids_ages, travel_style, education_approach, interests, languages, bio, avatar_url, created_at")
         .eq(isUUID ? "id" : "username", familyId)
         .single()
 
@@ -77,17 +77,7 @@ export default function PublicProfilePage() {
               </div>
             )}
           </div>
-          <h1 className="font-serif text-3xl font-bold inline-flex items-center gap-2 justify-center">
-            {family.family_name}
-            {(family as Record<string, unknown>).membership_tier === "paid" && (
-              <span className="inline-flex items-center justify-center" title="Uncomun Member">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="9" fill="var(--accent-green)" />
-                  <path d="M6 10l3 3 5-6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            )}
-          </h1>
+          <h1 className="font-serif text-3xl font-bold">{family.family_name}</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">{flag} {family.home_country}</p>
           {currentCityInfo && (
             <p className="text-xs text-[var(--accent-green)] mt-1">Currently in {currentCityInfo.name}</p>

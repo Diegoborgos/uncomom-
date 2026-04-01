@@ -10,9 +10,7 @@ import { Trip, Review } from "@/lib/database.types"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
 import { openJoinOverlay } from "@/components/JoinOverlay"
-import EditableTagRow from "@/components/EditableTagRow"
-import { WORK_TYPES, EDUCATION_APPROACHES, TRAVEL_STYLES, INTERESTS, COMMON_LANGUAGES } from "@/lib/profile-options"
-import ForYou from "@/components/ForYou"
+import ConciergeCard from "@/components/ConciergeCard"
 import FamilyMatches from "@/components/FamilyMatches"
 
 const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
@@ -72,15 +70,16 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* Map hero */}
+      {/* Map hero — always show, like Nomad List globe */}
       <div className="relative w-full h-[400px] bg-black">
         <ProfileMap trips={trips} />
+        {/* Overlay gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[var(--bg)] to-transparent" />
       </div>
 
       {/* Profile section */}
       <div className="max-w-3xl mx-auto px-4 -mt-16 relative z-10">
-        {/* Avatar + name + badge */}
+        {/* Avatar + name */}
         <div className="text-center mb-6">
           <div className="relative w-28 h-28 mx-auto mb-3">
             {family?.avatar_url ? (
@@ -120,9 +119,8 @@ export default function DashboardPage() {
               />
             </label>
           </div>
-          <h1 className="font-serif text-3xl font-bold inline-flex items-center gap-2 justify-center">
+          <h1 className="font-serif text-3xl font-bold">
             {family?.family_name || "My Family"}
-            {isPaid && <PremiumBadge />}
           </h1>
           {family?.home_country && (
             <p className="text-sm text-[var(--text-secondary)] mt-1">
@@ -137,16 +135,20 @@ export default function DashboardPage() {
             {uniqueCountries.size > 0 && <span>{uniqueCountries.size} countries</span>}
             {totalDays > 0 && <span>{totalDays} days abroad</span>}
           </div>
+          {/* Action buttons */}
+          <div className="flex justify-center gap-2 mt-4">
+            <Link href="/onboarding" className="px-4 py-2 rounded-xl bg-[var(--accent-green)] text-black text-xs font-medium hover:opacity-90 transition-opacity">
+              Edit profile
+            </Link>
+          </div>
         </div>
 
-        {/* Bio — tap to edit */}
-        {family && (
+        {/* Bio */}
+        {family?.bio && (
           <div className="text-center mb-6">
-            {family.bio ? (
-              <EditableTagRow label="" field="bio" value={family.bio} mode="text" />
-            ) : (
-              <EditableTagRow label="" field="bio" value="" mode="text" />
-            )}
+            <p className="text-sm text-[var(--text-secondary)] italic max-w-lg mx-auto leading-relaxed">
+              &ldquo;{family.bio}&rdquo;
+            </p>
           </div>
         )}
 
@@ -158,46 +160,36 @@ export default function DashboardPage() {
           </Link>
         )}
 
-        {/* Tags — inline editable */}
+        {/* Tags — organized by category + edit link */}
         {family && (
           <div className="mb-8">
-            <div className="mb-3">
+            <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">Profile details</span>
+              <Link href="/onboarding" className="text-[10px] text-[var(--accent-green)] hover:underline">Edit all →</Link>
             </div>
             <div className="space-y-3">
-              <EditableTagRow label="Work" field="parent_work_type" value={family.parent_work_type || ""} options={WORK_TYPES} mode="single" />
-              <EditableTagRow label="Education" field="education_approach" value={family.education_approach || ""} options={EDUCATION_APPROACHES} mode="single" />
-              <EditableTagRow label="Travel" field="travel_style" value={family.travel_style || ""} options={TRAVEL_STYLES} mode="single" />
-              <EditableTagRow label="Kids" field="kids_ages" value={family.kids_ages || []} mode="ages" />
-              <EditableTagRow label="Languages" field="languages" value={family.languages || []} options={COMMON_LANGUAGES} mode="multi" />
-              <EditableTagRow label="Interests" field="interests" value={family.interests || []} options={INTERESTS} mode="multi" formatDisplay={(v) => v.charAt(0).toUpperCase() + v.slice(1)} />
+              {family.parent_work_type && <TagRow label="Work" tags={[family.parent_work_type]} />}
+              {family.education_approach && <TagRow label="Education" tags={[family.education_approach]} />}
+              {family.travel_style && <TagRow label="Travel" tags={[family.travel_style]} />}
+              {family.kids_ages && family.kids_ages.length > 0 && <TagRow label="Kids" tags={family.kids_ages.map((a) => `${a} years`)} />}
+              {family.languages && family.languages.length > 0 && <TagRow label="Languages" tags={family.languages} />}
+              {family.interests && family.interests.length > 0 && <TagRow label="Interests" tags={family.interests.map((i) => i.charAt(0).toUpperCase() + i.slice(1))} />}
             </div>
 
-            {/* Profile completion for missing fields */}
+            {/* Data collection prompts — ask for missing fields */}
             {(!family.parent_work_type || !family.education_approach || !family.travel_style || !family.languages?.length || !family.interests?.length) && (
-              <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] p-4 text-center">
+              <Link href="/onboarding" className="block mt-4 rounded-xl border border-dashed border-[var(--border)] p-4 text-center hover:border-[var(--accent-green)] transition-colors">
                 <p className="text-xs text-[var(--text-secondary)]">
                   Your profile is {Math.round(([family.parent_work_type, family.education_approach, family.travel_style, family.languages?.length, family.interests?.length, family.bio, family.kids_ages?.length].filter(Boolean).length / 7) * 100)}% complete —{" "}
-                  <span className="text-[var(--accent-green)]">tap any field above to add more</span>
+                  <span className="text-[var(--accent-green)]">add more to get better matches</span>
                 </p>
-              </div>
+              </Link>
             )}
           </div>
         )}
 
-        {/* Free user upgrade CTA — inline, not a card */}
-        {!isPaid && (
-          <div className="rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5 mb-8 text-center">
-            <p className="text-sm font-medium mb-1">Unlock the full Uncomun experience</p>
-            <p className="text-xs text-[var(--text-secondary)] mb-3 max-w-md mx-auto">City intelligence, family matching, personalized recommendations, and community access.</p>
-            <button onClick={() => openJoinOverlay()} className="px-5 py-2.5 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
-              Join Uncomun →
-            </button>
-          </div>
-        )}
-
-        {/* For You — data-driven intelligence cards */}
-        <ForYou trips={trips} reviews={reviews} />
+        {/* AI Concierge — personalized recommendations */}
+        <ConciergeCard />
 
         {/* Family Matches */}
         <FamilyMatches />
@@ -294,7 +286,7 @@ export default function DashboardPage() {
 
         {/* Reviews */}
         {reviews.length > 0 && (
-          <section className="mb-12">
+          <section className="mb-8">
             <SectionTitle>Reviews</SectionTitle>
             <div className="space-y-2">
               {reviews.map((review) => {
@@ -313,19 +305,43 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
+
+        {/* Membership */}
+        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center mb-12">
+          {isPaid ? (
+            <>
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-[var(--accent-green)]/20 text-[var(--accent-green)] mb-2">Member</span>
+              <p className="font-serif text-lg font-bold">Uncomun Member</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">Lifetime access</p>
+            </>
+          ) : (
+            <>
+              <p className="font-serif text-lg font-bold mb-1">Free Explorer</p>
+              <p className="text-xs text-[var(--text-secondary)] mb-3">Unlock full city intelligence and community.</p>
+              <button onClick={() => openJoinOverlay()}
+                className="px-5 py-2.5 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity">
+                Unlock details
+              </button>
+            </>
+          )}
+        </section>
       </div>
     </div>
   )
 }
 
-function PremiumBadge() {
+function TagRow({ label, tags }: { label: string; tags: string[] }) {
   return (
-    <span className="inline-flex items-center justify-center" title="Uncomun Member">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="9" fill="var(--accent-green)" />
-        <path d="M6 10l3 3 5-6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
+    <div className="flex items-start gap-3">
+      <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider w-16 shrink-0 pt-1.5">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {tags.map((tag) => (
+          <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20">
+            {tag.charAt(0).toUpperCase() + tag.slice(1)}
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }
 

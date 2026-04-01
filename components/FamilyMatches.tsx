@@ -18,7 +18,6 @@ type MatchedFamily = {
     education_approach: string
     interests: string[]
     bio: string
-    membership_tier?: "free" | "paid"
   }
   score: number
   reasons: string[]
@@ -77,15 +76,7 @@ export default function FamilyMatches() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-medium inline-flex items-center gap-1">
-                      {flag} {fam.family_name}
-                      {fam.membership_tier === "paid" && (
-                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="shrink-0">
-                          <circle cx="10" cy="10" r="9" fill="var(--accent-green)" />
-                          <path d="M6 10l3 3 5-6" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </p>
+                    <p className="text-sm font-medium">{flag} {fam.family_name}</p>
                     <span className="text-xs font-mono text-[var(--accent-green)]">{match.score}% match</span>
                   </div>
                   {fam.kids_ages && fam.kids_ages.length > 0 && (
