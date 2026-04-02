@@ -20,7 +20,7 @@ const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
 })
 
 export default function DashboardPage() {
-  const { user, family, loading, isPaid } = useAuth()
+  const { user, family, loading, isPaid, refreshFamily } = useAuth()
   const router = useRouter()
   const [trips, setTrips] = useState<Trip[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
@@ -114,7 +114,7 @@ export default function DashboardPage() {
                     body: formData,
                   })
                   const result = await res.json()
-                  if (result.url) { window.location.reload() }
+                  if (result.url) { await refreshFamily() }
                   else { alert(`Upload failed: ${result.error}`) }
                 }}
               />
