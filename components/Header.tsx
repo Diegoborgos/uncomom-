@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabase"
 
 const NAV_LINKS = [
   { href: "/", label: "Cities" },
@@ -105,7 +106,10 @@ export default function Header() {
               <div className="w-8 h-8 rounded-full bg-[var(--surface-elevated)] animate-pulse" />
             ) : user ? (
               /* Logged in */
-              <div className="relative" ref={dropdownRef}>
+              <div className="flex items-center gap-3">
+                {/* Message icon with unread badge */}
+                <MessageBadge />
+                <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 text-sm hover:opacity-90 transition-opacity"
@@ -161,6 +165,7 @@ export default function Header() {
                     </div>
                   </div>
                 )}
+              </div>
               </div>
             ) : (
               /* Logged out */
@@ -323,5 +328,40 @@ function MobileMenu({
       </div>
     </div>,
     document.body
+  )
+}
+
+function MessageBadge() {
+  const [unread, setUnread] = useState(0)
+
+  const fetchUnread = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      const res = await fetch("/api/messages/unread", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const data = await res.json()
+      setUnread(data.count || 0)
+    } catch { /* */ }
+  }, [])
+
+  useEffect(() => {
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 30000)
+    return () => clearInterval(interval)
+  }, [fetchUnread])
+
+  return (
+    <Link href="/messages" className="relative hover:opacity-80 transition-opacity">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+      </svg>
+      {unread > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 rounded-full bg-[var(--accent-green)] text-black text-[9px] font-bold flex items-center justify-center px-1">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      )}
+    </Link>
   )
 }

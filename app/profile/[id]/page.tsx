@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useAuth } from "@/lib/auth-context"
@@ -227,9 +227,7 @@ export default function PublicProfilePage() {
               >
                 {isFollowing ? "Following" : "Follow"}
               </button>
-              <button className="px-5 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] cursor-not-allowed opacity-50" title="Coming soon">
-                Message
-              </button>
+              <MessageButton targetFamilyId={family.id} />
             </>
           ) : (
             <Link href="/signup" className="px-5 py-2 rounded-lg bg-[var(--accent-green)] text-black text-sm font-medium hover:opacity-90 transition-opacity">
@@ -434,5 +432,39 @@ function AvatarLink({ family }: { family: CrossPathFamily }) {
         </div>
       )}
     </Link>
+  )
+}
+
+function MessageButton({ targetFamilyId }: { targetFamilyId: string }) {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+  const startConversation = async () => {
+    setLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ targetFamilyId }),
+      })
+      const data = await res.json()
+      if (data.conversationId) {
+        router.push(`/messages?chat=${data.conversationId}`)
+      }
+    } catch { /* */ }
+    setLoading(false)
+  }
+
+  return (
+    <button
+      onClick={startConversation}
+      disabled={loading}
+      className="px-5 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors disabled:opacity-50"
+    >
+      {loading ? "..." : "Message"}
+    </button>
   )
 }
