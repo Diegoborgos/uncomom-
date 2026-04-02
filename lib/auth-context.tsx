@@ -36,12 +36,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const fetchFamily = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from("families")
-      .select("*")
-      .eq("user_id", userId)
-      .single()
-    setFamily(data)
+    try {
+      const { data } = await supabase
+        .from("families")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle()
+      setFamily(data)
+    } catch {
+      setFamily(null)
+    }
   }, [])
 
   const refreshFamily = useCallback(async () => {
@@ -56,7 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (session?.user) await fetchFamily(session.user.id)
+      if (session?.user) {
+        try { await fetchFamily(session.user.id) } catch { /* */ }
+      }
       setLoading(false)
     })
 
@@ -66,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         setUser(session?.user ?? null)
         if (session?.user) {
-          await fetchFamily(session.user.id)
+          try { await fetchFamily(session.user.id) } catch { /* */ }
         } else {
           setFamily(null)
         }
