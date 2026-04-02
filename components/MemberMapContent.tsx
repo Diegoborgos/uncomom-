@@ -16,6 +16,7 @@ type FamilyLocation = {
   city_slug: string
   travel_style: string
   education_approach: string
+  avatar_url: string | null
 }
 
 export default function MemberMapContent() {
