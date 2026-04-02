@@ -30,7 +30,7 @@ type Message = {
 }
 
 function MessagesContent() {
-  const { user, family, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeChatId = searchParams.get("chat")
