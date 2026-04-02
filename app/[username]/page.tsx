@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { notFound } from "next/navigation"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useAuth } from "@/lib/auth-context"
@@ -38,6 +37,7 @@ export default function UserProfilePage() {
   const [family, setFamily] = useState<Family | null>(null)
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
+  const [notFoundState, setNotFoundState] = useState(false)
   const [followerCount, setFollowerCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
@@ -46,80 +46,89 @@ export default function UserProfilePage() {
   const [followers, setFollowers] = useState<CrossPathFamily[]>([])
   const [following, setFollowing] = useState<CrossPathFamily[]>([])
 
-  // Reserved route check
-  if (RESERVED.has(handle)) return notFound()
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    const load = async () => {
-      // Resolve username or UUID
-      const isUUID = handle.includes("-") && handle.length > 30
-      const { data: fam } = await supabase
-        .from("families")
-        .select("*")
-        .eq(isUUID ? "id" : "username", handle)
-        .single()
-
-      if (!fam) { setLoading(false); return }
-      setFamily(fam as Family)
-
-      // Trips
-      const { data: t } = await supabase
-        .from("trips")
-        .select("*")
-        .eq("family_id", fam.id)
-        .order("arrived_at", { ascending: false, nullsFirst: false })
-      setTrips(t || [])
-
-      // Follower/following counts
-      const { count: fc } = await supabase.from("family_follows").select("id", { count: "exact", head: true }).eq("following_id", fam.id)
-      const { count: fgc } = await supabase.from("family_follows").select("id", { count: "exact", head: true }).eq("follower_id", fam.id)
-      setFollowerCount(fc || 0)
-      setFollowingCount(fgc || 0)
-
-      // Am I following this person?
-      if (myFamily?.id && myFamily.id !== fam.id) {
-        const { data: fw } = await supabase.from("family_follows").select("id").eq("follower_id", myFamily.id).eq("following_id", fam.id).maybeSingle()
-        setIsFollowing(!!fw)
-      }
-
-      // People who cross paths — families with trips in the same cities
-      const citySlugs = Array.from(new Set((t || []).map((tr: Trip) => tr.city_slug)))
-      if (citySlugs.length > 0) {
-        const { data: crossTrips } = await supabase
-          .from("trips")
-          .select("family_id")
-          .in("city_slug", citySlugs)
-          .neq("family_id", fam.id)
-          .limit(100)
-        const crossFamilyIds = Array.from(new Set((crossTrips || []).map(ct => ct.family_id))).slice(0, 20)
-        if (crossFamilyIds.length > 0) {
-          const { data: crossFams } = await supabase
-            .from("families")
-            .select("id, family_name, username, avatar_url, country_code")
-            .in("id", crossFamilyIds)
-          setCrossPaths((crossFams || []) as CrossPathFamily[])
-        }
-      }
-
-      // Followers list
-      const { data: followerRows } = await supabase.from("family_follows").select("follower_id").eq("following_id", fam.id).limit(20)
-      if (followerRows?.length) {
-        const { data: fols } = await supabase.from("families").select("id, family_name, username, avatar_url, country_code").in("id", followerRows.map(r => r.follower_id))
-        setFollowers((fols || []) as CrossPathFamily[])
-      }
-
-      // Following list
-      const { data: followingRows } = await supabase.from("family_follows").select("following_id").eq("follower_id", fam.id).limit(20)
-      if (followingRows?.length) {
-        const { data: fgns } = await supabase.from("families").select("id, family_name, username, avatar_url, country_code").in("id", followingRows.map(r => r.following_id))
-        setFollowing((fgns || []) as CrossPathFamily[])
-      }
-
+    // Reserved route check
+    if (RESERVED.has(handle)) {
+      setNotFoundState(true)
       setLoading(false)
+      return
+    }
+
+    const load = async () => {
+      try {
+        const isUUID = handle.includes("-") && handle.length > 30
+        const { data: fam } = await supabase
+          .from("families")
+          .select("*")
+          .eq(isUUID ? "id" : "username", handle)
+          .single()
+
+        if (!fam) { setNotFoundState(true); setLoading(false); return }
+        setFamily(fam as Family)
+
+        // Trips
+        const { data: t } = await supabase
+          .from("trips")
+          .select("*")
+          .eq("family_id", fam.id)
+          .order("arrived_at", { ascending: false, nullsFirst: false })
+        setTrips(t || [])
+
+        // Follower/following counts (graceful — table may not exist yet)
+        try {
+          const { count: fc } = await supabase.from("family_follows").select("id", { count: "exact", head: true }).eq("following_id", fam.id)
+          const { count: fgc } = await supabase.from("family_follows").select("id", { count: "exact", head: true }).eq("follower_id", fam.id)
+          setFollowerCount(fc || 0)
+          setFollowingCount(fgc || 0)
+
+          if (myFamily?.id && myFamily.id !== fam.id) {
+            const { data: fw } = await supabase.from("family_follows").select("id").eq("follower_id", myFamily.id).eq("following_id", fam.id).maybeSingle()
+            setIsFollowing(!!fw)
+          }
+
+          // Followers list
+          const { data: followerRows } = await supabase.from("family_follows").select("follower_id").eq("following_id", fam.id).limit(20)
+          if (followerRows?.length) {
+            const { data: fols } = await supabase.from("families").select("id, family_name, username, avatar_url, country_code").in("id", followerRows.map(r => r.follower_id))
+            setFollowers((fols || []) as CrossPathFamily[])
+          }
+
+          // Following list
+          const { data: followingRows } = await supabase.from("family_follows").select("following_id").eq("follower_id", fam.id).limit(20)
+          if (followingRows?.length) {
+            const { data: fgns } = await supabase.from("families").select("id, family_name, username, avatar_url, country_code").in("id", followingRows.map(r => r.following_id))
+            setFollowing((fgns || []) as CrossPathFamily[])
+          }
+        } catch {
+          // family_follows table may not exist yet — skip silently
+        }
+
+        // People who cross paths
+        const citySlugs = Array.from(new Set((t || []).map((tr: Trip) => tr.city_slug)))
+        if (citySlugs.length > 0) {
+          const { data: crossTrips } = await supabase
+            .from("trips")
+            .select("family_id")
+            .in("city_slug", citySlugs)
+            .neq("family_id", fam.id)
+            .limit(100)
+          const crossFamilyIds = Array.from(new Set((crossTrips || []).map(ct => ct.family_id))).slice(0, 20)
+          if (crossFamilyIds.length > 0) {
+            const { data: crossFams } = await supabase
+              .from("families")
+              .select("id, family_name, username, avatar_url, country_code")
+              .in("id", crossFamilyIds)
+            setCrossPaths((crossFams || []) as CrossPathFamily[])
+          }
+        }
+      } catch (err) {
+        console.error("Profile load error:", err)
+        setNotFoundState(true)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handle, myFamily?.id])
 
   const toggleFollow = async () => {
@@ -141,7 +150,7 @@ export default function UserProfilePage() {
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
-  if (!family) return notFound()
+  if (notFoundState || !family) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Family not found</div>
 
   const isOwnProfile = myFamily?.id === family.id
   const initials = family.family_name?.slice(0, 2).toUpperCase() || "??"
