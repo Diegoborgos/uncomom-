@@ -14,7 +14,15 @@ const MemberMapContent = dynamic(() => import("@/components/MemberMapContent"), 
 })
 
 export default function MemberMapPage() {
-  const { isPaid } = useAuth()
+  const { isPaid, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="w-full h-[calc(100vh-64px)] flex items-center justify-center bg-[var(--bg)]">
+        <p className="text-[var(--text-secondary)]">Loading...</p>
+      </div>
+    )
+  }
 
   if (!isPaid) {
     return (
