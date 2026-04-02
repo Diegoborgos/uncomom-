@@ -18,6 +18,7 @@ type MatchedFamily = {
     education_approach: string
     interests: string[]
     bio: string
+    avatar_url: string | null
   }
   score: number
   reasons: string[]
@@ -71,9 +72,14 @@ export default function FamilyMatches() {
           return (
             <Link key={i} href={`/profile/${fam.username || fam.id}`} className="block rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 hover:border-[var(--accent-green)] transition-colors">
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-sm font-bold shrink-0">
-                  {initials}
-                </div>
+                {fam.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={fam.avatar_url} alt={fam.family_name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-sm font-bold shrink-0">
+                    {initials}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-sm font-medium">{flag} {fam.family_name}</p>

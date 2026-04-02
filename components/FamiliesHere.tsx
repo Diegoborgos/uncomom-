@@ -25,14 +25,14 @@ export default function FamiliesHere({
       // Families here now
       const { data: hereTrips, count: hereCount } = await supabase
         .from("trips")
-        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach)", { count: "exact" })
+        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach, avatar_url)", { count: "exact" })
         .eq("city_slug", citySlug)
         .eq("status", "here_now")
 
       // Families who've been here
       const { data: beenTrips, count: beenCount } = await supabase
         .from("trips")
-        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach)", { count: "exact" })
+        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach, avatar_url)", { count: "exact" })
         .eq("city_slug", citySlug)
         .eq("status", "been_here")
 
@@ -155,15 +155,20 @@ function FamilyCard({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border)] px-3 py-2.5">
-      <span
-        className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-          variant === "here"
-            ? "bg-[var(--accent-green)] text-[var(--bg)]"
-            : "bg-[var(--surface)] text-[var(--text-secondary)] border border-[var(--border)]"
-        }`}
-      >
-        {family.family_name.slice(0, 2).toUpperCase()}
-      </span>
+      {(family as Record<string, unknown>).avatar_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={(family as Record<string, unknown>).avatar_url as string} alt={family.family_name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+      ) : (
+        <span
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+            variant === "here"
+              ? "bg-[var(--accent-green)] text-[var(--bg)]"
+              : "bg-[var(--surface)] text-[var(--text-secondary)] border border-[var(--border)]"
+          }`}
+        >
+          {family.family_name.slice(0, 2).toUpperCase()}
+        </span>
+      )}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">
           {family.country_code ? flag(family.country_code) + " " : ""}

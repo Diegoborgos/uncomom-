@@ -28,7 +28,7 @@ export default function MemberMapContent() {
   useEffect(() => {
     supabase
       .from("trips")
-      .select("city_slug, families(family_name, country_code, kids_ages, travel_style, education_approach)")
+      .select("city_slug, families(family_name, country_code, kids_ages, travel_style, education_approach, avatar_url)")
       .eq("status", "here_now")
       .then(({ data }) => {
         if (data) {
@@ -110,9 +110,12 @@ export default function MemberMapContent() {
             ? f.country_code.toUpperCase().split("").map((c: string) => String.fromCodePoint(127397 + c.charCodeAt(0))).join("")
             : ""
           const initials = f.family_name.slice(0, 2).toUpperCase()
+          const avatarHtml = f.avatar_url
+            ? `<img src="${f.avatar_url}" alt="${f.family_name}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;" />`
+            : `<div style="width:36px;height:36px;border-radius:50%;background:#EBFF00;color:#000;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</div>`
           return `
             <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #333;">
-              <div style="width:36px;height:36px;border-radius:50%;background:#EBFF00;color:#000;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">${initials}</div>
+              ${avatarHtml}
               <div>
                 <div style="font-size:13px;font-weight:600;color:#fff;">${flag} ${f.family_name}</div>
                 <div style="font-size:11px;color:#A1A1AA;">${f.kids_ages?.length ? `Kids: ${f.kids_ages.join(", ")}` : ""}${f.travel_style ? ` · ${f.travel_style}` : ""}</div>

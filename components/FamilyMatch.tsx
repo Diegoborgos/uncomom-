@@ -18,6 +18,7 @@ type Match = {
     kids_ages: number[]
     ai_profile_summary: string
     decision_stage: string
+    avatar_url: string | null
   }
 }
 
@@ -48,7 +49,7 @@ export default function FamilyMatch() {
       const otherId = data.family_a_id === family.id ? data.family_b_id : data.family_a_id
       const { data: otherFam } = await supabase
         .from("families")
-        .select("family_name, country_code, kids_ages, ai_profile_summary, decision_stage")
+        .select("family_name, country_code, kids_ages, ai_profile_summary, decision_stage, avatar_url")
         .eq("id", otherId)
         .single()
 
@@ -96,9 +97,14 @@ export default function FamilyMatch() {
         </p>
 
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-sm font-bold shrink-0 font-serif">
-            {match.other_family?.family_name?.slice(0, 2).toUpperCase()}
-          </div>
+          {(match.other_family as Record<string, unknown>)?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={(match.other_family as Record<string, unknown>).avatar_url as string} alt={match.other_family?.family_name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center text-sm font-bold shrink-0 font-serif">
+              {match.other_family?.family_name?.slice(0, 2).toUpperCase()}
+            </div>
+          )}
           <div>
             <p className="font-medium text-sm">
               {flag(match.other_family?.country_code || "")} {match.other_family?.family_name}
