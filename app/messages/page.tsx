@@ -42,7 +42,7 @@ function MessagesContent() {
   const [msgLoading, setMsgLoading] = useState(false)
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Fetch conversations
@@ -89,14 +89,17 @@ function MessagesContent() {
     if (activeChatId) fetchMessages(activeChatId)
   }, [activeChatId, fetchMessages])
 
-  // Auto-scroll to bottom
+  // Auto-scroll — scroll the messages container, not the page
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = messagesContainerRef.current
+    if (container) container.scrollTop = container.scrollHeight
   }, [messages])
 
-  // Focus input
+  // Focus input — desktop only to avoid mobile keyboard jump
   useEffect(() => {
-    if (activeChatId && !sending) inputRef.current?.focus()
+    if (activeChatId && !sending && typeof window !== "undefined" && window.innerWidth >= 768) {
+      inputRef.current?.focus()
+    }
   }, [activeChatId, sending])
 
   // Real-time subscription for active conversation
@@ -183,7 +186,7 @@ function MessagesContent() {
   const showChat = !!activeChatId
 
   return (
-    <div className="flex h-[calc(100vh-64px)]">
+    <div className="flex" style={{ height: "calc(100dvh - 64px)" }}>
       {/* Conversation list — hidden on mobile when chat is active */}
       <div className={`${showChat ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 border-r border-[var(--border)] bg-[var(--bg)]`}>
         <div className="p-4 border-b border-[var(--border)]">
@@ -277,11 +280,11 @@ function MessagesContent() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0">
               {msgLoading ? (
-                <div className="flex items-center justify-center h-full text-[var(--text-secondary)] text-sm">Loading...</div>
+                <div className="pt-8 text-center text-[var(--text-secondary)] text-sm">Loading...</div>
               ) : messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-[var(--text-secondary)] text-sm">
+                <div className="pt-8 text-center text-[var(--text-secondary)] text-sm">
                   Say hello! Start the conversation.
                 </div>
               ) : (
@@ -303,7 +306,7 @@ function MessagesContent() {
                   )
                 })
               )}
-              <div ref={bottomRef} />
+              <div />
             </div>
 
             {/* Input */}
