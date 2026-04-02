@@ -352,7 +352,12 @@ function MessageBadge() {
   useEffect(() => {
     fetchUnread()
     const interval = setInterval(fetchUnread, 30000)
-    return () => clearInterval(interval)
+    const onRead = () => fetchUnread()
+    window.addEventListener("messages-read", onRead)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("messages-read", onRead)
+    }
   }, [fetchUnread])
 
   return (

@@ -74,6 +74,8 @@ function MessagesContent() {
       const data = await res.json()
       setMessages(data.messages || [])
       setMyFamilyId(data.myFamilyId || myFamilyId)
+      // Tell header badge to refresh
+      window.dispatchEvent(new Event("messages-read"))
     } catch { /* */ }
     setMsgLoading(false)
   }, [myFamilyId])
