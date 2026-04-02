@@ -443,7 +443,10 @@ function MessageButton({ targetFamilyId }: { targetFamilyId: string }) {
     setLoading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) return
+      if (!session?.access_token) {
+        router.push("/login")
+        return
+      }
 
       const res = await fetch("/api/conversations", {
         method: "POST",
@@ -453,9 +456,14 @@ function MessageButton({ targetFamilyId }: { targetFamilyId: string }) {
       const data = await res.json()
       if (data.conversationId) {
         router.push(`/messages?chat=${data.conversationId}`)
+      } else if (data.error) {
+        alert(data.error)
       }
-    } catch { /* */ }
-    setLoading(false)
+    } catch {
+      alert("Could not start conversation. Try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
