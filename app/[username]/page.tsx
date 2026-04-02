@@ -144,7 +144,6 @@ export default function UserProfilePage() {
   if (!family) return notFound()
 
   const isOwnProfile = myFamily?.id === family.id
-  const flag = family.country_code ? countryCodeToFlag(family.country_code) : ""
   const initials = family.family_name?.slice(0, 2).toUpperCase() || "??"
   const uniqueCities = [...new Set(trips.map(t => t.city_slug))]
   const uniqueCountries = [...new Set(trips.map(t => cities.find(c => c.slug === t.city_slug)?.country).filter(Boolean))]
