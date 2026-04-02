@@ -84,7 +84,7 @@ export default function UserProfilePage() {
       }
 
       // People who cross paths — families with trips in the same cities
-      const citySlugs = [...new Set((t || []).map((tr: Trip) => tr.city_slug))]
+      const citySlugs = Array.from(new Set((t || []).map((tr: Trip) => tr.city_slug)))
       if (citySlugs.length > 0) {
         const { data: crossTrips } = await supabase
           .from("trips")
@@ -92,7 +92,7 @@ export default function UserProfilePage() {
           .in("city_slug", citySlugs)
           .neq("family_id", fam.id)
           .limit(100)
-        const crossFamilyIds = [...new Set((crossTrips || []).map(ct => ct.family_id))].slice(0, 20)
+        const crossFamilyIds = Array.from(new Set((crossTrips || []).map(ct => ct.family_id))).slice(0, 20)
         if (crossFamilyIds.length > 0) {
           const { data: crossFams } = await supabase
             .from("families")
@@ -145,8 +145,8 @@ export default function UserProfilePage() {
 
   const isOwnProfile = myFamily?.id === family.id
   const initials = family.family_name?.slice(0, 2).toUpperCase() || "??"
-  const uniqueCities = [...new Set(trips.map(t => t.city_slug))]
-  const uniqueCountries = [...new Set(trips.map(t => cities.find(c => c.slug === t.city_slug)?.country).filter(Boolean))]
+  const uniqueCities = Array.from(new Set(trips.map(t => t.city_slug)))
+  const uniqueCountries = Array.from(new Set(trips.map(t => cities.find(c => c.slug === t.city_slug)?.country).filter(Boolean)))
   const currentTrip = trips.find(t => t.status === "here_now")
   const currentCity = currentTrip ? cities.find(c => c.slug === currentTrip.city_slug) : null
   const memberSince = new Date(family.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
