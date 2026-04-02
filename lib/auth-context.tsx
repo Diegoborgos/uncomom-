@@ -64,7 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try { await fetchFamily(session.user.id) } catch { /* */ }
       }
       setLoading(false)
+    }).catch(() => {
+      setLoading(false)
     })
+
+    // Safety: never stay loading for more than 5 seconds
+    const timeout = setTimeout(() => setLoading(false), 5000)
 
     if (!isSupabaseConfigured) return
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -80,7 +85,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [fetchFamily])
 
   const signUp = async (email: string, password: string) => {
