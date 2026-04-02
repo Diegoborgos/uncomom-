@@ -42,7 +42,7 @@ export default function OnboardingPage() {
   const [showCityPicker, setShowCityPicker] = useState(false)
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [cityPickerContinent, setCityPickerContinent] = useState<string | null>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -88,12 +88,13 @@ export default function OnboardingPage() {
           content: "Hey! Tell me about your family — where are you from?"
         }])
       }
-      setTimeout(() => inputRef.current?.focus(), 300)
+      if (typeof window !== "undefined" && window.innerWidth >= 768) setTimeout(() => inputRef.current?.focus(), 300)
     }
   }, [user, loading, family]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = messagesContainerRef.current
+    if (container) container.scrollTop = container.scrollHeight
   }, [messages])
 
   const sendMessage = async () => {
@@ -187,8 +188,7 @@ export default function OnboardingPage() {
         setShowCityPicker(true)
         setMessages((prev) => [...prev, { role: "assistant", content: "Now the fun part — which cities have you explored as a family? Tap to select." }])
       } else {
-        setTimeout(() => inputRef.current?.focus(), 100)
-      }
+        if (typeof window !== "undefined" && window.innerWidth >= 768) setTimeout(() => inputRef.current?.focus(), 100)      }
     } catch {
       setError("Connection error. Try again.")
     } finally {
@@ -349,7 +349,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Messages */}
-      <div className="px-4 py-2 space-y-3">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-3 min-h-0">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in`}>
             <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
@@ -374,7 +374,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        <div ref={bottomRef} />
+        <div />
       </div>
 
       {/* Error */}

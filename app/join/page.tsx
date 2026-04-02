@@ -20,7 +20,7 @@ export default function JoinPage() {
   const [showResults, setShowResults] = useState(false)
   const [matchData, setMatchData] = useState<Record<string, unknown> | null>(null)
   const [trajectoryData, setTrajectoryData] = useState<Record<string, unknown> | null>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const hasInitialized = useRef(false)
 
@@ -59,11 +59,12 @@ export default function JoinPage() {
   }, [authLoading, family])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = messagesContainerRef.current
+    if (container) container.scrollTop = container.scrollHeight
   }, [messages])
 
   useEffect(() => {
-    if (!loading) inputRef.current?.focus()
+    if (!loading && typeof window !== "undefined" && window.innerWidth >= 768) inputRef.current?.focus()
   }, [loading])
 
   const loadResults = useCallback(async () => {
@@ -168,7 +169,7 @@ export default function JoinPage() {
       </div>
 
       {/* Messages — same style as onboarding */}
-      <div className="px-4 py-2 space-y-3">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-3 min-h-0">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
@@ -241,7 +242,7 @@ export default function JoinPage() {
           </>
         )}
 
-        <div ref={bottomRef} />
+        <div />
       </div>
 
       {/* Input — same position as onboarding */}
