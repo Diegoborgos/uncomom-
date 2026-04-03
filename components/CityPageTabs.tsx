@@ -16,6 +16,7 @@ import TripTracker from "./TripTracker"
 import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
 import DataFreshness from "./DataFreshness"
+import { useCityOverview, CityOverviewContext } from "@/lib/use-city-overview"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -36,8 +37,10 @@ export default function CityPageTabs({
   relatedCities: City[]
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("overview")
+  const { data: overview } = useCityOverview(city)
 
   return (
+    <CityOverviewContext.Provider value={overview}>
     <div>
       {/* Sticky tab bar */}
       <div className="sticky top-16 z-30 bg-[var(--bg)] border-b border-[var(--border)]">
@@ -205,5 +208,6 @@ export default function CityPageTabs({
 
       </div>
     </div>
+    </CityOverviewContext.Provider>
   )
 }
