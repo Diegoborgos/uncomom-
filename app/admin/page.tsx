@@ -164,44 +164,74 @@ export default function AdminPage() {
       </div>
 
       {/* Admin actions */}
-      <div className="mb-8 flex flex-wrap gap-3">
-        <button
-          onClick={async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) return
-            const res = await fetch("/api/refresh-public-data", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${session.access_token}`,
-              },
-              body: JSON.stringify({}),
-            })
-            const data = await res.json()
-            alert(`Refreshed ${data.cities} cities, ${data.signals} signals, ${data.errors} errors`)
-          }}
-          className="px-4 py-2 text-xs rounded-lg bg-[var(--accent-green)] text-black font-medium hover:opacity-90"
-        >
-          Refresh all public data
-        </button>
-        <button
-          onClick={async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) return
-            const res = await fetch("/api/aggregate-signals", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-cron-secret": process.env.NEXT_PUBLIC_CRON_SECRET || "",
-              },
-            })
-            const data = await res.json()
-            alert(`Aggregated ${data.processed} cities: ${data.succeeded} succeeded, ${data.failed} failed`)
-          }}
-          className="px-4 py-2 text-xs rounded-lg border border-[var(--border)] text-[var(--text-primary)] font-medium hover:bg-[var(--surface-elevated)]"
-        >
-          Aggregate field reports
-        </button>
+      <div className="mb-8">
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">Data Pipeline</p>
+        <div className="flex flex-wrap gap-3">
+          <AdminAction
+            label="Refresh all public data"
+            onClick={async (setStatus) => {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session) throw new Error("Not logged in — refresh the page")
+
+              const { data: cities, error: citiesErr } = await supabase
+                .from("cities")
+                .select("slug, name")
+                .order("name")
+              if (citiesErr || !cities?.length) throw new Error("Could not load cities")
+
+              let totalSignals = 0
+              let totalErrors = 0
+              const failed: string[] = []
+
+              for (let i = 0; i < cities.length; i++) {
+                const city = cities[i]
+                setStatus(`Refreshing ${i + 1}/${cities.length}: ${city.name}...`)
+                try {
+                  const res = await fetch("/api/refresh-public-data", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({ citySlug: city.slug }),
+                  })
+                  const data = await res.json()
+                  if (!res.ok) {
+                    totalErrors++
+                    failed.push(city.name)
+                  } else {
+                    totalSignals += data.signals || 0
+                    totalErrors += data.errors || 0
+                  }
+                } catch {
+                  totalErrors++
+                  failed.push(city.name)
+                }
+              }
+
+              const errSuffix = failed.length > 0 ? ` | Failed: ${failed.slice(0, 3).join(", ")}` : ""
+              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix}`)
+            }}
+            accent
+          />
+          <AdminAction
+            label="Aggregate field reports"
+            onClick={async (setStatus) => {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session) throw new Error("Not logged in — refresh the page")
+              const res = await fetch("/api/aggregate-signals", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${session.access_token}`,
+                },
+              })
+              const data = await res.json()
+              if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+              setStatus(`Done: ${data.processed} cities — ${data.succeeded} succeeded, ${data.failed} failed`)
+            }}
+          />
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -299,6 +329,41 @@ function SmallMetric({ label, value }: { label: string; value: number }) {
     <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 flex items-center justify-between">
       <span className="text-[10px] text-[var(--text-secondary)]">{label}</span>
       <span className="text-xs font-mono font-bold">{value}</span>
+    </div>
+  )
+}
+
+function AdminAction({ label, onClick, accent }: { label: string; onClick: (setStatus: (s: string) => void) => Promise<void>; accent?: boolean }) {
+  const [status, setStatus] = useState<string | null>(null)
+  const [running, setRunning] = useState(false)
+
+  return (
+    <div>
+      <button
+        disabled={running}
+        onClick={async () => {
+          setRunning(true)
+          setStatus(null)
+          try {
+            await onClick(setStatus)
+          } catch (err) {
+            setStatus(`Error: ${err instanceof Error ? err.message : String(err)}`)
+          }
+          setRunning(false)
+        }}
+        className={`px-4 py-2 text-xs rounded-lg font-medium transition-opacity disabled:opacity-50 ${
+          accent
+            ? "bg-[var(--accent-green)] text-black hover:opacity-90"
+            : "border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-elevated)]"
+        }`}
+      >
+        {running ? "Running…" : label}
+      </button>
+      {status && (
+        <p className={`text-[10px] mt-1.5 ${status.startsWith("Error") ? "text-[var(--score-low)]" : "text-[var(--accent-green)]"}`}>
+          {status}
+        </p>
+      )}
     </div>
   )
 }

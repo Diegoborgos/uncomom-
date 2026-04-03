@@ -10,6 +10,8 @@ import {
   fetchOpenWeather,
 } from "@/lib/api-integrations"
 
+export const maxDuration = 300 // 5 minutes — this route processes all cities
+
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
 type RefreshResult = {
@@ -104,7 +106,7 @@ export async function POST(req: NextRequest) {
 
       // Log sources
       for (const r of results.filter((r) => r.source === "Open-Meteo")) {
-        await supabase.from("city_data_sources").upsert({
+        const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
           city_slug: city.slug,
           signal_key: r.signal,
           signal_value: String(r.value),
@@ -115,6 +117,7 @@ export async function POST(req: NextRequest) {
           valid_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           confidence: 90,
         }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+        if (upsertErr) console.error(`[${city.slug}] Upsert failed for ${r.signal}:`, upsertErr.message)
       }
     } catch (err) {
       results.push({ source: "Open-Meteo", signal: "weather+aq", value: null, error: String(err) })
@@ -130,7 +133,7 @@ export async function POST(req: NextRequest) {
         { source: "REST Countries", signal: "meta.population", value: country.population },
       )
 
-      await supabase.from("city_data_sources").upsert({
+      const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
         city_slug: city.slug,
         signal_key: "meta.country",
         signal_value: JSON.stringify({ languages: country.languages, currencies: country.currencies }),
@@ -141,6 +144,7 @@ export async function POST(req: NextRequest) {
         valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         confidence: 95,
       }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      if (upsertErr) console.error(`[${city.slug}] Upsert failed for meta.country:`, upsertErr.message)
     } catch (err) {
       results.push({ source: "REST Countries", signal: "country", value: null, error: String(err) })
     }
@@ -170,7 +174,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        await supabase.from("city_data_sources").upsert({
+        const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
           city_slug: city.slug,
           signal_key: "teleport.scores",
           signal_value: JSON.stringify(teleport.scores),
@@ -181,6 +185,7 @@ export async function POST(req: NextRequest) {
           valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           confidence: 80,
         }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+        if (upsertErr) console.error(`[${city.slug}] Upsert failed for teleport.scores:`, upsertErr.message)
       }
     } catch (err) {
       results.push({ source: "Teleport", signal: "scores", value: null, error: String(err) })
@@ -194,7 +199,7 @@ export async function POST(req: NextRequest) {
         signalUpdates["childSafety.airQuality"] = airScore // Override Open-Meteo with real-time
         results.push({ source: "AQICN", signal: "childSafety.airQuality", value: airScore })
 
-        await supabase.from("city_data_sources").upsert({
+        const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
           city_slug: city.slug,
           signal_key: "childSafety.airQuality",
           signal_value: String(airScore),
@@ -205,6 +210,7 @@ export async function POST(req: NextRequest) {
           valid_until: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6h for real-time
           confidence: 95,
         }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+        if (upsertErr) console.error(`[${city.slug}] Upsert failed for childSafety.airQuality:`, upsertErr.message)
       }
     } catch (err) {
       results.push({ source: "AQICN", signal: "airQuality", value: null, error: String(err) })
@@ -237,7 +243,7 @@ export async function POST(req: NextRequest) {
         results.push({ source: "World Bank", signal: "healthcare.infantMortality", value: wb.infantMortality })
       }
 
-      await supabase.from("city_data_sources").upsert({
+      const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
         city_slug: city.slug,
         signal_key: "worldbank.indicators",
         signal_value: JSON.stringify(wb),
@@ -248,6 +254,7 @@ export async function POST(req: NextRequest) {
         valid_until: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days
         confidence: 95,
       }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      if (upsertErr) console.error(`[${city.slug}] Upsert failed for worldbank.indicators:`, upsertErr.message)
     } catch (err) {
       results.push({ source: "World Bank", signal: "indicators", value: null, error: String(err) })
     }
@@ -262,7 +269,7 @@ export async function POST(req: NextRequest) {
           { source: "OpenWeatherMap", signal: "weather.description", value: weather.description },
         )
 
-        await supabase.from("city_data_sources").upsert({
+        const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
           city_slug: city.slug,
           signal_key: "weather.current",
           signal_value: JSON.stringify(weather),
@@ -273,6 +280,7 @@ export async function POST(req: NextRequest) {
           valid_until: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6h
           confidence: 90,
         }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+        if (upsertErr) console.error(`[${city.slug}] Upsert failed for weather.current:`, upsertErr.message)
       }
     } catch (err) {
       results.push({ source: "OpenWeatherMap", signal: "weather", value: null, error: String(err) })

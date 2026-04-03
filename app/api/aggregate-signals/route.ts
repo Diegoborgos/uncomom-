@@ -5,18 +5,33 @@ export async function GET(req: NextRequest) {
   return POST(req)
 }
 
+export const maxDuration = 120 // 2 minutes
+
+const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
+
 export async function POST(req: NextRequest) {
   const cronSecret = req.headers.get("x-cron-secret")
   const authHeader = req.headers.get("authorization")
-  const bearerToken = authHeader?.replace("Bearer ", "")
-
-  if (cronSecret !== process.env.CRON_SECRET && bearerToken !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const token = authHeader?.replace("Bearer ", "")
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const supabase = createClient(url, key, { auth: { persistSession: false } })
+
+  let authorized = cronSecret === process.env.CRON_SECRET || token === process.env.CRON_SECRET
+  if (!authorized && token) {
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const userClient = createClient(url, anonKey, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    })
+    const { data: { user } } = await userClient.auth.getUser()
+    if (user?.email && ADMIN_EMAILS.includes(user.email)) authorized = true
+  }
+
+  if (!authorized) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
   try {
     const { data: staleCities } = await supabase
