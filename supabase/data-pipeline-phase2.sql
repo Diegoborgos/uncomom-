@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.city_data_sources (
 );
 
 CREATE INDEX IF NOT EXISTS idx_city_data_sources_city ON public.city_data_sources(city_slug);
-CREATE INDEX IF NOT EXISTS idx_city_data_sources_signal ON public.city_data_sources(city_slug, signal_key);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_city_data_sources_signal ON public.city_data_sources(city_slug, signal_key);
 CREATE INDEX IF NOT EXISTS idx_city_data_sources_stale ON public.city_data_sources(valid_until) WHERE valid_until IS NOT NULL;
 
 ALTER TABLE public.city_data_sources ENABLE ROW LEVEL SECURITY;
