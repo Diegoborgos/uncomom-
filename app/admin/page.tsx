@@ -180,8 +180,8 @@ export default function AdminPage() {
                 },
                 body: JSON.stringify({}),
               })
-              if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json().catch(() => ({}))).error || res.statusText}`)
               const data = await res.json()
+              if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
               setStatus(`Done: ${data.cities} cities, ${data.signals} signals, ${data.errors} errors`)
             }}
             accent
@@ -198,8 +198,8 @@ export default function AdminPage() {
                   "Authorization": `Bearer ${session.access_token}`,
                 },
               })
-              if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json().catch(() => ({}))).error || res.statusText}`)
               const data = await res.json()
+              if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
               setStatus(`Done: ${data.processed} cities — ${data.succeeded} succeeded, ${data.failed} failed`)
             }}
           />

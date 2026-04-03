@@ -10,6 +10,8 @@ import {
   fetchOpenWeather,
 } from "@/lib/api-integrations"
 
+export const maxDuration = 300 // 5 minutes — this route processes all cities
+
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
 type RefreshResult = {

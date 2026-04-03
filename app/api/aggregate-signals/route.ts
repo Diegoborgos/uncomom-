@@ -5,6 +5,8 @@ export async function GET(req: NextRequest) {
   return POST(req)
 }
 
+export const maxDuration = 120 // 2 minutes
+
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
 export async function POST(req: NextRequest) {
