@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
@@ -12,8 +13,31 @@ const FIRST_MESSAGE: Message = {
   content: "Hey! Tell me about your family — where are you from, and what's got you thinking about living abroad?"
 }
 
+function getFieldReportMessage(citySlug: string): Message {
+  const cityName = citySlug
+    .split("-")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
+
+  return {
+    role: "assistant",
+    content: `Welcome back. So you've been to ${cityName} — I'd love to hear how it went.\n\nWhat was the experience like for your family?`
+  }
+}
+
 export default function JoinPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-20 text-center text-[var(--text-secondary)]">Loading...</div>}>
+      <JoinPageContent />
+    </Suspense>
+  )
+}
+
+function JoinPageContent() {
   const { user, family, refreshFamily, loading: authLoading } = useAuth()
+  const searchParams = useSearchParams()
+  const citySlug = searchParams.get("city")
+  const mode = searchParams.get("mode")
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -30,6 +54,12 @@ export default function JoinPage() {
     if (authLoading) return
     if (hasInitialized.current) return
     hasInitialized.current = true
+
+    // If coming from a city page in report mode, start fresh with city context
+    if (mode === "report" && citySlug) {
+      setMessages([getFieldReportMessage(citySlug)])
+      return
+    }
 
     const saved = family?.chat_history as Message[] | null
     if (saved && Array.isArray(saved) && saved.length > 0) {
@@ -97,6 +127,8 @@ export default function JoinPage() {
           messages: newMessages,
           familyId: family?.id || null,
           userId: user?.id || null,
+          cityContext: citySlug || null,
+          mode: mode || "onboarding",
         }),
       })
 

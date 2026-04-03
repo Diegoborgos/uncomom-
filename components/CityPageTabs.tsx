@@ -15,7 +15,6 @@ import FamiliesHere from "./FamiliesHere"
 import TripTracker from "./TripTracker"
 import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
-import FieldReportForm from "./FieldReportForm"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -183,11 +182,20 @@ export default function CityPageTabs({
             <CityReviews citySlug={city.slug} />
             <FamiliesHere citySlug={city.slug} fallbackCount={city.meta.familiesNow} />
             <section id="field-report">
-              <h2 className="font-serif text-xl font-bold mb-2">File a Field Report</h2>
-              <p className="text-sm text-[var(--text-secondary)] mb-4">
-                Your report directly updates {city.name}&apos;s city intelligence.
-              </p>
-              <FieldReportForm citySlug={city.slug} />
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 text-center">
+                <h2 className="font-serif text-xl font-bold mb-2">
+                  Been to {city.name}?
+                </h2>
+                <p className="text-sm text-[var(--text-secondary)] mb-4">
+                  Tell us about your experience. A quick conversation helps the next family land better.
+                </p>
+                <a
+                  href={`/join?city=${city.slug}&mode=report`}
+                  className="inline-flex items-center gap-2 bg-[var(--accent-green)] text-black px-6 py-3 rounded-full text-sm font-medium hover:opacity-90 transition"
+                >
+                  Share your experience &rarr;
+                </a>
+              </div>
             </section>
           </div>
         )}

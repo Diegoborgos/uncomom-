@@ -106,6 +106,7 @@ export default function FieldReportForm({
     await supabase.from("city_field_reports").upsert({
       family_id: family.id,
       city_slug: citySlug,
+      source: "form",
       trip_start: data.tripStart,
       trip_end: data.tripEnd,
       kids_ages_during_trip: ages,
@@ -156,7 +157,7 @@ export default function FieldReportForm({
       passport_tier: data.passportTier || null,
       setup_narrative: data.setupNarrative || null,
       arrival_month: data.tripStart ? new Date(data.tripStart).getMonth() + 1 : null,
-    }, { onConflict: "family_id,city_slug" })
+    }, { onConflict: "family_id,city_slug,source" })
 
     setSubmitting(false)
     setSubmitted(true)
