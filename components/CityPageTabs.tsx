@@ -15,6 +15,7 @@ import FamiliesHere from "./FamiliesHere"
 import TripTracker from "./TripTracker"
 import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
+import DataFreshness from "./DataFreshness"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -143,6 +144,8 @@ export default function CityPageTabs({
                 </div>
               </section>
             )}
+
+            <DataFreshness citySlug={city.slug} />
           </div>
         )}
 

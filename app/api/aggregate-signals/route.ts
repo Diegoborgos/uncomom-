@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
+export async function GET(req: NextRequest) {
+  return POST(req)
+}
+
 export async function POST(req: NextRequest) {
   const cronSecret = req.headers.get("x-cron-secret")
-  if (cronSecret !== process.env.CRON_SECRET) {
+  const authHeader = req.headers.get("authorization")
+  const bearerToken = authHeader?.replace("Bearer ", "")
+
+  if (cronSecret !== process.env.CRON_SECRET && bearerToken !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

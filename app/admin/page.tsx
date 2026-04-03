@@ -163,6 +163,47 @@ export default function AdminPage() {
         <SmallMetric label="Schools (Google)" value={stats.totalSchools} />
       </div>
 
+      {/* Admin actions */}
+      <div className="mb-8 flex flex-wrap gap-3">
+        <button
+          onClick={async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+            const res = await fetch("/api/refresh-public-data", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({}),
+            })
+            const data = await res.json()
+            alert(`Refreshed ${data.cities} cities, ${data.signals} signals, ${data.errors} errors`)
+          }}
+          className="px-4 py-2 text-xs rounded-lg bg-[var(--accent-green)] text-black font-medium hover:opacity-90"
+        >
+          Refresh all public data
+        </button>
+        <button
+          onClick={async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+            const res = await fetch("/api/aggregate-signals", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-cron-secret": process.env.NEXT_PUBLIC_CRON_SECRET || "",
+              },
+            })
+            const data = await res.json()
+            alert(`Aggregated ${data.processed} cities: ${data.succeeded} succeeded, ${data.failed} failed`)
+          }}
+          className="px-4 py-2 text-xs rounded-lg border border-[var(--border)] text-[var(--text-primary)] font-medium hover:bg-[var(--surface-elevated)]"
+        >
+          Aggregate field reports
+        </button>
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Events by type */}
         <div className="lg:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
