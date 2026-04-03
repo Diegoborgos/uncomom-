@@ -172,17 +172,45 @@ export default function AdminPage() {
             onClick={async (setStatus) => {
               const { data: { session } } = await supabase.auth.getSession()
               if (!session) throw new Error("Not logged in — refresh the page")
-              const res = await fetch("/api/refresh-public-data", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${session.access_token}`,
-                },
-                body: JSON.stringify({}),
-              })
-              const data = await res.json()
-              if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
-              setStatus(`Done: ${data.cities} cities, ${data.signals} signals, ${data.errors} errors`)
+
+              const { data: cities, error: citiesErr } = await supabase
+                .from("cities")
+                .select("slug, name")
+                .order("name")
+              if (citiesErr || !cities?.length) throw new Error("Could not load cities")
+
+              let totalSignals = 0
+              let totalErrors = 0
+              const failed: string[] = []
+
+              for (let i = 0; i < cities.length; i++) {
+                const city = cities[i]
+                setStatus(`Refreshing ${i + 1}/${cities.length}: ${city.name}...`)
+                try {
+                  const res = await fetch("/api/refresh-public-data", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({ citySlug: city.slug }),
+                  })
+                  const data = await res.json()
+                  if (!res.ok) {
+                    totalErrors++
+                    failed.push(city.name)
+                  } else {
+                    totalSignals += data.signals || 0
+                    totalErrors += data.errors || 0
+                  }
+                } catch {
+                  totalErrors++
+                  failed.push(city.name)
+                }
+              }
+
+              const errSuffix = failed.length > 0 ? ` | Failed: ${failed.slice(0, 3).join(", ")}` : ""
+              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix}`)
             }}
             accent
           />
