@@ -5,7 +5,7 @@ import Link from "next/link"
 import { City } from "@/lib/types"
 import CityCard from "./CityCard"
 import { formatEuro } from "@/lib/scores"
-import { FISBreakdown } from "./FISScore"
+import FISBreakdownV2 from "./FISBreakdownV2"
 import CityIntelligence from "./CityIntelligence"
 import PlacesGallery from "./PlacesGallery"
 import CityVisas from "./CityVisas"
@@ -15,7 +15,6 @@ import FamiliesHere from "./FamiliesHere"
 import TripTracker from "./TripTracker"
 import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
-import DataFreshness from "./DataFreshness"
 import { useCityOverview, CityOverviewContext } from "@/lib/use-city-overview"
 
 const TABS = [
@@ -68,20 +67,22 @@ export default function CityPageTabs({
 
         {/* OVERVIEW */}
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* FIS Breakdown */}
-            <section>
+          <div className="space-y-6">
+            {/* FIS Breakdown — reads from context */}
+            <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
               <div className="flex items-baseline justify-between mb-4">
                 <h2 className="font-serif text-xl font-bold">Family Intelligence Score&trade;</h2>
-                <Link href="/methodology" className="text-xs text-[var(--accent-green)] hover:underline shrink-0 ml-4">
-                  How this works &rarr;
-                </Link>
+                {overview?.fis.isPersonalized && (
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
+                    Personalized
+                  </span>
+                )}
               </div>
-              <FISBreakdown city={city} />
+              <FISBreakdownV2 />
             </section>
 
-            {/* About + Tags + Best Months — compact */}
-            <section>
+            {/* About */}
+            <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
               <h2 className="font-serif text-xl font-bold mb-3">About {city.name}</h2>
               <p className="text-[var(--text-secondary)] leading-relaxed mb-4">{city.description}</p>
               <div className="flex flex-wrap gap-2 mb-4">
@@ -95,13 +96,15 @@ export default function CityPageTabs({
                   </Link>
                 ))}
               </div>
-              <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
-                <span>Best months:</span>
-                <span className="text-[var(--text-primary)]">{city.meta.bestMonths.join(", ")}</span>
-              </div>
+              {city.meta.bestMonths.length > 0 && (
+                <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                  <span>Best months:</span>
+                  <span className="text-[var(--text-primary)]">{city.meta.bestMonths.join(", ")}</span>
+                </div>
+              )}
             </section>
 
-            {/* Cost + Meta — side by side on desktop */}
+            {/* Cost + Meta — consistent card style */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
                 <CostPanelGated city={city} />
@@ -112,10 +115,14 @@ export default function CityPageTabs({
             {/* Trip Tracker */}
             <TripTracker citySlug={city.slug} />
 
-            {/* Related Cities — full CityCard on desktop, compact on mobile */}
+            {/* Related Cities */}
             {relatedCities.length > 0 && (
               <section>
-                <h2 className="font-serif text-xl font-bold mb-4">Other cities in {city.continent}</h2>
+                <h2 className="font-serif text-xl font-bold mb-4">
+                  {overview?.fis.isPersonalized
+                    ? `Other cities in ${city.continent} for your family`
+                    : `Other cities in ${city.continent}`}
+                </h2>
                 {/* Desktop: full CityCards */}
                 <div className="hidden sm:grid sm:grid-cols-3 gap-4">
                   {relatedCities.map((c) => (
@@ -147,8 +154,6 @@ export default function CityPageTabs({
                 </div>
               </section>
             )}
-
-            <DataFreshness citySlug={city.slug} />
           </div>
         )}
 
