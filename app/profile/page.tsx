@@ -92,7 +92,15 @@ export default function ProfilePage() {
     )
   }
 
-  if (!user || !family) return null
+  if (!user) return null
+
+  if (!family) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center text-[var(--text-secondary)]">
+        Loading...
+      </div>
+    )
+  }
 
   const getCityName = (slug: string) => {
     const city = cities.find((c) => c.slug === slug)

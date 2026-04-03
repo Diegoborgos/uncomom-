@@ -57,23 +57,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
       return
     }
+
+    let initialLoad = true
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
         try { await fetchFamily(session.user.id) } catch { /* */ }
       }
+      initialLoad = false
       setLoading(false)
     }).catch(() => {
+      initialLoad = false
       setLoading(false)
     })
 
     // Safety: never stay loading for more than 5 seconds
     const timeout = setTimeout(() => setLoading(false), 5000)
 
-    if (!isSupabaseConfigured) return
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        // Skip if initial getSession() is still in flight — it will handle loading
+        if (initialLoad) return
         setSession(session)
         setUser(session?.user ?? null)
         if (session?.user) {
@@ -81,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setFamily(null)
         }
-        setLoading(false)
       }
     )
 
