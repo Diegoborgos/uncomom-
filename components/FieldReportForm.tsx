@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
 import { cities } from "@/data/cities"
 
-const TOTAL_STEPS = 5
+const TOTAL_STEPS = 6
 
 type ReportData = {
   tripStart: string
@@ -47,6 +47,17 @@ type ReportData = {
   biggestChallenge: string
   wouldReturn: boolean | null
   overallRating: number
+  // Arrival curve
+  daysToHousing: string
+  daysToFirstCommunity: string
+  daysToSchoolEnrolled: string
+  daysToOperational: string
+  housingSearchDifficulty: string
+  biggestSetupBlocker: string
+  passportTier: string
+  visaProcessingDays: string
+  setupNarrative: string
+  arrivalMonth: string
 }
 
 const defaultData: ReportData = {
@@ -62,6 +73,9 @@ const defaultData: ReportData = {
   recommendCommunity: null, whereCommunity: "",
   internetQuality: "", couldWork: null,
   topTip: "", biggestChallenge: "", wouldReturn: null, overallRating: 0,
+  daysToHousing: "", daysToFirstCommunity: "", daysToSchoolEnrolled: "",
+  daysToOperational: "", housingSearchDifficulty: "", biggestSetupBlocker: "",
+  passportTier: "", visaProcessingDays: "", setupNarrative: "", arrivalMonth: "",
 }
 
 export default function FieldReportForm({
@@ -92,6 +106,7 @@ export default function FieldReportForm({
     await supabase.from("city_field_reports").upsert({
       family_id: family.id,
       city_slug: citySlug,
+      source: "form",
       trip_start: data.tripStart,
       trip_end: data.tripEnd,
       kids_ages_during_trip: ages,
@@ -132,7 +147,17 @@ export default function FieldReportForm({
       would_return: data.wouldReturn,
       overall_rating: data.overallRating || null,
       stay_duration_days: durationDays,
-    }, { onConflict: "family_id,city_slug" })
+      // Arrival curve
+      days_to_housing: data.daysToHousing ? parseInt(data.daysToHousing) : null,
+      days_to_first_community: data.daysToFirstCommunity ? parseInt(data.daysToFirstCommunity) : null,
+      days_to_school_enrolled: data.daysToSchoolEnrolled ? parseInt(data.daysToSchoolEnrolled) : null,
+      days_to_operational: data.daysToOperational ? parseInt(data.daysToOperational) : null,
+      housing_search_difficulty: data.housingSearchDifficulty || null,
+      biggest_setup_blocker: data.biggestSetupBlocker || null,
+      passport_tier: data.passportTier || null,
+      setup_narrative: data.setupNarrative || null,
+      arrival_month: data.tripStart ? new Date(data.tripStart).getMonth() + 1 : null,
+    }, { onConflict: "family_id,city_slug,source" })
 
     setSubmitting(false)
     setSubmitted(true)
@@ -177,8 +202,90 @@ export default function FieldReportForm({
         </div>
       )}
 
-      {/* Step 2: Safety + Healthcare */}
+      {/* Step 2: Arrival Curve — the data no other platform collects */}
       {step === 2 && (
+        <div className="space-y-5">
+          <div>
+            <h3 className="font-serif text-lg font-bold mb-1">The arrival curve</h3>
+            <p className="text-xs text-[var(--text-secondary)]">
+              This is the data no platform has. Your real timeline helps the next family land better.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Days until you had a flat/villa</label>
+              <input type="number" placeholder="e.g. 14" value={data.daysToHousing}
+                onChange={(e) => setData({ ...data, daysToHousing: e.target.value })}
+                className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)]" />
+            </div>
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Days until first real family connection</label>
+              <input type="number" placeholder="e.g. 8" value={data.daysToFirstCommunity}
+                onChange={(e) => setData({ ...data, daysToFirstCommunity: e.target.value })}
+                className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)]" />
+            </div>
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Days until kids enrolled in school</label>
+              <input type="number" placeholder="e.g. 21 (0 if homeschool)" value={data.daysToSchoolEnrolled}
+                onChange={(e) => setData({ ...data, daysToSchoolEnrolled: e.target.value })}
+                className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)]" />
+            </div>
+            <div>
+              <label className="block text-xs text-[var(--text-secondary)] mb-1">Weeks until you felt operational</label>
+              <input type="number" placeholder="e.g. 6" value={data.daysToOperational}
+                onChange={(e) => setData({ ...data, daysToOperational: e.target.value })}
+                className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)]" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1">Housing search difficulty</label>
+            <select value={data.housingSearchDifficulty}
+              onChange={(e) => setData({ ...data, housingSearchDifficulty: e.target.value })}
+              className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)]">
+              <option value="">Select...</option>
+              <option value="easy">Easy — found something good within a week</option>
+              <option value="moderate">Moderate — took 2-3 weeks, some false starts</option>
+              <option value="hard">Hard — 3-5 weeks, lost flats, felt stressful</option>
+              <option value="very_hard">Very hard — 5+ weeks or had to compromise significantly</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1">Your passport tier</label>
+            <select value={data.passportTier}
+              onChange={(e) => setData({ ...data, passportTier: e.target.value })}
+              className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)]">
+              <option value="">Select...</option>
+              <option value="strong">Strong — US, UK, EU, AU, CA, JP, NZ, SG</option>
+              <option value="medium">Medium — BR, MX, AR, TR, IN, ZA, MY, TH</option>
+              <option value="limited">Limited — NG, GH, PK, KE, UG, and similar</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1">Biggest setup blocker (optional)</label>
+            <input type="text" placeholder="e.g. 'NIF took 3 weeks', 'school needed proof of address first'"
+              value={data.biggestSetupBlocker}
+              onChange={(e) => setData({ ...data, biggestSetupBlocker: e.target.value })}
+              className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)]" />
+          </div>
+
+          <div>
+            <label className="block text-xs text-[var(--text-secondary)] mb-1">
+              Your setup story — week by week (optional but gold)
+            </label>
+            <textarea rows={3} placeholder="Week 1: SIM and Airbnb. Week 2: lost two flats. Week 3: NIF sorted. Week 5: school enrolled. Operational by week 7."
+              value={data.setupNarrative}
+              onChange={(e) => setData({ ...data, setupNarrative: e.target.value })}
+              className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--accent-green)] resize-none" />
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Safety + Healthcare */}
+      {step === 3 && (
         <div className="space-y-4">
           <p className="text-sm font-medium mb-2">Safety & Healthcare</p>
           <StarRating label="Overall safety feeling" value={data.safetyOverall} onChange={(v) => update({ safetyOverall: v })} />
@@ -196,8 +303,8 @@ export default function FieldReportForm({
         </div>
       )}
 
-      {/* Step 3: Education + Cost */}
-      {step === 3 && (
+      {/* Step 4: Education + Cost */}
+      {step === 4 && (
         <div className="space-y-4">
           <p className="text-sm font-medium mb-2">Education & Cost</p>
           <Select label="Education approach used" value={data.schoolingApproach} onChange={(v) => update({ schoolingApproach: v })} options={["International school", "Local school", "Homeschool", "Online school", "Worldschooling", "Mixed"]} />
@@ -218,8 +325,8 @@ export default function FieldReportForm({
         </div>
       )}
 
-      {/* Step 4: Nature + Community + Work */}
-      {step === 4 && (
+      {/* Step 5: Nature + Community + Work */}
+      {step === 5 && (
         <div className="space-y-4">
           <p className="text-sm font-medium mb-2">Nature, Community & Work</p>
           <StarRating label="Outdoor life for kids" value={data.outdoorRating} onChange={(v) => update({ outdoorRating: v })} />
@@ -233,8 +340,8 @@ export default function FieldReportForm({
         </div>
       )}
 
-      {/* Step 5: Open fields + Overall */}
-      {step === 5 && (
+      {/* Step 6: Open fields + Overall */}
+      {step === 6 && (
         <div className="space-y-4">
           <p className="text-sm font-medium mb-2">Overall & Tips</p>
           <StarRating label="Overall rating" value={data.overallRating} onChange={(v) => update({ overallRating: v })} />

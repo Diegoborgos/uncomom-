@@ -69,13 +69,13 @@ export function FISDetailGauge({ city }: { city: City }) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="font-serif text-3xl font-bold" style={{ color }}>{fis.score}</span>
-          <span className="text-[8px] text-white/50 tracking-widest uppercase">FIS&trade;</span>
+          <span className="text-xs text-white/50 tracking-widest uppercase">FIS&trade;</span>
         </div>
       </div>
 
       {/* Label */}
-      <span className="text-xs mt-1" style={{ color }}>{label}</span>
-      <span className="text-[10px] text-white/40 mt-0.5">
+      <span className="text-sm font-medium mt-1" style={{ color }}>{label}</span>
+      <span className="text-xs text-white/50 mt-0.5">
         {isPersonal ? "Your FIS\u2122" : "Family Intelligence Score\u2122"}
       </span>
     </div>

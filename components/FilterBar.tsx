@@ -12,8 +12,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "childSafety", label: "Child Safety" },
   { value: "nature", label: "Nature" },
   { value: "internet", label: "Internet" },
-  { value: "familiesNow", label: "Families There Now" },
-  { value: "returnRate", label: "Return Rate" },
 ]
 
 const CONTINENTS = ["Europe", "Asia", "Latin America", "Africa"]
@@ -47,11 +45,9 @@ const activeFilterCount = (filters: Filters): number => {
 export default function FilterBar({
   filters,
   onChange,
-  resultCount,
 }: {
   filters: Filters
   onChange: (f: Filters) => void
-  resultCount: number
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterCount = activeFilterCount(filters)
@@ -76,66 +72,60 @@ export default function FilterBar({
 
   return (
     <div className="sticky top-16 z-30 bg-[var(--bg)] border-b border-[var(--border)]">
-      {/* Main toolbar row — Nomad List style */}
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-2 h-12 overflow-x-auto scrollbar-hide">
-          {/* Logo icon */}
-          <span className="font-serif text-lg font-bold text-[var(--accent-green)] shrink-0 mr-1">U</span>
+        <div className="flex items-center gap-3 h-14 overflow-x-auto scrollbar-hide">
 
-          {/* Filters toggle */}
+          {/* Filters toggle — premium pill */}
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium shrink-0 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-medium shrink-0 transition-all ${
               filtersOpen || filterCount > 0
-                ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-[var(--bg)]"
-                : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
+                ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-black"
+                : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
             }`}
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M1 3h14v1.5H1V3zm2 4h10v1.5H3V7zm3 4h4v1.5H6V11z" />
             </svg>
             Filters
             {filterCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-[var(--bg)] text-[var(--accent-green)] text-[10px] flex items-center justify-center font-bold">
+              <span className="w-5 h-5 rounded-full bg-black text-[var(--accent-green)] text-[10px] flex items-center justify-center font-bold">
                 {filterCount}
               </span>
             )}
           </button>
 
           {/* Search input */}
-          <div className="relative flex-1 min-w-[140px] max-w-[280px]">
-            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <div className="relative flex-1 min-w-[160px] max-w-[320px]">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="7" cy="7" r="5" />
               <path d="M11 11l3.5 3.5" />
             </svg>
             <input
               type="text"
-              placeholder="Search or filter..."
+              placeholder="Search destination..."
               value={filters.search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-8 pr-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-10 pr-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
             />
           </div>
-
-          {/* Separator */}
-          <span className="w-px h-5 bg-[var(--border)] shrink-0" />
 
           {/* Compare */}
           <Link
             href="/compare"
-            className="px-3 py-1.5 rounded-full border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:border-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+            className="px-4 py-2.5 rounded-full border border-[var(--border)] text-sm text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-all shrink-0"
           >
             Compare
           </Link>
 
           {/* View toggle */}
           <div className="flex rounded-full border border-[var(--border)] overflow-hidden shrink-0">
-            <span className="px-3 py-1.5 text-xs bg-[var(--surface-elevated)] text-[var(--text-primary)] font-medium">
-              Grid view
+            <span className="px-4 py-2.5 text-sm bg-[var(--surface-elevated)] text-[var(--text-primary)] font-medium">
+              Grid
             </span>
             <Link
               href="/map"
-              className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              className="px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
               Map view
             </Link>
@@ -148,7 +138,7 @@ export default function FilterBar({
           <select
             value={filters.sort}
             onChange={(e) => handleSortChange(e.target.value as SortOption)}
-            className="bg-transparent border border-[var(--border)] rounded-full px-3 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)] transition-colors shrink-0 cursor-pointer"
+            className="bg-[var(--surface)] border border-[var(--border)] rounded-full px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)] transition-colors shrink-0 cursor-pointer"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -157,17 +147,6 @@ export default function FilterBar({
 
           {/* Spacer */}
           <div className="flex-1" />
-
-          {/* Result count + CTA */}
-          <span className="text-xs text-[var(--text-secondary)] shrink-0 hidden sm:inline">
-            {resultCount} {resultCount === 1 ? "city" : "cities"}
-          </span>
-          <Link
-            href="/signup"
-            className="px-4 py-1.5 rounded-full bg-[var(--accent-green)] text-[var(--bg)] text-xs font-medium hover:opacity-90 transition-opacity shrink-0"
-          >
-            Join Uncomun →
-          </Link>
         </div>
       </div>
 

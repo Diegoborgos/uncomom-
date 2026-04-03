@@ -5,65 +5,32 @@ import Link from "next/link"
 export default function Hero() {
   return (
     <section className="relative w-full h-[85vh] min-h-[600px] overflow-hidden bg-[var(--bg)]">
-      {/* Gradient background instead of image */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0d1a14] via-[#1a3d28] to-[#0d1a14]" />
-      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 30% 40%, rgba(76,175,125,0.3) 0%, transparent 60%), radial-gradient(circle at 70% 60%, rgba(212,135,74,0.2) 0%, transparent 50%)" }} />
+      {/* Pure black with subtle radial glow */}
+      <div className="absolute inset-0 bg-black" />
+      <div className="absolute inset-0 opacity-30" style={{
+        backgroundImage: "radial-gradient(circle at 50% 40%, rgba(235,255,0,0.12) 0%, transparent 50%)"
+      }} />
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
         <p className="text-sm text-[var(--accent-green)] font-medium tracking-wider uppercase mb-6">
           For families who live differently
         </p>
-        <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl font-bold text-[var(--text-primary)] leading-tight max-w-4xl mb-6">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-medium text-white leading-tight max-w-4xl mb-6" style={{ fontFamily: "'Instrument Serif', serif", letterSpacing: "-0.03em" }}>
           Spent months in a city<br />that failed your family?
         </h1>
-        <p className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-xl mb-10">
+        <p className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-xl mb-10" style={{ fontFamily: "'Inter', sans-serif" }}>
           Great on paper. Wrong school options. No family community. Traffic that made walking with your kids dangerous. That&apos;s what we prevent.
         </p>
 
-        {/* CTA buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Link
-            href="#cities"
-            onClick={(e) => {
-              e.preventDefault()
-              document.getElementById("cities")?.scrollIntoView({ behavior: "smooth" })
-            }}
-            className="px-8 py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity text-sm"
-          >
-            Find your family&apos;s next city
-          </Link>
-          <Link
-            href="/membership"
-            className="px-8 py-3.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors text-sm"
-          >
-            Join Uncomun · €179 lifetime
-          </Link>
-        </div>
-
-        {/* Quick stats */}
-        <div className="flex items-center gap-8 mt-12 text-[var(--text-secondary)] text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🌍</span>
-            <span>45 cities</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🏠</span>
-            <span>For families</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📚</span>
-            <span>Schools & visas</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[var(--text-secondary)]/40">
-        <span className="text-xs">Explore cities</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M4 6l4 4 4-4" />
-        </svg>
+        {/* CTA — yellow pill */}
+        <Link
+          href="/join"
+          className="px-8 py-3.5 rounded-full bg-[var(--accent-green)] text-black font-semibold hover:opacity-90 transition-opacity text-sm"
+          style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+          Join Uncomun
+        </Link>
       </div>
     </section>
   )

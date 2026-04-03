@@ -1,21 +1,54 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
-import { schools } from "@/data/schools"
+import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag, formatEuro } from "@/lib/scores"
-import { SchoolType, SchoolCurriculum } from "@/lib/school-types"
 
-const SCHOOL_TYPES: SchoolType[] = ["International", "Bilingual", "Montessori", "Waldorf", "Online/Hybrid"]
-const CURRICULA: SchoolCurriculum[] = ["IB", "British", "American", "French", "Montessori", "Waldorf"]
+type SchoolRow = {
+  id: string
+  city_slug: string
+  name: string
+  school_type: string
+  curriculum: string
+  age_range: string
+  monthly_fee: number | null
+  rating: number | null
+  review_count: number
+  address: string | null
+  phone: string | null
+  website: string | null
+  google_maps_url: string | null
+  photo_urls: string[]
+  description: string | null
+  languages: string[]
+  tags: string[]
+  google_reviews: Array<{ author: string; rating: number; text: string; time: string }> | null
+}
+
+const SCHOOL_TYPES = ["International", "British", "American", "Montessori", "Waldorf", "Bilingual", "Forest School", "Alternative", "Private"]
+const CURRICULA = ["IB", "British", "American", "French", "Montessori", "Waldorf"]
 
 export default function SchoolsPage() {
+  const [schools, setSchools] = useState<SchoolRow[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [cityFilter, setCityFilter] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [curriculumFilter, setCurriculumFilter] = useState("")
-  const [sort, setSort] = useState<"rating" | "fee-low" | "fee-high">("rating")
+  const [sort, setSort] = useState<"rating" | "fee-low" | "fee-high" | "reviews">("rating")
+
+  useEffect(() => {
+    supabase
+      .from("city_schools")
+      .select("*")
+      .order("rating", { ascending: false, nullsFirst: false })
+      .then(({ data }) => {
+        setSchools(data || [])
+        setLoading(false)
+      })
+  }, [])
 
   const filtered = useMemo(() => {
     let result = [...schools]
@@ -25,30 +58,34 @@ export default function SchoolsPage() {
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(q) ||
-          s.description.toLowerCase().includes(q) ||
+          (s.description || "").toLowerCase().includes(q) ||
+          (s.address || "").toLowerCase().includes(q) ||
           s.tags.some((t) => t.toLowerCase().includes(q))
       )
     }
-    if (cityFilter) result = result.filter((s) => s.citySlug === cityFilter)
-    if (typeFilter) result = result.filter((s) => s.type === typeFilter)
+    if (cityFilter) result = result.filter((s) => s.city_slug === cityFilter)
+    if (typeFilter) result = result.filter((s) => s.school_type === typeFilter)
     if (curriculumFilter) result = result.filter((s) => s.curriculum === curriculumFilter)
 
     result.sort((a, b) => {
-      if (sort === "rating") return b.rating - a.rating
-      if (sort === "fee-low") return a.monthlyFee - b.monthlyFee
-      return b.monthlyFee - a.monthlyFee
+      if (sort === "rating") return (b.rating || 0) - (a.rating || 0)
+      if (sort === "fee-low") return (a.monthly_fee || 9999) - (b.monthly_fee || 9999)
+      if (sort === "fee-high") return (b.monthly_fee || 0) - (a.monthly_fee || 0)
+      return b.review_count - a.review_count
     })
 
     return result
-  }, [search, cityFilter, typeFilter, curriculumFilter, sort])
+  }, [schools, search, cityFilter, typeFilter, curriculumFilter, sort])
 
   const getCityInfo = (slug: string) => {
     const city = cities.find((c) => c.slug === slug)
-    if (!city) return { name: slug, flag: "" }
+    if (!city) return { name: slug.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "), flag: "" }
     return { name: city.name, flag: countryCodeToFlag(city.countryCode) }
   }
 
-  const cityOptions = Array.from(new Set(schools.map((s) => s.citySlug))).sort()
+  const cityOptions = useMemo(() =>
+    Array.from(new Set(schools.map((s) => s.city_slug))).sort()
+  , [schools])
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -104,82 +141,139 @@ export default function SchoolsPage() {
             <option value="rating">Sort: Rating</option>
             <option value="fee-low">Sort: Fee (low first)</option>
             <option value="fee-high">Sort: Fee (high first)</option>
+            <option value="reviews">Sort: Most reviewed</option>
           </select>
         </div>
         <p className="text-sm text-[var(--text-secondary)]">
-          {filtered.length} {filtered.length === 1 ? "school" : "schools"}
+          {loading ? "Loading..." : `${filtered.length} ${filtered.length === 1 ? "school" : "schools"}`}
         </p>
       </div>
 
       {/* School list */}
-      {filtered.length === 0 ? (
+      {!loading && filtered.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-[var(--text-secondary)]">No schools match your filters.</p>
+          <p className="text-[var(--text-secondary)] mb-2">No schools match your filters.</p>
+          <p className="text-sm text-[var(--text-secondary)]">Schools are loaded per city. Check back as we expand coverage.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {filtered.map((school) => {
-            const cityInfo = getCityInfo(school.citySlug)
+            const cityInfo = getCityInfo(school.city_slug)
             return (
               <div
                 key={school.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 hover:border-[var(--accent-green)] transition-colors"
+                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden hover:border-[var(--accent-green)] transition-colors"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-serif text-xl font-bold mb-1">{school.name}</h3>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-secondary)] mb-3">
-                      <Link
-                        href={`/cities/${school.citySlug}`}
-                        className="hover:text-[var(--accent-green)] transition-colors"
-                      >
+                <div className="flex flex-col sm:flex-row">
+                  {/* Photo */}
+                  <div className="h-48 sm:h-auto sm:w-48 shrink-0 bg-[var(--surface-elevated)]">
+                    {school.photo_urls?.[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={school.photo_urls[0]} alt={school.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)] text-xs">No photo</div>
+                    )}
+                  </div>
+                  {/* Content — right side */}
+                  <div className="flex-1 p-5">
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <h3 className="font-serif text-lg font-bold mb-1 line-clamp-2">{school.name}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-secondary)]">
+                      <Link href={`/cities/${school.city_slug}`} className="hover:text-[var(--accent-green)] transition-colors">
                         {cityInfo.flag} {cityInfo.name}
                       </Link>
-                      <span>·</span>
-                      <span>{school.type}</span>
-                      <span>·</span>
-                      <span>{school.curriculum} curriculum</span>
-                      <span>·</span>
-                      <span>Ages {school.ageRange}</span>
-                    </div>
-                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
-                      {school.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {school.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                      {school.school_type && <><span className="hidden sm:inline">·</span><span>{school.school_type}</span></>}
+                      {school.curriculum && <><span className="hidden sm:inline">·</span><span>{school.curriculum}</span></>}
                     </div>
                   </div>
-                  <div className="flex sm:flex-col items-center sm:items-end gap-3 shrink-0">
-                    <div className="text-right">
-                      <p className="text-xs text-[var(--text-secondary)]">Monthly fee</p>
-                      <p className="font-mono font-bold text-[var(--accent-warm)]">
-                        {formatEuro(school.monthlyFee)}
-                      </p>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-[var(--text-secondary)]">Rating</p>
+                    <p className="font-mono text-[var(--accent-warm)]">
+                      {school.rating && school.rating > 0 ? (
+                        <>{"★".repeat(Math.round(school.rating))}{"☆".repeat(5 - Math.round(school.rating))} <span className="text-xs">({school.review_count})</span></>
+                      ) : (
+                        <span className="text-xs text-[var(--text-secondary)]">No reviews</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {school.description && (
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">{school.description}</p>
+                )}
+
+                {/* Cost + Tags row */}
+                <div className="flex flex-wrap items-center gap-3 mb-3">
+                  {school.monthly_fee && school.monthly_fee > 0 && (
+                    <span className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)] font-medium">
+                      {formatEuro(school.monthly_fee)}/mo
+                    </span>
+                  )}
+                  {school.school_type && (
+                    <button
+                      onClick={() => setTypeFilter(school.school_type)}
+                      className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
+                    >
+                      {school.school_type}
+                    </button>
+                  )}
+                  {school.curriculum && school.curriculum !== school.school_type && (
+                    <button
+                      onClick={() => setCurriculumFilter(school.curriculum)}
+                      className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
+                    >
+                      {school.curriculum}
+                    </button>
+                  )}
+                </div>
+
+                {/* CTA buttons */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {school.google_maps_url && (
+                    <a href={school.google_maps_url} target="_blank" rel="noopener noreferrer"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity">
+                      Google Maps
+                    </a>
+                  )}
+                  {school.website && (
+                    <a href={school.website} target="_blank" rel="noopener noreferrer"
+                      className="text-xs px-3 py-1.5 rounded-lg border border-[var(--accent-green)] text-[var(--accent-green)] font-medium hover:bg-[var(--accent-green)]/10 transition-colors">
+                      Website
+                    </a>
+                  )}
+                </div>
+
+                {/* Google Reviews — one positive, one negative */}
+                {school.google_reviews && school.google_reviews.length > 0 && (() => {
+                  const positive = school.google_reviews!.find((r) => r.rating >= 4 && r.text)
+                  const negative = school.google_reviews!.find((r) => r.rating <= 3 && r.text)
+                  if (!positive && !negative) return null
+                  return (
+                    <div className="border-t border-[var(--border)] pt-3 space-y-2">
+                      {positive && (
+                        <div className="flex gap-2">
+                          <span className="text-[var(--accent-green)] shrink-0 text-xs mt-0.5">+</span>
+                          <div>
+                            <p className="text-xs text-[var(--text-secondary)] line-clamp-2">&ldquo;{positive.text}&rdquo;</p>
+                            <p className="text-[10px] text-[var(--text-secondary)]/50 mt-0.5">{positive.author} · Google Maps</p>
+                          </div>
+                        </div>
+                      )}
+                      {negative && (
+                        <div className="flex gap-2">
+                          <span className="text-[var(--score-low)] shrink-0 text-xs mt-0.5">−</span>
+                          <div>
+                            <p className="text-xs text-[var(--text-secondary)] line-clamp-2">&ldquo;{negative.text}&rdquo;</p>
+                            <p className="text-[10px] text-[var(--text-secondary)]/50 mt-0.5">{negative.author} · Google Maps</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-[var(--text-secondary)]">Rating</p>
-                      <p className="font-mono text-[var(--accent-warm)]">
-                        {"★".repeat(Math.round(school.rating))}{"☆".repeat(5 - Math.round(school.rating))}
-                        <span className="text-xs ml-1">({school.familyReviews})</span>
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {school.language.map((lang) => (
-                        <span
-                          key={lang}
-                          className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]"
-                        >
-                          {lang}
-                        </span>
-                      ))}
-                    </div>
+                  )
+                })()}
                   </div>
                 </div>
               </div>

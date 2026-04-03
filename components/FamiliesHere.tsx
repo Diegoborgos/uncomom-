@@ -25,14 +25,14 @@ export default function FamiliesHere({
       // Families here now
       const { data: hereTrips, count: hereCount } = await supabase
         .from("trips")
-        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach)", { count: "exact" })
+        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach, avatar_url)", { count: "exact" })
         .eq("city_slug", citySlug)
         .eq("status", "here_now")
 
       // Families who've been here
       const { data: beenTrips, count: beenCount } = await supabase
         .from("trips")
-        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach)", { count: "exact" })
+        .select("family_id, families(id, family_name, country_code, kids_ages, travel_style, education_approach, avatar_url)", { count: "exact" })
         .eq("city_slug", citySlug)
         .eq("status", "been_here")
 
@@ -72,21 +72,25 @@ export default function FamiliesHere({
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <h3 className="font-serif text-lg font-bold mb-4">Families in this city</h3>
 
-      {/* Counters */}
-      <div className="flex gap-6 mb-5">
-        <div>
-          <p className="text-2xl font-mono font-bold text-[var(--accent-warm)] pulse-live">
-            {totalHere}
-          </p>
-          <p className="text-xs text-[var(--text-secondary)]">here now</p>
+      {/* Counters — only show when there's real data */}
+      {(totalHere > 0 || (loaded && totalBeen > 0)) && (
+        <div className="flex gap-6 mb-5">
+          {totalHere > 0 && (
+            <div>
+              <p className="text-2xl font-mono font-bold text-[var(--accent-warm)] pulse-live">
+                {totalHere}
+              </p>
+              <p className="text-xs text-[var(--text-secondary)]">here now</p>
+            </div>
+          )}
+          {(loaded && totalBeen > 0) && (
+            <div>
+              <p className="text-2xl font-mono font-bold">{totalBeen}</p>
+              <p className="text-xs text-[var(--text-secondary)]">have been here</p>
+            </div>
+          )}
         </div>
-        {(loaded && totalBeen > 0) && (
-          <div>
-            <p className="text-2xl font-mono font-bold">{totalBeen}</p>
-            <p className="text-xs text-[var(--text-secondary)]">have been here</p>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Families here now */}
       {familiesNow.length > 0 && (
@@ -126,9 +130,14 @@ export default function FamiliesHere({
           No families have checked in yet. Be the first!
         </p>
       )}
-      {!loaded && familiesNow.length === 0 && (
+      {!loaded && familiesNow.length === 0 && fallbackCount > 0 && (
         <p className="text-sm text-[var(--text-secondary)]">
           {fallbackCount} families estimated
+        </p>
+      )}
+      {!loaded && familiesNow.length === 0 && fallbackCount === 0 && (
+        <p className="text-sm text-[var(--text-secondary)]">
+          No families have checked in yet. Be the first!
         </p>
       )}
     </div>
@@ -146,15 +155,20 @@ function FamilyCard({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border)] px-3 py-2.5">
-      <span
-        className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-          variant === "here"
-            ? "bg-[var(--accent-green)] text-[var(--bg)]"
-            : "bg-[var(--surface)] text-[var(--text-secondary)] border border-[var(--border)]"
-        }`}
-      >
-        {family.family_name.slice(0, 2).toUpperCase()}
-      </span>
+      {(family as Record<string, unknown>).avatar_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={(family as Record<string, unknown>).avatar_url as string} alt={family.family_name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+      ) : (
+        <span
+          className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+            variant === "here"
+              ? "bg-[var(--accent-green)] text-[var(--bg)]"
+              : "bg-[var(--surface)] text-[var(--text-secondary)] border border-[var(--border)]"
+          }`}
+        >
+          {family.family_name.slice(0, 2).toUpperCase()}
+        </span>
+      )}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">
           {family.country_code ? flag(family.country_code) + " " : ""}

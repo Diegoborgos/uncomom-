@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/intelligence/update",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/refresh-public-data",
+      "schedule": "0 3 * * 0"
+    },
+    {
+      "path": "/api/aggregate-signals",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}

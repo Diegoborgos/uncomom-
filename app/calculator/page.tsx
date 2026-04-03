@@ -11,6 +11,21 @@ const EDUCATION_OPTIONS = [
   { value: "homeschool", label: "Homeschool", multiplier: 0 },
 ]
 
+function calcTotal(
+  city: typeof cities[0],
+  numKids: number,
+  numAdults: number,
+  edu: string
+): number {
+  const schoolCost = edu === "international"
+    ? city.cost.internationalSchool * numKids
+    : edu === "local"
+      ? city.cost.localSchool * numKids
+      : 0
+  const childcareCost = numKids > 0 ? city.cost.childcare : 0
+  return city.cost.rent2br + schoolCost + childcareCost + (numKids > 0 ? 400 : 200) * (numKids + numAdults)
+}
+
 export default function CalculatorPage() {
   const [adults, setAdults] = useState(2)
   const [kids, setKids] = useState(2)
@@ -19,27 +34,13 @@ export default function CalculatorPage() {
 
   const sorted = useMemo(() => {
     return [...cities].sort((a, b) => {
-      const costA = calcTotal(a, kids, education)
-      const costB = calcTotal(b, kids, education)
+      const costA = calcTotal(a, kids, adults, education)
+      const costB = calcTotal(b, kids, adults, education)
       return costA - costB
     })
-  }, [kids, education])
+  }, [kids, adults, education])
 
   const selected = selectedCity ? cities.find((c) => c.slug === selectedCity) : null
-
-  function calcTotal(
-    city: typeof cities[0],
-    numKids: number,
-    edu: string
-  ): number {
-    const schoolCost = edu === "international"
-      ? city.cost.internationalSchool * numKids
-      : edu === "local"
-        ? city.cost.localSchool * numKids
-        : 0
-    const childcareCost = numKids > 0 ? city.cost.childcare : 0
-    return city.cost.rent2br + schoolCost + childcareCost + (numKids > 0 ? 400 : 200) * (numKids + adults)
-  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -117,7 +118,7 @@ export default function CalculatorPage() {
           <span>Est. monthly ({adults} adult{adults > 1 ? "s" : ""} + {kids} kid{kids !== 1 ? "s" : ""})</span>
         </div>
         {sorted.map((city, i) => {
-          const total = calcTotal(city, kids, education)
+          const total = calcTotal(city, kids, adults, education)
           const isSelected = city.slug === selectedCity
           return (
             <button
@@ -173,7 +174,7 @@ export default function CalculatorPage() {
             <div className="border-t border-[var(--border)] pt-3 flex justify-between font-bold">
               <span>Total estimated</span>
               <span className="font-mono text-lg text-[var(--accent-warm)]">
-                {formatEuro(calcTotal(selected, kids, education))}/mo
+                {formatEuro(calcTotal(selected, kids, adults, education))}/mo
               </span>
             </div>
           </div>

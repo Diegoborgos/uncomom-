@@ -36,12 +36,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const fetchFamily = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from("families")
-      .select("*")
-      .eq("user_id", userId)
-      .single()
-    setFamily(data)
+    try {
+      const { data } = await supabase
+        .from("families")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle()
+      setFamily(data)
+    } catch {
+      setFamily(null)
+    }
   }, [])
 
   const refreshFamily = useCallback(async () => {
@@ -53,28 +57,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
       return
     }
-    supabase.auth.getSession().then(({ data: { session } }) => {
+
+    let initialLoad = true
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (session?.user) fetchFamily(session.user.id)
+      if (session?.user) {
+        try { await fetchFamily(session.user.id) } catch { /* */ }
+      }
+      initialLoad = false
+      setLoading(false)
+    }).catch(() => {
+      initialLoad = false
       setLoading(false)
     })
 
-    if (!isSupabaseConfigured) return
+    // Safety: never stay loading for more than 5 seconds
+    const timeout = setTimeout(() => setLoading(false), 5000)
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
+        // Skip if initial getSession() is still in flight — it will handle loading
+        if (initialLoad) return
         setSession(session)
         setUser(session?.user ?? null)
         if (session?.user) {
-          fetchFamily(session.user.id)
+          try { await fetchFamily(session.user.id) } catch { /* */ }
         } else {
           setFamily(null)
         }
-        setLoading(false)
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [fetchFamily])
 
   const signUp = async (email: string, password: string) => {

@@ -3,7 +3,7 @@ export type VisaFriendliness = "Excellent" | "Good" | "OK" | "Difficult"
 export type KidsAgeIdeal = "All ages" | "Under 10" | "Teens" | "Young children"
 
 // ============================================================
-// FIS™ Signal Architecture — 9 Dimensions, 1000+ signals
+// FIS™ Signal Architecture — 9 Dimensions, 250+ data points per city
 // ============================================================
 
 export type CitySignals = {

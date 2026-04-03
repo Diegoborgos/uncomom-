@@ -1,14 +1,16 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabase"
 
 const NAV_LINKS = [
   { href: "/", label: "Cities" },
   { href: "/map", label: "Map" },
+  { href: "/member-map", label: "Members" },
   { href: "/schools", label: "Schools" },
   { href: "/visas", label: "Visa Guide" },
 ]
@@ -64,18 +66,15 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-[var(--surface)] transition-all duration-200 ${
-        scrolled ? "border-b border-[var(--border)] backdrop-blur-sm" : ""
+      className={`sticky top-0 z-50 bg-[var(--bg)] transition-all duration-200 ${
+        scrolled ? "border-b border-[var(--border)]" : ""
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* LEFT — Logo */}
-        <Link href="/" className="flex flex-col shrink-0">
-          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
+        <Link href="/" className="shrink-0">
+          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight">
             Uncomun
-          </span>
-          <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
-            City intelligence for traveling families
           </span>
         </Link>
 
@@ -107,7 +106,10 @@ export default function Header() {
               <div className="w-8 h-8 rounded-full bg-[var(--surface-elevated)] animate-pulse" />
             ) : user ? (
               /* Logged in */
-              <div className="relative" ref={dropdownRef}>
+              <div className="flex items-center gap-3">
+                {/* Message icon with unread badge */}
+                <MessageBadge />
+                <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 text-sm hover:opacity-90 transition-opacity"
@@ -164,6 +166,7 @@ export default function Header() {
                   </div>
                 )}
               </div>
+              </div>
             ) : (
               /* Logged out */
               <>
@@ -177,7 +180,7 @@ export default function Header() {
                   href="/signup"
                   className="text-sm px-4 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
                 >
-                  Join Families
+                  Sign up
                 </Link>
               </>
             )}
@@ -240,16 +243,13 @@ function MobileMenu({
   return createPortal(
     <div
       className="fixed inset-0 flex flex-col md:hidden"
-      style={{ backgroundColor: "#0d1a14", zIndex: 99999 }}
+      style={{ backgroundColor: "var(--bg)", zIndex: 99999 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 h-16 shrink-0">
-        <Link href="/" onClick={() => setMobileOpen(false)} className="flex flex-col">
-          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
+        <Link href="/" onClick={() => setMobileOpen(false)}>
+          <span className="font-serif text-2xl font-bold text-[var(--text-primary)] tracking-tight">
             Uncomun
-          </span>
-          <span className="text-[10px] text-[var(--text-secondary)] leading-none mt-0.5">
-            City intelligence for traveling families
           </span>
         </Link>
         <button
@@ -300,6 +300,9 @@ function MobileMenu({
                 Complete your profile
               </Link>
             )}
+            <Link href="/messages" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--text-secondary)] py-1">
+              Messages
+            </Link>
             <button
               onClick={() => { signOut(); setMobileOpen(false) }}
               className="block text-lg text-[var(--text-secondary)] py-1"
@@ -314,7 +317,7 @@ function MobileMenu({
               onClick={() => setMobileOpen(false)}
               className="block text-center py-3.5 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium text-lg"
             >
-              Join Families
+              Sign up
             </Link>
             <Link
               href="/login"
@@ -328,5 +331,45 @@ function MobileMenu({
       </div>
     </div>,
     document.body
+  )
+}
+
+function MessageBadge() {
+  const [unread, setUnread] = useState(0)
+
+  const fetchUnread = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      const res = await fetch("/api/messages/unread", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const data = await res.json()
+      setUnread(data.count || 0)
+    } catch { /* */ }
+  }, [])
+
+  useEffect(() => {
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 30000)
+    const onRead = () => fetchUnread()
+    window.addEventListener("messages-read", onRead)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("messages-read", onRead)
+    }
+  }, [fetchUnread])
+
+  return (
+    <Link href="/messages" className="relative hover:opacity-80 transition-opacity">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+      </svg>
+      {unread > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 rounded-full bg-[var(--accent-green)] text-black text-[9px] font-bold flex items-center justify-center px-1">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      )}
+    </Link>
   )
 }

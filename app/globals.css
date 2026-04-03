@@ -3,19 +3,21 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #0d1a14;
-  --surface: #132018;
-  --surface-elevated: #1a2d20;
-  --border: #2a3d2e;
-  --text-primary: #f0ece0;
-  --text-secondary: #8a9e8d;
-  --accent-green: #4caf7d;
-  --accent-warm: #d4874a;
-  --score-high: #4caf7d;
-  --score-mid: #c8932a;
-  --score-low: #c44b2b;
+  --bg: #000000;
+  --surface: #1A1A1A;
+  --surface-elevated: #2A2A2A;
+  --border: #333333;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --accent-green: #EBFF00;
+  --accent-warm: #EBFF00;
+  --score-high: #EBFF00;
+  --score-mid: #FFB800;
+  --score-low: #FF4444;
 }
 
 * {
@@ -25,12 +27,13 @@
 body {
   color: var(--text-primary);
   background: var(--bg);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  letter-spacing: -0.02em;
 }
 
 ::selection {
@@ -77,4 +80,83 @@ h1, h2, h3, h4, h5, h6 {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Glass effect utility */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Premium pill buttons */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--surface);
+  transition: all 0.2s;
+}
+.pill:hover {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+.pill-active {
+  background: var(--accent-green);
+  color: #000;
+  border-color: var(--accent-green);
+}
+
+/* Premium search input */
+.search-premium {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 14px 20px 14px 44px;
+  font-size: 15px;
+  color: var(--text-primary);
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-premium:focus {
+  border-color: var(--accent-green);
+}
+.search-premium::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Premium card hover */
+.card-premium {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+.card-premium:hover {
+  border-color: var(--accent-green);
+  transform: translateY(-2px);
+}
+
+/* Hide scrollbar but allow scroll */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Responsive typography — larger on desktop */
+@media (min-width: 768px) {
+  h1 { font-size: 2.5rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.25rem; }
+}
+
+@media (max-width: 767px) {
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1rem; }
 }

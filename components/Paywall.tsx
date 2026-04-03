@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { openJoinOverlay } from "./JoinOverlay"
 
 const MEMBER_BENEFITS = [
   "Full city data & detailed cost breakdowns",
@@ -15,8 +16,13 @@ const MEMBER_BENEFITS = [
 ]
 
 /**
+ * CTA logic used across all paywall components:
+ * - Logged out → "Join Uncomun" → /signup (create account)
+ * - Logged in, not paid → "Unlock details" → opens JoinOverlay (buy membership)
+ */
+
+/**
  * PaywallBlur — blurs a small section of content with a thin unlock bar.
- * Used for cost details, meta info rows, etc. Subtle, not intrusive.
  */
 export function PaywallBlur({ children }: { children: React.ReactNode }) {
   const { isPaid, loading } = useAuth()
@@ -24,16 +30,16 @@ export function PaywallBlur({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative">
-      <div className="select-none pointer-events-none" style={{ filter: "blur(5px)", opacity: 0.4 }}>
+      <div className="select-none pointer-events-none max-h-48 overflow-hidden" style={{ filter: "blur(5px)", opacity: 0.4 }}>
         {children}
       </div>
       <div className="absolute inset-0 flex items-end justify-center pb-2">
-        <Link
-          href="/membership"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium bg-[var(--accent-warm)] text-[var(--bg)] hover:opacity-90 transition-opacity shadow-lg"
+        <button
+          onClick={openJoinOverlay}
+          className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold bg-[var(--accent-warm)] text-[var(--bg)] hover:opacity-90 transition-opacity shadow-xl"
         >
-          🔒 Unlock details · €179 lifetime
-        </Link>
+          🔒 Unlock details
+        </button>
       </div>
     </div>
   )
@@ -41,8 +47,6 @@ export function PaywallBlur({ children }: { children: React.ReactNode }) {
 
 /**
  * PaywallGate — clean card that gates interactive/premium features.
- * Used for trip logger, reviews, family finder, meetups, etc.
- * No blur — just a locked state with benefits list.
  */
 export function PaywallGate({ feature }: { feature: string }) {
   const { user, isPaid, loading } = useAuth()
@@ -57,19 +61,27 @@ export function PaywallGate({ feature }: { feature: string }) {
       <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-sm mx-auto">
         This is available to Uncomun members. One payment, lifetime access for your whole family.
       </p>
-      <Link
-        href={user ? "/membership" : "/signup"}
-        className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
-      >
-        {user ? "Become a member · €179" : "Join Uncomun · €179 lifetime"}
-      </Link>
+      {user ? (
+        <button
+          onClick={openJoinOverlay}
+          className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
+        >
+          Unlock details
+        </button>
+      ) : (
+        <Link
+          href="/join"
+          className="inline-block px-6 py-2.5 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity"
+        >
+          Join Uncomun
+        </Link>
+      )}
     </div>
   )
 }
 
 /**
  * Paywall — full overlay for entire sections (community pages).
- * Shows blurred preview with upgrade-only card overlay (no free tier column).
  */
 export default function Paywall({
   children,
@@ -120,12 +132,21 @@ export default function Paywall({
               ))}
             </ul>
 
-            <Link
-              href={user ? "/membership" : "/signup"}
-              className="block text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
-            >
-              {user ? "Become a member · €179" : "Join Uncomun · €179 lifetime"}
-            </Link>
+            {user ? (
+              <button
+                onClick={openJoinOverlay}
+                className="block w-full text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+              >
+                Unlock details
+              </button>
+            ) : (
+              <Link
+                href="/join"
+                className="block text-center py-3 rounded-lg bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+              >
+                Join Uncomun
+              </Link>
+            )}
             <p className="text-[10px] text-[var(--text-secondary)] text-center mt-2">
               One payment · Whole family · 30-day refund
             </p>
@@ -157,12 +178,21 @@ export function PaywallInline({ feature }: { feature: string }) {
         <span className="text-sm">🔒</span>
         <span className="text-xs text-[var(--text-secondary)]">{feature}</span>
       </div>
-      <Link
-        href={user ? "/membership" : "/signup"}
-        className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
-      >
-        {user ? "Unlock · €179" : "Join"}
-      </Link>
+      {user ? (
+        <button
+          onClick={openJoinOverlay}
+          className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
+        >
+          Unlock
+        </button>
+      ) : (
+        <Link
+          href="/join"
+          className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity shrink-0"
+        >
+          Join
+        </Link>
+      )}
     </div>
   )
 }

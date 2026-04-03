@@ -1,13 +1,25 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
-import { visas } from "@/data/visas"
+import { supabase } from "@/lib/supabase"
+import { visas as staticVisas } from "@/data/visas"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag, formatEuro } from "@/lib/scores"
-import { VisaType } from "@/lib/visa-types"
+import { VisaInfo, VisaType } from "@/lib/visa-types"
 
 const VISA_TYPES: VisaType[] = ["Tourist", "Digital Nomad", "Freelancer", "Residency", "Business", "Student"]
+
+function rowToVisa(row: Record<string, unknown>): VisaInfo {
+  return {
+    id: row.id as string, country: row.country as string, countryCode: row.country_code as string,
+    visaName: row.visa_name as string, type: row.type as string, durationDays: row.duration_days as number,
+    renewable: row.renewable as boolean, familyFriendly: row.family_friendly as boolean,
+    costEUR: row.cost_eur as number, processingDays: row.processing_days as number,
+    incomeRequirement: row.income_requirement as number, requirements: (row.requirements as string[]) || [],
+    notes: (row.notes as string) || "", bestFor: (row.best_for as string) || "", citySlugs: (row.city_slugs as string[]) || [],
+  }
+}
 
 function formatDuration(days: number): string {
   if (days >= 365) {
@@ -18,10 +30,17 @@ function formatDuration(days: number): string {
 }
 
 export default function VisasPage() {
+  const [visas, setVisas] = useState<VisaInfo[]>(staticVisas)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [familyOnly, setFamilyOnly] = useState(false)
   const [sort, setSort] = useState<"duration" | "cost" | "income">("duration")
+
+  useEffect(() => {
+    supabase.from("visas").select("*").order("country").then(({ data }) => {
+      if (data && data.length > 0) setVisas(data.map(rowToVisa))
+    })
+  }, [])
 
   const filtered = useMemo(() => {
     let result = [...visas]
@@ -45,7 +64,7 @@ export default function VisasPage() {
     })
 
     return result
-  }, [search, typeFilter, familyOnly, sort])
+  }, [visas, search, typeFilter, familyOnly, sort])
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">

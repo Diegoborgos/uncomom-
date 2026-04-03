@@ -1,426 +1,478 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
+import { cities } from "@/data/cities"
 
-const WORK_TYPES = [
-  "Remote employee",
-  "Freelancer / Consultant",
-  "Business owner",
-  "Investor / Retired",
-  "Content creator",
-  "Not working currently",
-  "Other",
-]
+type Message = { role: "user" | "assistant"; content: string }
 
-const EDUCATION_APPROACHES = [
-  "Homeschool",
-  "Worldschool",
-  "International school",
-  "Local school (immersion)",
-  "Online school",
-  "Unschool",
-  "Mix of approaches",
-  "No school-age kids yet",
-]
+type ProfileFields = {
+  family_name: string
+  home_country: string
+  country_code: string
+  kids_ages: number[]
+  parent_work_type: string
+  education_approach: string
+  travel_style: string
+  languages: string[]
+  interests: string[]
+  cities_visited: string[]
+  bio: string
+  done: boolean
+}
 
-const TRAVEL_STYLES = [
-  "Slow travel (months per city)",
-  "Medium pace (1-3 months)",
-  "Fast movers (weeks per city)",
-  "Base + trips (one home base)",
-  "Seasonal (summer/winter bases)",
-  "Just getting started",
-]
-
-const INTERESTS = [
-  "surf", "nature", "beach", "mountains", "co-living", "co-working",
-  "language immersion", "arts & culture", "outdoor sports", "music",
-  "food & cooking", "sustainability", "entrepreneurship", "yoga & wellness",
-]
-
-const LANGUAGES = [
-  "English", "Spanish", "Portuguese", "French", "German", "Italian",
-  "Dutch", "Thai", "Indonesian", "Japanese", "Mandarin", "Arabic",
-  "Russian", "Korean", "Hindi",
-]
-
-const TOTAL_STEPS = 4
+const emptyProfile: ProfileFields = {
+  family_name: "", home_country: "", country_code: "",
+  kids_ages: [], parent_work_type: "", education_approach: "",
+  travel_style: "", languages: [], interests: [],
+  cities_visited: [], bio: "", done: false,
+}
 
 export default function OnboardingPage() {
   const { user, family, loading, refreshFamily } = useAuth()
   const router = useRouter()
-  const [step, setStep] = useState(1)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState("")
+  const [sending, setSending] = useState(false)
+  const [profile, setProfile] = useState<ProfileFields>(emptyProfile)
   const [saving, setSaving] = useState(false)
-
-  // Form state
-  const [familyName, setFamilyName] = useState("")
-  const [homeCountry, setHomeCountry] = useState("")
-  const [countryCode, setCountryCode] = useState("")
-  const [kidsAges, setKidsAges] = useState("")
-  const [parentWorkType, setParentWorkType] = useState("")
-  const [travelStyle, setTravelStyle] = useState("")
-  const [educationApproach, setEducationApproach] = useState("")
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
-  const [bio, setBio] = useState("")
+  const [error, setError] = useState("")
+  const [showCityPicker, setShowCityPicker] = useState(false)
+  const [selectedCities, setSelectedCities] = useState<string[]>([])
+  const [cityPickerContinent, setCityPickerContinent] = useState<string | null>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    }
+    if (!loading && !user) router.push("/login")
   }, [user, loading, router])
 
-  // Pre-fill if family already exists
+  // Start conversation — different for new vs returning users
   useEffect(() => {
-    if (family) {
-      setFamilyName(family.family_name || "")
-      setHomeCountry(family.home_country || "")
-      setCountryCode(family.country_code || "")
-      setKidsAges(family.kids_ages?.join(", ") || "")
-      setParentWorkType(family.parent_work_type || "")
-      setTravelStyle(family.travel_style || "")
-      setEducationApproach(family.education_approach || "")
-      setSelectedLanguages(family.languages || [])
-      setSelectedInterests(family.interests || [])
-      setBio(family.bio || "")
-    }
-  }, [family])
+    if (messages.length === 0 && user && !loading) {
+      if (family?.onboarding_complete) {
+        // Returning user — show current profile summary and ask what to change
+        const parts: string[] = []
+        if (family.family_name) parts.push(`Family: ${family.family_name}`)
+        if (family.home_country) parts.push(`From: ${family.home_country}`)
+        if (family.kids_ages?.length) parts.push(`Kids: ages ${family.kids_ages.join(", ")}`)
+        if (family.parent_work_type) parts.push(`Work: ${family.parent_work_type}`)
+        if (family.education_approach) parts.push(`Education: ${family.education_approach}`)
+        if (family.travel_style) parts.push(`Travel: ${family.travel_style}`)
+        if (family.bio) parts.push(`\nBio: "${family.bio}"`)
 
-  const toggleItem = (arr: string[], item: string) =>
-    arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item]
+        setMessages([{
+          role: "assistant",
+          content: `Here's your current profile:\n\n${parts.join("\n")}\n\nWhat would you like to update?`
+        }])
+        // Pre-fill profile state with existing data
+        setProfile({
+          family_name: family.family_name || "",
+          home_country: family.home_country || "",
+          country_code: family.country_code || "",
+          kids_ages: family.kids_ages || [],
+          parent_work_type: family.parent_work_type || "",
+          education_approach: family.education_approach || "",
+          travel_style: family.travel_style || "",
+          languages: family.languages || [],
+          interests: family.interests || [],
+          cities_visited: [],
+          bio: family.bio || "",
+          done: false,
+        })
+      } else {
+        setMessages([{
+          role: "assistant",
+          content: "Hey! Tell me about your family — where are you from?"
+        }])
+      }
+      if (typeof window !== "undefined" && window.innerWidth >= 768) setTimeout(() => inputRef.current?.focus(), 300)
+    }
+  }, [user, loading, family]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (container) container.scrollTop = container.scrollHeight
+  }, [messages])
+
+  const sendMessage = async () => {
+    if (!input.trim() || sending) return
+    const userMsg = input.trim()
+    setInput("")
+    setError("")
+
+    // Intercept city-related messages — show picker directly
+    const cityWords = ["cities", "city", "traveled", "travelled", "visited", "been to", "places"]
+    if (cityWords.some((w) => userMsg.toLowerCase().includes(w)) && !showCityPicker) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: userMsg },
+        { role: "assistant", content: "Let's add your cities — tap to select the ones you've been to." },
+      ])
+      setShowCityPicker(true)
+      return
+    }
+
+    const newMessages: Message[] = [...messages, { role: "user", content: userMsg }]
+    setMessages(newMessages)
+    setSending(true)
+
+    try {
+      const res = await fetch("/api/onboarding/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: newMessages,
+          existingProfile: family?.onboarding_complete ? {
+            family_name: family.family_name,
+            home_country: family.home_country,
+            kids_ages: family.kids_ages,
+            parent_work_type: family.parent_work_type,
+            education_approach: family.education_approach,
+            travel_style: family.travel_style,
+            languages: family.languages,
+            interests: family.interests,
+            bio: family.bio,
+          } : undefined,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.error) {
+        const msg = typeof data.error === "string" && data.error.includes("rate_limit")
+          ? "We're getting a lot of traffic right now. Please try again in a few minutes."
+          : typeof data.error === "string" && data.error.length > 100
+          ? "Something went wrong. Please try again."
+          : data.error
+        setError(msg)
+        setSending(false)
+        return
+      }
+
+      // Merge extracted profile
+      if (data.profile) {
+        setProfile((prev) => {
+          const merged = { ...prev }
+          for (const [key, value] of Object.entries(data.profile)) {
+            if (value && (typeof value === "string" ? value.length > 0 : Array.isArray(value) ? (value as unknown[]).length > 0 : value === true)) {
+              (merged as Record<string, unknown>)[key] = value
+            }
+          }
+          return merged
+        })
+      }
+
+      setMessages([...newMessages, { role: "assistant", content: data.reply }])
+
+      // After enough fields extracted and no cities yet → show city picker
+      const updatedProfile = { ...profile }
+      if (data.profile) {
+        for (const [key, value] of Object.entries(data.profile)) {
+          if (value && (typeof value === "string" ? value.length > 0 : Array.isArray(value) ? (value as unknown[]).length > 0 : value === true)) {
+            (updatedProfile as Record<string, unknown>)[key] = value
+          }
+        }
+      }
+      // Show city picker ONLY after core fields are all collected
+      const hasAllCore = updatedProfile.home_country
+        && updatedProfile.kids_ages.length > 0
+        && updatedProfile.parent_work_type
+        && updatedProfile.education_approach
+        && updatedProfile.travel_style
+
+      // Only auto-trigger city picker for NEW users (not returning ones editing their profile)
+      const isNewUser = !family?.onboarding_complete
+      if (isNewUser && hasAllCore && !updatedProfile.cities_visited.length && !showCityPicker) {
+        setShowCityPicker(true)
+        setMessages((prev) => [...prev, { role: "assistant", content: "Now the fun part — which cities have you explored as a family? Tap to select." }])
+      } else {
+        if (typeof window !== "undefined" && window.innerWidth >= 768) setTimeout(() => inputRef.current?.focus(), 100)      }
+    } catch {
+      setError("Connection error. Try again.")
+    } finally {
+      setSending(false)
+    }
+  }
 
   const handleSave = async () => {
     if (!user) return
     setSaving(true)
+    setError("")
 
-    const ages = kidsAges
-      .split(",")
-      .map((a) => parseInt(a.trim()))
-      .filter((a) => !isNaN(a))
+    try {
+      const payload = {
+        family_name: profile.family_name || family?.family_name || "My Family",
+        home_country: profile.home_country || family?.home_country || "",
+        country_code: (profile.country_code || family?.country_code || "").toUpperCase(),
+        kids_ages: profile.kids_ages.length > 0 ? profile.kids_ages : family?.kids_ages || [],
+        parent_work_type: profile.parent_work_type || family?.parent_work_type || "",
+        travel_style: profile.travel_style || family?.travel_style || "",
+        education_approach: profile.education_approach || family?.education_approach || "",
+        languages: profile.languages.length > 0 ? profile.languages : family?.languages || [],
+        interests: profile.interests.length > 0 ? profile.interests : family?.interests || [],
+        bio: profile.bio || family?.bio || "",
+        onboarding_complete: true,
+        updated_at: new Date().toISOString(),
+      }
 
-    const payload = {
-      family_name: familyName,
-      home_country: homeCountry,
-      country_code: countryCode.toUpperCase(),
-      kids_ages: ages,
-      parent_work_type: parentWorkType,
-      travel_style: travelStyle,
-      education_approach: educationApproach,
-      languages: selectedLanguages,
-      interests: selectedInterests,
-      bio: bio,
-      onboarding_complete: true,
-      updated_at: new Date().toISOString(),
+      // Auto-generate username from family_name if not set
+      if (payload.family_name && !family?.username) {
+        const base = payload.family_name
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+          .slice(0, 20) || "family"
+        const { data: existing } = await supabase.from("families").select("id").eq("username", base).maybeSingle()
+        const username = existing ? base + Math.floor(Math.random() * 999) : base
+        Object.assign(payload, { username })
+      }
+
+      if (family) {
+        const { error: updateErr } = await supabase.from("families").update(payload).eq("id", family.id)
+        if (updateErr) throw new Error(updateErr.message)
+      } else {
+        const { error: insertErr } = await supabase.from("families").insert({ user_id: user.id, ...payload })
+        if (insertErr) throw new Error(insertErr.message)
+      }
+
+      // Auto-log cities as trips — re-fetch family if we just inserted
+      let familyId = family?.id
+      if (!familyId) {
+        const { data: newFam } = await supabase.from("families").select("id").eq("user_id", user.id).single()
+        familyId = newFam?.id
+      }
+      if (profile.cities_visited.length > 0 && familyId) {
+        for (const cityName of profile.cities_visited) {
+          const matched = cities.find((c) =>
+            c.name.toLowerCase() === cityName.toLowerCase() ||
+            c.slug === cityName.toLowerCase().replace(/\s+/g, "-")
+          )
+          if (matched) {
+            const { data: existingTrip } = await supabase.from("trips")
+              .select("id").eq("family_id", familyId).eq("city_slug", matched.slug).maybeSingle()
+            if (!existingTrip) {
+              await supabase.from("trips").insert({
+                family_id: familyId,
+                city_slug: matched.slug,
+                status: "been_here" as const,
+              })
+            }
+          }
+        }
+      }
+
+      await refreshFamily()
+      router.push("/dashboard")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save. Try again.")
+    } finally {
+      setSaving(false)
     }
-
-    if (family) {
-      await supabase.from("families").update(payload).eq("id", family.id)
-    } else {
-      await supabase.from("families").insert({ user_id: user.id, ...payload })
-    }
-
-    await refreshFamily()
-    setSaving(false)
-    router.push("/dashboard")
   }
 
-  if (loading) {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center text-[var(--text-secondary)]">
-        Loading...
-      </div>
+  // Group cities by continent
+  const continents = Array.from(new Set(cities.map((c) => c.continent))).sort()
+  const citiesByContinent = continents.reduce((acc, cont) => {
+    acc[cont] = cities.filter((c) => c.continent === cont).sort((a, b) => a.name.localeCompare(b.name))
+    return acc
+  }, {} as Record<string, typeof cities>)
+
+  const toggleCity = (cityName: string) => {
+    setSelectedCities((prev) =>
+      prev.includes(cityName) ? prev.filter((c) => c !== cityName) : [...prev, cityName]
     )
   }
 
+  const submitCities = () => {
+    const cityNames = selectedCities
+    setProfile((prev) => ({ ...prev, cities_visited: cityNames }))
+    setShowCityPicker(false)
+    setCityPickerContinent(null)
+
+    // Add as user message and continue conversation
+    const cityText = cityNames.length > 0 ? cityNames.join(", ") : "None yet"
+    const newMessages: Message[] = [...messages, { role: "user", content: `I've been to: ${cityText}` }]
+    setMessages(newMessages)
+
+    // Send to LLM to continue
+    setSending(true)
+    fetch("/api/onboarding/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: newMessages }),
+    }).then((res) => res.json()).then((data) => {
+      if (data.profile) {
+        setProfile((prev) => {
+          const merged = { ...prev }
+          for (const [key, value] of Object.entries(data.profile)) {
+            if (value && (typeof value === "string" ? value.length > 0 : Array.isArray(value) ? (value as unknown[]).length > 0 : value === true)) {
+              (merged as Record<string, unknown>)[key] = value
+            }
+          }
+          return merged
+        })
+      }
+      setMessages([...newMessages, { role: "assistant", content: data.reply }])
+      setSending(false)
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }).catch(() => {
+      setError("Connection error.")
+      setSending(false)
+    })
+  }
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
+  if (!user) return null
+
+  const fieldsExtracted = [
+    profile.family_name, profile.home_country, profile.kids_ages.length > 0,
+    profile.parent_work_type, profile.education_approach, profile.travel_style,
+    profile.languages.length > 0, profile.cities_visited.length > 0, profile.bio,
+  ].filter(Boolean).length
+  const progress = Math.min(100, (fieldsExtracted / 9) * 100)
+
   return (
-    <div className="max-w-xl mx-auto px-4 py-12">
-      {/* Progress bar */}
-      <div className="flex items-center gap-2 mb-10">
-        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-          <div
-            key={i}
-            className={`flex-1 h-1 rounded-full transition-colors ${
-              i < step ? "bg-[var(--accent-green)]" : "bg-[var(--border)]"
-            }`}
-          />
+    <div className="max-w-lg mx-auto">
+      {/* Progress — compact inline */}
+      <div className="px-4 pt-3 pb-1">
+        <div className="h-1 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+          <div className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-700" style={{ width: `${progress}%` }} />
+        </div>
+        {messages.length > 2 && !profile.done && (
+          <div className="text-right mt-1">
+            <button onClick={() => { setProfile({ ...profile, done: true }) }} className="text-[10px] text-[var(--text-secondary)] hover:text-[var(--accent-green)]">
+              Skip →
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-3 min-h-0">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in`}>
+            <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
+              msg.role === "user"
+                ? "bg-[var(--accent-green)] text-black rounded-2xl rounded-br-md"
+                : "bg-[var(--surface)] text-[var(--text-primary)] rounded-2xl rounded-bl-md"
+            }`}>
+              {msg.content}
+            </div>
+          </div>
         ))}
-      </div>
 
-      {/* Step 1: Who are you */}
-      {step === 1 && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="font-serif text-3xl font-bold mb-2">Tell us about your family</h1>
-            <p className="text-[var(--text-secondary)]">
-              This helps other traveling families find and connect with you.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-1">Family name</label>
-            <input
-              type="text"
-              value={familyName}
-              onChange={(e) => setFamilyName(e.target.value)}
-              placeholder="The Silvas"
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-[var(--text-secondary)] mb-1">Home country</label>
-              <input
-                type="text"
-                value={homeCountry}
-                onChange={(e) => setHomeCountry(e.target.value)}
-                placeholder="Portugal"
-                className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-[var(--text-secondary)] mb-1">Country code</label>
-              <input
-                type="text"
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                maxLength={2}
-                placeholder="PT"
-                className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
-              />
+        {sending && (
+          <div className="flex justify-start">
+            <div className="bg-[var(--surface)] px-4 py-3 rounded-2xl rounded-bl-md">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-1">
-              Kids ages <span className="opacity-60">(comma separated)</span>
-            </label>
-            <input
-              type="text"
-              value={kidsAges}
-              onChange={(e) => setKidsAges(e.target.value)}
-              placeholder="4, 7, 11"
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">What do you do for work?</label>
-            <div className="grid grid-cols-2 gap-2">
-              {WORK_TYPES.map((wt) => (
-                <button
-                  key={wt}
-                  onClick={() => setParentWorkType(wt)}
-                  className={`px-3 py-2 rounded-lg border text-sm text-left transition-colors ${
-                    parentWorkType === wt
-                      ? "bg-[var(--accent-green)]/15 border-[var(--accent-green)] text-[var(--accent-green)]"
-                      : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-                  }`}
-                >
-                  {wt}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: How you travel */}
-      {step === 2 && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="font-serif text-3xl font-bold mb-2">How does your family travel?</h1>
-            <p className="text-[var(--text-secondary)]">
-              Helps us match you with cities and families that move like you do.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">Travel style</label>
-            <div className="space-y-2">
-              {TRAVEL_STYLES.map((ts) => (
-                <button
-                  key={ts}
-                  onClick={() => setTravelStyle(ts)}
-                  className={`w-full px-4 py-3 rounded-lg border text-sm text-left transition-colors ${
-                    travelStyle === ts
-                      ? "bg-[var(--accent-green)]/15 border-[var(--accent-green)] text-[var(--accent-green)]"
-                      : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-                  }`}
-                >
-                  {ts}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">Education approach</label>
-            <div className="grid grid-cols-2 gap-2">
-              {EDUCATION_APPROACHES.map((ea) => (
-                <button
-                  key={ea}
-                  onClick={() => setEducationApproach(ea)}
-                  className={`px-3 py-2 rounded-lg border text-sm text-left transition-colors ${
-                    educationApproach === ea
-                      ? "bg-[var(--accent-warm)]/15 border-[var(--accent-warm)] text-[var(--accent-warm)]"
-                      : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-                  }`}
-                >
-                  {ea}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Languages + interests */}
-      {step === 3 && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="font-serif text-3xl font-bold mb-2">Languages & interests</h1>
-            <p className="text-[var(--text-secondary)]">
-              Select all that apply. This helps families with similar kids connect.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">
-              Languages your family speaks
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => setSelectedLanguages(toggleItem(selectedLanguages, lang))}
-                  className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
-                    selectedLanguages.includes(lang)
-                      ? "bg-[var(--accent-green)] border-[var(--accent-green)] text-[var(--bg)]"
-                      : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-                  }`}
-                >
-                  {lang}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">
-              Family interests
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {INTERESTS.map((interest) => (
-                <button
-                  key={interest}
-                  onClick={() => setSelectedInterests(toggleItem(selectedInterests, interest))}
-                  className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
-                    selectedInterests.includes(interest)
-                      ? "bg-[var(--accent-warm)] border-[var(--accent-warm)] text-[var(--bg)]"
-                      : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
-                  }`}
-                >
-                  {interest}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: Bio + finish */}
-      {step === 4 && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="font-serif text-3xl font-bold mb-2">Almost there</h1>
-            <p className="text-[var(--text-secondary)]">
-              A short bio helps other families get a feel for who you are.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-1">
-              Family bio <span className="opacity-60">(optional, 2-3 sentences)</span>
-            </label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-              placeholder="We're a family of four from Lisbon, currently slow-traveling through Southeast Asia. The kids (4 and 7) are homeschooled and obsessed with surfing and bugs."
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent-green)] transition-colors resize-none"
-            />
-          </div>
-
-          {/* Summary */}
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-3">
-            <h3 className="font-serif font-bold text-lg">Your profile</h3>
-            <SummaryRow label="Family" value={familyName} />
-            <SummaryRow label="From" value={`${homeCountry}${countryCode ? ` (${countryCode.toUpperCase()})` : ""}`} />
-            <SummaryRow label="Kids" value={kidsAges || "—"} />
-            <SummaryRow label="Work" value={parentWorkType || "—"} />
-            <SummaryRow label="Travel" value={travelStyle || "—"} />
-            <SummaryRow label="Education" value={educationApproach || "—"} />
-            <SummaryRow label="Languages" value={selectedLanguages.join(", ") || "—"} />
-            <SummaryRow label="Interests" value={selectedInterests.join(", ") || "—"} />
-          </div>
-        </div>
-      )}
-
-      {/* Navigation buttons */}
-      <div className="flex items-center justify-between mt-10">
-        {step > 1 ? (
-          <button
-            onClick={() => setStep(step - 1)}
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-          >
-            ← Back
-          </button>
-        ) : (
-          <div />
         )}
 
-        {step < TOTAL_STEPS ? (
-          <button
-            onClick={() => setStep(step + 1)}
-            disabled={step === 1 && !familyName}
-            className="px-6 py-2.5 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-30"
-          >
-            Continue
-          </button>
-        ) : (
-          <button
-            onClick={handleSave}
-            disabled={saving || !familyName}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {saving && <span className="w-4 h-4 border-2 border-[var(--bg)] border-t-transparent rounded-full animate-spin" />}
-            {saving ? "Saving..." : "Complete profile"}
-          </button>
-        )}
+        <div />
       </div>
 
-      {/* Skip link */}
-      <p className="text-center mt-6">
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-        >
-          Skip for now
-        </button>
-      </p>
-    </div>
-  )
-}
+      {/* Error */}
+      {error && <p className="text-xs text-center text-[var(--score-low)] mb-2">{error}</p>}
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between text-sm">
-      <span className="text-[var(--text-secondary)]">{label}</span>
-      <span className="text-right max-w-[60%]">{value}</span>
+      {/* Input — directly below messages, no gap */}
+      <div className="pb-4 pt-2">
+        {showCityPicker ? (
+          <div className="space-y-3">
+            {/* Continent selector */}
+            {!cityPickerContinent ? (
+              <>
+                <p className="text-xs text-[var(--text-secondary)] mb-2">Tap a continent to see cities:</p>
+                <div className="flex flex-wrap gap-2">
+                  {continents.map((cont) => (
+                    <button key={cont} onClick={() => setCityPickerContinent(cont)}
+                      className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors">
+                      {cont}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <button onClick={() => setCityPickerContinent(null)} className="text-xs text-[var(--accent-green)]">&larr; All continents</button>
+                  <p className="text-xs text-[var(--text-secondary)]">{selectedCities.length} selected</p>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {citiesByContinent[cityPickerContinent]?.map((c) => {
+                    const selected = selectedCities.includes(c.name)
+                    const flag = c.countryCode.toUpperCase().split("").map((ch) => String.fromCodePoint(127397 + ch.charCodeAt(0))).join("")
+                    return (
+                      <button key={c.slug} onClick={() => toggleCity(c.name)}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between transition-colors ${
+                          selected ? "bg-[var(--accent-green)]/15 text-[var(--accent-green)]" : "text-[var(--text-secondary)] hover:bg-[var(--surface)]"
+                        }`}>
+                        <span>{flag} {c.name}</span>
+                        {selected && <span>✓</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+            {/* Selected cities preview + submit */}
+            {selectedCities.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[var(--border)]">
+                {selectedCities.map((c) => (
+                  <span key={c} onClick={() => toggleCity(c)}
+                    className="text-xs px-2.5 py-1 rounded-full bg-[var(--accent-green)] text-black cursor-pointer hover:opacity-80">
+                    {c} ✕
+                  </span>
+                ))}
+              </div>
+            )}
+            <button onClick={submitCities}
+              className="w-full py-3 rounded-xl bg-[var(--accent-green)] text-black font-semibold text-sm hover:opacity-90 transition-opacity">
+              {selectedCities.length > 0 ? `Continue with ${selectedCities.length} cities` : "Skip — haven't traveled yet"}
+            </button>
+          </div>
+        ) : profile.done ? (
+          <div className="space-y-3">
+            {/* Profile summary */}
+            <div className="rounded-xl bg-[var(--surface)] p-4 space-y-2 text-xs">
+              <p className="text-[var(--text-secondary)] font-medium uppercase tracking-wider text-[10px]">Your profile</p>
+              {profile.family_name && <p><strong>Family:</strong> {profile.family_name}</p>}
+              {profile.home_country && <p><strong>From:</strong> {profile.home_country}</p>}
+              {profile.kids_ages.length > 0 && <p><strong>Kids:</strong> ages {profile.kids_ages.join(", ")}</p>}
+              {profile.parent_work_type && <p><strong>Work:</strong> {profile.parent_work_type}</p>}
+              {profile.education_approach && <p><strong>Education:</strong> {profile.education_approach}</p>}
+              {profile.travel_style && <p><strong>Travel:</strong> {profile.travel_style}</p>}
+              {profile.cities_visited.length > 0 && <p><strong>Cities:</strong> {profile.cities_visited.join(", ")}</p>}
+              {profile.bio && <p className="italic text-[var(--text-primary)] pt-1 border-t border-[var(--border)]">&ldquo;{profile.bio}&rdquo;</p>}
+            </div>
+            <button onClick={handleSave} disabled={saving}
+              className="w-full py-4 rounded-xl bg-[var(--accent-green)] text-black font-semibold text-sm disabled:opacity-50 hover:opacity-90 transition-opacity">
+              {saving ? "Setting up..." : "Save profile →"}
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={(e) => { e.preventDefault(); sendMessage() }} className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Tell me about your family..."
+              disabled={sending}
+              className="flex-1 px-4 py-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm outline-none focus:border-[var(--accent-green)] transition-colors disabled:opacity-50 placeholder-[var(--text-secondary)]"
+            />
+            <button type="submit" disabled={!input.trim() || sending}
+              className="px-5 py-3.5 rounded-xl bg-[var(--accent-green)] text-black font-bold text-sm disabled:opacity-20 hover:opacity-90 transition-opacity">
+              →
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,28 +1,53 @@
-// Remember to add the callback URL to Google Cloud Console and Supabase Auth settings:
-// - Google Cloud Console → Credentials → OAuth 2.0 → Authorized redirect URIs:
-//   https://YOUR_SUPABASE_PROJECT.supabase.co/auth/v1/callback
-// - Supabase Dashboard → Auth → URL Configuration → Redirect URLs:
-//   https://your-domain.com/auth/callback
-
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createServerClient, type CookieOptions } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
+  const next = searchParams.get("next") ?? "/dashboard"
 
   if (code) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const cookieStore = cookies()
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: CookieOptions) {
+            cookieStore.delete({ name, ...options })
+          },
+        },
+      }
+    )
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      return NextResponse.redirect(`${origin}/dashboard`)
+      // Check if user has completed onboarding — new users go to /onboarding
+      if (next === "/dashboard") {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: family } = await supabase
+            .from("families")
+            .select("onboarding_complete")
+            .eq("user_id", user.id)
+            .maybeSingle()
+          if (!family || !family.onboarding_complete) {
+            return NextResponse.redirect(`${origin}/onboarding`)
+          }
+        }
+      }
+      return NextResponse.redirect(`${origin}${next}`)
     }
   }
 
-  // If there's an error or no code, redirect to login
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
 }
