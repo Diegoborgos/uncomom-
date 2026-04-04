@@ -50,18 +50,18 @@ export default function FISBreakdownV2() {
         </p>
       )}
 
-      {/* Trust line — replaces both "Based on public data sources" and the DataFreshness widget */}
-      <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
-        <span>
-          {dataHealth.totalSignals > 0
-            ? `${dataHealth.totalSignals} signals from ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.fieldReportCount > 0 ? ` + ${dataHealth.fieldReportCount} family report${dataHealth.fieldReportCount !== 1 ? "s" : ""}` : ""}`
-            : "Based on public data sources"}
-          {dataHealth.lastUpdated && ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}`}
-        </span>
-        <Link href="/methodology" className="text-[var(--accent-green)] hover:underline shrink-0 ml-3">
-          How this works &rarr;
-        </Link>
-      </div>
+      {/* Trust line — only render when we have actual signals */}
+      {dataHealth.totalSignals > 0 && (
+        <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+          <span>
+            {`${dataHealth.totalSignals} signals from ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.fieldReportCount > 0 ? ` + ${dataHealth.fieldReportCount} family report${dataHealth.fieldReportCount !== 1 ? "s" : ""}` : ""}`}
+            {dataHealth.lastUpdated && ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}`}
+          </span>
+          <Link href="/methodology" className="text-[var(--accent-green)] hover:underline shrink-0 ml-3">
+            How this works &rarr;
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
