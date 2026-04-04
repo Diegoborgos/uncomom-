@@ -16,6 +16,7 @@ import TripTracker from "./TripTracker"
 import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
 import { useCityOverview, CityOverviewContext } from "@/lib/use-city-overview"
+import PersonalBadge from "./ui/PersonalBadge"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -72,11 +73,7 @@ export default function CityPageTabs({
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
               <div className="flex items-baseline justify-between mb-4">
                 <h2 className="font-serif text-xl font-bold">Family Intelligence Score&trade;</h2>
-                {overview?.fis.isPersonalized && (
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-                    Personalized
-                  </span>
-                )}
+                {overview?.fis.isPersonalized && <PersonalBadge label="Personalized" />}
               </div>
               <FISBreakdownV2 />
             </section>

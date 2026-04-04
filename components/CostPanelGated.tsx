@@ -7,6 +7,7 @@ import { PaywallBlur } from "./Paywall"
 import { formatEuro } from "@/lib/scores"
 import { City } from "@/lib/types"
 import { personalizedCost } from "@/lib/personalize"
+import PersonalBadge from "./ui/PersonalBadge"
 
 export default function CostPanelGated({ city }: { city: City }) {
   const overview = useCityOverviewContext()
@@ -25,11 +26,7 @@ export default function CostPanelGated({ city }: { city: City }) {
     <div>
       <div className="flex items-baseline justify-between mb-1">
         <h3 className="font-serif text-lg font-bold">Family Cost Estimate</h3>
-        {cost.isPersonalized && (
-          <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-            For you
-          </span>
-        )}
+        {cost.isPersonalized && <PersonalBadge />}
       </div>
       <p className="text-xs text-[var(--text-secondary)] mb-3">
         {cost.label}

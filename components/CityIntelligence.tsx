@@ -4,6 +4,7 @@ import { City } from "@/lib/types"
 import { getFISColor } from "@/lib/fis"
 import { useAuth } from "@/lib/auth-context"
 import { PaywallBlur } from "./Paywall"
+import PersonalBadge from "./ui/PersonalBadge"
 import DataPoint from "./DataPoint"
 
 /**
@@ -315,11 +316,7 @@ function PassportRow({ tier, examples, days, approval, friendly, isUserTier }: {
         <div>
           <p className="text-xs font-medium">
             {tier} passport
-            {isUserTier && (
-              <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-                Your passport
-              </span>
-            )}
+            {isUserTier && <PersonalBadge label="Your passport" />}
           </p>
           <p className="text-[10px] text-[var(--text-secondary)]">{examples}</p>
         </div>
