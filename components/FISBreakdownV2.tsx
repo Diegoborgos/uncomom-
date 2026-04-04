@@ -39,7 +39,7 @@ export default function FISBreakdownV2() {
             index={i}
             isExpanded={expandedDim === dim.key}
             onTap={() => setExpandedDim(expandedDim === dim.key ? null : dim.key)}
-            sources={dataHealth.sources}
+            dataHealth={dataHealth}
           />
         ))}
       </div>
@@ -72,13 +72,13 @@ function DimensionRow({
   index,
   isExpanded,
   onTap,
-  sources,
+  dataHealth,
 }: {
   dim: FISDimensionData
   index: number
   isExpanded: boolean
   onTap: () => void
-  sources: { name: string; confidence: number; updatedAt: string | null }[]
+  dataHealth: { totalSignals: number; totalSources: number; fieldReportCount: number; lastUpdated: string | null }
 }) {
   const adjustmentText = dim.personalAdjustment > 0
     ? `+${dim.personalAdjustment}`
@@ -118,8 +118,8 @@ function DimensionRow({
       </button>
 
       {/* Tooltip — absolute positioned, floats above without shifting layout */}
-      {isExpanded && sources.length > 0 && (
-        <div className="absolute left-8 sm:left-32 bottom-full mb-1.5 z-40 max-w-[260px]">
+      {isExpanded && dataHealth.totalSignals > 0 && (
+        <div className="absolute left-8 sm:left-32 bottom-full mb-1.5 z-40 max-w-[280px]">
           <div className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] text-[10px] text-[var(--text-secondary)] shadow-lg">
             {dim.isPersonalized && (
               <p className="text-[var(--accent-green)] mb-1">
@@ -127,9 +127,8 @@ function DimensionRow({
               </p>
             )}
             <p>
-              {sources.slice(0, 2).map(s => s.name).join(", ")}
-              {sources.length > 2 && ` +${sources.length - 2} more`}
-              {` \u00b7 Updated ${sources[0]?.updatedAt ? getTimeAgo(new Date(sources[0].updatedAt)) : "recently"}`}
+              {`${dataHealth.totalSignals} signals from ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.fieldReportCount > 0 ? ` + ${dataHealth.fieldReportCount} family report${dataHealth.fieldReportCount !== 1 ? "s" : ""}` : ""}`}
+              {dataHealth.lastUpdated && ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}`}
             </p>
           </div>
           {/* Arrow pointing down */}
