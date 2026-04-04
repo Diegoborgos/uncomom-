@@ -140,11 +140,11 @@ export default function VisasPage() {
                   <p className="text-sm text-[var(--text-secondary)]">{visa.country}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)] font-medium">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)] font-medium">
                     {visa.type}
                   </span>
                   {visa.familyFriendly && (
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)] font-medium">
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)] font-medium">
                       Includes dependents
                     </span>
                   )}

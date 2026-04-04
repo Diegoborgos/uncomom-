@@ -48,11 +48,11 @@ export default function CityVisas({ citySlug }: { citySlug: string }) {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h3 className="font-medium">{visa.visaName}</h3>
               <div className="flex gap-2">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)]">
                   {visa.type}
                 </span>
                 {visa.familyFriendly && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)]">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)]">
                     Includes family
                   </span>
                 )}

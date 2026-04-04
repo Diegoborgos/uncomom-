@@ -77,33 +77,34 @@ function DimensionRow({
     : "Estimated data"
 
   return (
-    <div className="flex items-center gap-3">
-      <SourceTooltip content={tooltipContent}>
-        <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0">
+    <SourceTooltip content={tooltipContent} showIcon={false}>
+      <div className="flex items-center gap-3 w-full">
+        <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0 flex items-center gap-1">
           {dim.label}
+          <span className="text-[9px] opacity-30 group-hover:opacity-70 transition-opacity">&#9432;</span>
         </span>
-      </SourceTooltip>
-      <div className="flex-1 h-2.5 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${dim.score}%`,
-            backgroundColor: dim.color,
-            transition: `width 0.8s ease-out ${index * 0.08}s`,
-          }}
-        />
+        <div className="flex-1 h-2.5 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${dim.score}%`,
+              backgroundColor: dim.color,
+              transition: `width 0.8s ease-out ${index * 0.08}s`,
+            }}
+          />
+        </div>
+        <span className="w-8 text-right text-xs font-mono" style={{ color: dim.color }}>
+          {dim.score}
+        </span>
+        {adjustmentText && (
+          <span className={`w-10 text-right text-[9px] font-mono ${
+            dim.personalAdjustment > 0 ? "text-[var(--accent-green)]" : "text-red-400"
+          }`}>
+            {adjustmentText}%
+          </span>
+        )}
       </div>
-      <span className="w-8 text-right text-xs font-mono" style={{ color: dim.color }}>
-        {dim.score}
-      </span>
-      {adjustmentText && (
-        <span className={`w-10 text-right text-[9px] font-mono ${
-          dim.personalAdjustment > 0 ? "text-[var(--accent-green)]" : "text-red-400"
-        }`}>
-          {adjustmentText}%
-        </span>
-      )}
-    </div>
+    </SourceTooltip>
   )
 }
 

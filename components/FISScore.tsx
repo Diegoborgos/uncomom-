@@ -109,7 +109,7 @@ export function FISBreakdown({ city }: { city: City }) {
           {personalFIS.adjustedFor.map((a) => (
             <span
               key={a}
-              className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]"
+              className="text-[10px] px-2 py-0.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)]"
             >
               {a}
             </span>

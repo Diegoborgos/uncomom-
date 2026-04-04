@@ -166,7 +166,7 @@ export default function FieldReportForm({
 
   if (submitted) {
     return (
-      <div className="rounded-xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-8 text-center">
+      <div className="rounded-xl border border-[rgb(var(--accent-green-rgb)/0.3)] bg-[rgb(var(--accent-green-rgb)/0.05)] p-8 text-center">
         <p className="font-serif text-xl font-bold text-[var(--accent-green)] mb-2">Field report submitted</p>
         <p className="text-sm text-[var(--text-secondary)]">
           Your experience improves the FIS&trade; for every family researching {city?.name || citySlug}.
@@ -453,7 +453,7 @@ function BoolInput({ label, value, onChange }: { label: string; value: boolean |
       <div className="flex gap-2">
         <button
           type="button" onClick={() => onChange(true)}
-          className={`px-4 py-1.5 rounded-lg text-xs border ${value === true ? "bg-[var(--accent-green)]/15 border-[var(--accent-green)] text-[var(--accent-green)]" : "border-[var(--border)] text-[var(--text-secondary)]"}`}
+          className={`px-4 py-1.5 rounded-lg text-xs border ${value === true ? "bg-[rgb(var(--accent-green-rgb)/0.15)] border-[var(--accent-green)] text-[var(--accent-green)]" : "border-[var(--border)] text-[var(--text-secondary)]"}`}
         >
           Yes
         </button>

@@ -240,7 +240,7 @@ function JoinPageContent() {
             )}
 
             {top5 && top5.length > 0 && (
-              <div className="rounded-xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-4">
+              <div className="rounded-xl border border-[rgb(var(--accent-green-rgb)/0.3)] bg-[rgb(var(--accent-green-rgb)/0.05)] p-4">
                 <p className="text-[10px] text-[var(--accent-green)] uppercase tracking-wider mb-3 font-medium">Your top cities</p>
                 {typeof matchData?.personalIntro === "string" && matchData.personalIntro && (
                   <p className="text-xs text-[var(--text-secondary)] italic mb-3">{matchData.personalIntro}</p>

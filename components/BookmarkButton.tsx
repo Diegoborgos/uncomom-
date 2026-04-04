@@ -27,7 +27,7 @@ export default function BookmarkButton({ citySlug }: { citySlug: string }) {
       onClick={toggle}
       className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
         saved
-          ? "bg-[var(--accent-warm)]/15 border-[var(--accent-warm)] text-[var(--accent-warm)]"
+          ? "bg-[rgb(var(--accent-warm-rgb)/0.15)] border-[var(--accent-warm)] text-[var(--accent-warm)]"
           : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-warm)] hover:text-[var(--accent-warm)]"
       }`}
     >

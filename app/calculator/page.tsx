@@ -99,7 +99,7 @@ export default function CalculatorPage() {
                   onClick={() => setEducation(opt.value)}
                   className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-colors ${
                     education === opt.value
-                      ? "bg-[var(--accent-green)]/15 border-[var(--accent-green)] text-[var(--accent-green)]"
+                      ? "bg-[rgb(var(--accent-green-rgb)/0.15)] border-[var(--accent-green)] text-[var(--accent-green)]"
                       : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-secondary)]"
                   }`}
                 >
@@ -126,8 +126,8 @@ export default function CalculatorPage() {
               onClick={() => setSelectedCity(isSelected ? "" : city.slug)}
               className={`w-full flex items-center justify-between rounded-xl border p-4 text-left transition-colors ${
                 isSelected
-                  ? "border-[var(--accent-green)] bg-[var(--accent-green)]/5"
-                  : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent-green)]/50"
+                  ? "border-[var(--accent-green)] bg-[rgb(var(--accent-green-rgb)/0.05)]"
+                  : "border-[var(--border)] bg-[var(--surface)] hover:border-[rgb(var(--accent-green-rgb)/0.5)]"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export default function CalculatorPage() {
 
       {/* Expanded city detail */}
       {selected && (
-        <div className="mt-6 rounded-xl border border-[var(--accent-green)]/30 bg-[var(--surface)] p-6">
+        <div className="mt-6 rounded-xl border border-[rgb(var(--accent-green-rgb)/0.3)] bg-[var(--surface)] p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-serif text-xl font-bold">
               {countryCodeToFlag(selected.countryCode)} {selected.name} — Cost Breakdown

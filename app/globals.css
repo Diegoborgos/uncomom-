@@ -15,6 +15,8 @@
   --text-secondary: #A1A1AA;
   --accent-green: #EBFF00;
   --accent-warm: #EBFF00;
+  --accent-green-rgb: 235, 255, 0;
+  --accent-warm-rgb: 235, 255, 0;
   --score-high: #EBFF00;
   --score-mid: #FFB800;
   --score-low: #FF4444;

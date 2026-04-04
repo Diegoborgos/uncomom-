@@ -135,7 +135,7 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
 
       {/* Current trip banner */}
       {currentTrip && (
-        <div className="flex items-center justify-between bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30 rounded-lg px-4 py-3 mb-4">
+        <div className="flex items-center justify-between bg-[rgb(var(--accent-green-rgb)/0.1)] border border-[rgb(var(--accent-green-rgb)/0.3)] rounded-lg px-4 py-3 mb-4">
           <div>
             <p className="text-sm font-medium text-[var(--accent-green)]">You&apos;re here now</p>
             {currentTrip.arrived_at && (
@@ -275,7 +275,7 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
 
       {/* Field report prompt — appears after marking a trip as left */}
       {showReportPrompt && (
-        <div className="mt-4 rounded-lg border border-[var(--accent-warm)]/40 bg-[var(--accent-warm)]/8 p-4">
+        <div className="mt-4 rounded-lg border border-[rgb(var(--accent-warm-rgb)/0.4)] bg-[rgb(var(--accent-warm-rgb)/0.08)] p-4">
           <p className="text-sm font-medium text-[var(--text-primary)] mb-1">
             You stayed. Now tell us what the next family needs to know.
           </p>
