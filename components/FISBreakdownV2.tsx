@@ -36,7 +36,6 @@ export default function FISBreakdownV2() {
             key={dim.key}
             dim={dim}
             index={i}
-            dataHealth={dataHealth}
           />
         ))}
       </div>
@@ -67,11 +66,9 @@ export default function FISBreakdownV2() {
 function DimensionRow({
   dim,
   index,
-  dataHealth,
 }: {
   dim: FISDimensionData
   index: number
-  dataHealth: { totalSignals: number; totalSources: number; fieldReportCount: number; lastUpdated: string | null }
 }) {
   const [hovered, setHovered] = useState(false)
   const [pinned, setPinned] = useState(false)
@@ -140,8 +137,8 @@ function DimensionRow({
               </p>
             )}
             <p>
-              {dataHealth.totalSignals > 0
-                ? `${dataHealth.totalSignals} signals \u00b7 ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.lastUpdated ? ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}` : ""}`
+              {dim.signalCount > 0
+                ? `${dim.signalCount} signal${dim.signalCount !== 1 ? "s" : ""} \u00b7 ${dim.sourceCount} source${dim.sourceCount !== 1 ? "s" : ""}${dim.lastUpdated ? ` \u00b7 Updated ${getTimeAgo(new Date(dim.lastUpdated))}` : ""}`
                 : "Estimated data"}
             </p>
           </div>
