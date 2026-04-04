@@ -6,6 +6,7 @@ import { getVisaBadgeColor, getHomeschoolBadgeColor } from "@/lib/scores"
 import { PaywallBlur } from "./Paywall"
 import { personalizedVisa } from "@/lib/personalize"
 import { useCityOverviewContext } from "@/lib/use-city-overview"
+import PersonalBadge from "./ui/PersonalBadge"
 
 export default function MetaPanelGated({ city }: { city: City }) {
   const { family, isPaid } = useAuth()
@@ -33,11 +34,7 @@ export default function MetaPanelGated({ city }: { city: City }) {
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <p className="text-xs text-[var(--text-secondary)]">Homeschool legal</p>
-                {isHomeschooler && (
-                  <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-                    For you
-                  </span>
-                )}
+                {isHomeschooler && <PersonalBadge />}
               </div>
               <span
                 className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5"
@@ -57,11 +54,7 @@ export default function MetaPanelGated({ city }: { city: City }) {
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <p className="text-xs text-[var(--text-secondary)]">Visa friendly</p>
-                {visa && (
-                  <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-                    {visa.tierLabel}
-                  </span>
-                )}
+                {visa && <PersonalBadge label={visa.tierLabel} />}
               </div>
               <span
                 className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5"
