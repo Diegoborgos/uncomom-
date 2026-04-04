@@ -42,16 +42,20 @@ export default function DataPoint({
 
     setOpen(true)
     setLoading(true)
-    const { data } = await supabase
-      .from("city_data_sources")
-      .select("source_name, source_url, source_type, fetched_at, confidence, report_count")
-      .eq("city_slug", citySlug)
-      .eq("signal_key", signalKey)
-      .order("fetched_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
+    try {
+      const { data } = await supabase
+        .from("city_data_sources")
+        .select("source_name, source_url, source_type, fetched_at, confidence, report_count")
+        .eq("city_slug", citySlug)
+        .eq("signal_key", signalKey)
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-    setSource(data)
+      setSource(data)
+    } catch {
+      // query failed — show fallback
+    }
     setLoading(false)
     setLoaded(true)
   }
