@@ -5,7 +5,6 @@ import { getFISColor } from "@/lib/fis"
 import { useAuth } from "@/lib/auth-context"
 import { PaywallBlur } from "./Paywall"
 import DataPoint from "./DataPoint"
-import ContributePrompt from "./ContributePrompt"
 
 /**
  * Renders deep signal intelligence for cities that have full signals data.
@@ -13,6 +12,8 @@ import ContributePrompt from "./ContributePrompt"
  */
 export default function CityIntelligence({ city }: { city: City }) {
   const s = city.signals
+  const { family } = useAuth()
+  const userPassportTier = family?.passport_tier?.toLowerCase() || null
   if (!s) return null
 
   return (
@@ -34,7 +35,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           </div>
           <div className="grid grid-cols-2 gap-3 mb-4">
             <TimelineItem label="Housing secured" value={`~${s.setupDifficulty.housingSetupDays} days`} citySlug={city.slug} signalKey="setupDifficulty.housingSetupDays" />
-            <TimelineItem label="SIM card" value={`~${s.setupDifficulty.simCardSetupHours} hours`} />
+            <TimelineItem label="SIM card" value={`~${s.setupDifficulty.simCardSetupHours} ${s.setupDifficulty.simCardSetupHours === 1 ? "hour" : "hours"}`} />
             <TimelineItem label="Bank account" value={s.setupDifficulty.bankAccountOpenable ? `~${s.setupDifficulty.bankAccountDays} days` : "Not available"} />
             <TimelineItem label="GP registered" value={`~${s.setupDifficulty.gpRegistrationDays} days`} />
             <TimelineItem label="School enrolled" value={`~${s.setupDifficulty.schoolEnrollmentSetupDays} days`} citySlug={city.slug} signalKey="setupDifficulty.schoolEnrollmentSetupDays" />
@@ -56,7 +57,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.setupDifficulty.memberSetupNarrative && (
             <MemberQuote quote={s.setupDifficulty.memberSetupNarrative} />
           )}
-          <ContributePrompt label="Settled here? Share your setup timeline" />
+
         </GatedDetails>
       </IntelSection>
 
@@ -93,7 +94,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.healthcare.memberEmergencyNarrative && (
             <MemberQuote quote={s.healthcare.memberEmergencyNarrative} />
           )}
-          <ContributePrompt label="Used healthcare here? Share your experience" />
+
         </GatedDetails>
       </IntelSection>
 
@@ -135,7 +136,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.educationAccess.memberEnrollmentNarrative && (
             <MemberQuote quote={s.educationAccess.memberEnrollmentNarrative} />
           )}
-          <ContributePrompt label="Enrolled kids here? Share the reality" />
+
         </GatedDetails>
       </IntelSection>
 
@@ -149,6 +150,7 @@ export default function CityIntelligence({ city }: { city: City }) {
               days={s.visa.strongPassportProcessingDays}
               approval={s.visa.strongPassportApprovalRate}
               friendly={s.visa.strongPassportVisaFriendly}
+              isUserTier={userPassportTier === "strong"}
             />
             <PassportRow
               tier="Medium"
@@ -156,6 +158,7 @@ export default function CityIntelligence({ city }: { city: City }) {
               days={s.visa.mediumPassportProcessingDays}
               approval={s.visa.mediumPassportApprovalRate}
               friendly={s.visa.mediumPassportVisaFriendly}
+              isUserTier={userPassportTier === "medium"}
             />
             <PassportRow
               tier="Limited"
@@ -163,6 +166,7 @@ export default function CityIntelligence({ city }: { city: City }) {
               days={s.visa.limitedPassportProcessingDays}
               approval={s.visa.limitedPassportApprovalRate}
               friendly={s.visa.limitedPassportVisaFriendly}
+              isUserTier={userPassportTier === "limited"}
             />
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
@@ -174,7 +178,7 @@ export default function CityIntelligence({ city }: { city: City }) {
           {s.visa.memberVisaNarrative && (
             <MemberQuote quote={s.visa.memberVisaNarrative} />
           )}
-          <ContributePrompt label="Got a visa here? Share processing times" />
+
         </GatedDetails>
       </IntelSection>
 
@@ -194,10 +198,12 @@ export default function CityIntelligence({ city }: { city: City }) {
               </p>
               <p className="text-[10px] text-[var(--text-secondary)]">newcomer activities</p>
             </div>
-            <div className="text-center">
-              <p className="font-mono text-2xl font-bold">{s.community.meetupsPerMonth}</p>
-              <p className="text-[10px] text-[var(--text-secondary)]">meetups/month</p>
-            </div>
+            {s.community.meetupsPerMonth > 0 && (
+              <div className="text-center">
+                <p className="font-mono text-2xl font-bold">{s.community.meetupsPerMonth}</p>
+                <p className="text-[10px] text-[var(--text-secondary)]">meetups/month</p>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <TimelineItem label="Int'l kid community" value={`${s.community.internationalKidCommunitySize}/100`} citySlug={city.slug} signalKey="community.internationalKidCommunitySize" />
@@ -207,16 +213,33 @@ export default function CityIntelligence({ city }: { city: City }) {
             <SignalPill label="WhatsApp groups accessible" value={s.community.whatsappGroupsAccessible} />
             <TimelineItem label="Solo parent rating" value={`${s.community.soloParentCommunityRating}/100`} />
           </div>
-          <ContributePrompt label="Made friends here? Tell other families how" />
+
         </GatedDetails>
       </IntelSection>
+
+      {/* Single contribute CTA */}
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 text-center">
+        <p className="text-sm text-[var(--text-primary)] mb-1">
+          Lived in {city.name}?
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
+          Your experience makes this data real. A quick conversation updates all the intelligence above.
+        </p>
+        <a
+          href={`/join?city=${city.slug}&mode=report`}
+          className="inline-flex items-center gap-2 bg-[var(--accent-green)] text-black px-5 py-2.5 rounded-full text-xs font-medium hover:opacity-90 transition"
+        >
+          Share your experience &rarr;
+        </a>
+      </div>
 
       {/* Data quality footer */}
       <div className="rounded-lg bg-[var(--surface-elevated)] px-4 py-3 flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
         <span>
           {s.dataQuality.fieldReportCount > 0
-            ? `${s.dataQuality.fieldReportCount} field reports (${s.dataQuality.fieldReportsLast12Mo} in last 12mo)`
-            : "No family field reports yet"}
+            ? `${s.dataQuality.fieldReportCount} family report${s.dataQuality.fieldReportCount !== 1 ? "s" : ""}`
+            : "Research data"}
+          {s.dataQuality.fieldReportsLast12Mo > 0 && ` (${s.dataQuality.fieldReportsLast12Mo} recent)`}
         </span>
         <span>{s.dataQuality.signalCount} signals &middot; {s.dataQuality.dataCompleteness}% complete</span>
       </div>
@@ -288,14 +311,25 @@ function MemberQuote({ quote }: { quote: string }) {
   )
 }
 
-function PassportRow({ tier, examples, days, approval, friendly }: {
-  tier: string; examples: string; days: number; approval: number; friendly: string
+function PassportRow({ tier, examples, days, approval, friendly, isUserTier }: {
+  tier: string; examples: string; days: number; approval: number; friendly: string; isUserTier?: boolean
 }) {
   return (
-    <div className="rounded-lg bg-[var(--surface-elevated)] p-3">
+    <div className={`rounded-lg p-3 ${
+      isUserTier
+        ? "bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30"
+        : "bg-[var(--surface-elevated)]"
+    }`}>
       <div className="flex items-center justify-between mb-1">
         <div>
-          <p className="text-xs font-medium">{tier} passport</p>
+          <p className="text-xs font-medium">
+            {tier} passport
+            {isUserTier && (
+              <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
+                Your passport
+              </span>
+            )}
+          </p>
           <p className="text-[10px] text-[var(--text-secondary)]">{examples}</p>
         </div>
       </div>
