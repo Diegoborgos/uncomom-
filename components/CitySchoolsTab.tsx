@@ -76,7 +76,7 @@ export default function CitySchoolsTab({ citySlug, cityName, countryCode }: { ci
                   )}
                 </div>
                 {school.monthly_fee && school.monthly_fee > 0 && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)]">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)]">
                     {formatEuro(school.monthly_fee)}/mo
                   </span>
                 )}

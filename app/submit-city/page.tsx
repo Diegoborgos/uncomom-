@@ -39,7 +39,7 @@ export default function SubmitCityPage() {
   if (submitted) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center text-2xl mx-auto mb-6">
+        <div className="w-16 h-16 rounded-full bg-[rgb(var(--accent-green-rgb)/0.2)] text-[var(--accent-green)] flex items-center justify-center text-2xl mx-auto mb-6">
           ✓
         </div>
         <h1 className="font-serif text-3xl font-bold mb-4">City submitted</h1>

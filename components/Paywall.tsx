@@ -54,7 +54,7 @@ export function PaywallGate({ feature }: { feature: string }) {
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8 text-center">
-      <div className="w-10 h-10 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)] flex items-center justify-center text-lg mx-auto mb-4">
+      <div className="w-10 h-10 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)] flex items-center justify-center text-lg mx-auto mb-4">
         🔒
       </div>
       <h3 className="font-serif text-xl font-bold mb-2">{feature}</h3>
@@ -109,9 +109,9 @@ export default function Paywall({
         <div className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl max-w-md w-full mx-4 shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="relative px-8 pt-10 pb-6 text-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-green)]/8 via-transparent to-[var(--accent-warm)]/8" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[rgb(var(--accent-green-rgb)/0.08)] via-transparent to-[rgb(var(--accent-warm-rgb)/0.08)]" />
             <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)] flex items-center justify-center text-xl mx-auto mb-4">
+              <div className="w-12 h-12 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)] flex items-center justify-center text-xl mx-auto mb-4">
                 🔒
               </div>
               <h2 className="font-serif text-2xl font-bold mb-2">{feature}</h2>
@@ -173,7 +173,7 @@ export function PaywallInline({ feature }: { feature: string }) {
   if (isPaid) return null
 
   return (
-    <div className="rounded-lg border border-[var(--accent-warm)]/30 bg-[var(--accent-warm)]/5 px-4 py-3 flex items-center justify-between gap-3">
+    <div className="rounded-lg border border-[rgb(var(--accent-warm-rgb)/0.3)] bg-[rgb(var(--accent-warm-rgb)/0.05)] px-4 py-3 flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         <span className="text-sm">🔒</span>
         <span className="text-xs text-[var(--text-secondary)]">{feature}</span>

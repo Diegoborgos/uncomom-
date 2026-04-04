@@ -127,7 +127,7 @@ export default function JoinOverlay() {
 
         {/* Header */}
         <div className="relative px-8 pt-10 pb-6 text-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-green)]/8 via-transparent to-[var(--accent-warm)]/8" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[rgb(var(--accent-green-rgb)/0.08)] via-transparent to-[rgb(var(--accent-warm-rgb)/0.08)]" />
           <div className="relative">
             <h2 className="font-serif text-2xl font-bold mb-2">Join Uncomun</h2>
             <p className="text-sm text-[var(--text-secondary)]">

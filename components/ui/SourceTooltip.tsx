@@ -52,14 +52,14 @@ export default function SourceTooltip({
 
   return (
     <div
-      className="relative inline-flex items-center"
+      className="relative flex w-full items-center"
       ref={ref}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       <button
         onClick={() => setPinned(!pinned)}
-        className="text-left flex items-center gap-1 group hover:opacity-80 transition-opacity"
+        className="text-left flex items-center gap-1 w-full group hover:opacity-80 transition-opacity"
       >
         {children}
         {showIcon && iconPosition === "inline" && (

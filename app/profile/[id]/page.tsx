@@ -267,7 +267,7 @@ export default function PublicProfilePage() {
                 const left = trip.left_at ? new Date(trip.left_at).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "2-digit" }) : isActive ? "now" : ""
                 return (
                   <Link key={trip.id || i} href={`/cities/${trip.city_slug}`}
-                    className={`flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors ${isActive ? "bg-[var(--accent-green)]/5 border-l-2 border-l-[var(--accent-green)]" : ""}`}>
+                    className={`flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)] transition-colors ${isActive ? "bg-[rgb(var(--accent-green-rgb)/0.05)] border-l-2 border-l-[var(--accent-green)]" : ""}`}>
                     <span className="text-[10px] text-[var(--text-secondary)] w-28 shrink-0 font-mono">
                       {arrived}{left ? ` → ${left}` : ""}
                     </span>
@@ -405,7 +405,7 @@ function ProfileCityCard({ city, badge, href }: { city: { name: string; country:
         <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/70 text-[10px] font-mono text-[var(--accent-green)] font-bold">
           {badge}
         </div>
-        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[var(--accent-green)]/20 text-[10px] font-mono text-[var(--accent-green)]">
+        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.2)] text-[10px] font-mono text-[var(--accent-green)]">
           {city.scores.family}
         </div>
         <div className="absolute bottom-2 left-2 right-2">

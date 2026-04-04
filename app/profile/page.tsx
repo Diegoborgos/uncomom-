@@ -248,7 +248,7 @@ export default function ProfilePage() {
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
                     trip.status === "here_now"
-                      ? "bg-[var(--accent-green)]/20 text-[var(--accent-green)]"
+                      ? "bg-[rgb(var(--accent-green-rgb)/0.2)] text-[var(--accent-green)]"
                       : "bg-[var(--surface-elevated)] text-[var(--text-secondary)]"
                   }`}
                 >

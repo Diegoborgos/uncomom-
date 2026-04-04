@@ -20,7 +20,7 @@ function SuccessContent() {
   if (!user) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center text-3xl mx-auto mb-8">
+        <div className="w-16 h-16 rounded-full bg-[rgb(var(--accent-green-rgb)/0.2)] text-[var(--accent-green)] flex items-center justify-center text-3xl mx-auto mb-8">
           &#10003;
         </div>
 
@@ -60,7 +60,7 @@ function SuccessContent() {
   // Authenticated purchase
   return (
     <div className="max-w-lg mx-auto px-4 py-20 text-center">
-      <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center text-3xl mx-auto mb-8">
+      <div className="w-16 h-16 rounded-full bg-[rgb(var(--accent-green-rgb)/0.2)] text-[var(--accent-green)] flex items-center justify-center text-3xl mx-auto mb-8">
         &#10003;
       </div>
 
