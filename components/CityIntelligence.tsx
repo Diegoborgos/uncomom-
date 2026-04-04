@@ -15,6 +15,7 @@ export default function CityIntelligence({ city }: { city: City }) {
   const s = city.signals
   const { family } = useAuth()
   const userPassportTier = family?.passport_tier?.toLowerCase() || null
+  console.log("[PassportRow debug]", { rawTier: family?.passport_tier, normalizedTier: userPassportTier, familyExists: !!family })
   if (!s) return null
 
   return (

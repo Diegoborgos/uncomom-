@@ -61,7 +61,7 @@ export default function SourceTooltip({
         onClick={() => setPinned(!pinned)}
         className="text-left flex items-center gap-1 w-full group hover:opacity-80 transition-opacity"
       >
-        {children}
+        <span className="flex-1 min-w-0">{children}</span>
         {showIcon && iconPosition === "inline" && (
           <span className="text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors shrink-0">
             &#9432;

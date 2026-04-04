@@ -79,7 +79,7 @@ function DimensionRow({
   return (
     <SourceTooltip content={tooltipContent} showIcon={false}>
       <div className="flex items-center gap-3 w-full">
-        <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0 flex items-center gap-1">
+        <span className="text-xs text-[var(--text-secondary)] min-w-[8rem] shrink-0 flex items-center gap-1 whitespace-nowrap">
           {dim.label}
           <span className="text-[9px] opacity-30 group-hover:opacity-70 transition-opacity">&#9432;</span>
         </span>
