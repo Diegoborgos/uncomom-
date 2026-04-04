@@ -18,6 +18,22 @@ export default function CityIntelligence({ city }: { city: City }) {
 
   return (
     <div className="space-y-8">
+      {/* Contribute CTA */}
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 text-center">
+        <p className="text-sm text-[var(--text-primary)] mb-1">
+          Lived in {city.name}?
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] mb-3">
+          Your experience makes this data real. A quick conversation updates all the intelligence below.
+        </p>
+        <a
+          href={`/join?city=${city.slug}&mode=report`}
+          className="inline-flex items-center gap-2 bg-[var(--accent-green)] text-black px-5 py-2.5 rounded-full text-xs font-medium hover:opacity-90 transition"
+        >
+          Share your experience &rarr;
+        </a>
+      </div>
+
       {/* Setup Difficulty */}
       <IntelSection title="Setup Difficulty" subtitle="How hard is it to arrive and get operational">
         <GatedDetails>
@@ -217,32 +233,6 @@ export default function CityIntelligence({ city }: { city: City }) {
         </GatedDetails>
       </IntelSection>
 
-      {/* Single contribute CTA */}
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 text-center">
-        <p className="text-sm text-[var(--text-primary)] mb-1">
-          Lived in {city.name}?
-        </p>
-        <p className="text-xs text-[var(--text-secondary)] mb-3">
-          Your experience makes this data real. A quick conversation updates all the intelligence above.
-        </p>
-        <a
-          href={`/join?city=${city.slug}&mode=report`}
-          className="inline-flex items-center gap-2 bg-[var(--accent-green)] text-black px-5 py-2.5 rounded-full text-xs font-medium hover:opacity-90 transition"
-        >
-          Share your experience &rarr;
-        </a>
-      </div>
-
-      {/* Data quality footer */}
-      <div className="rounded-lg bg-[var(--surface-elevated)] px-4 py-3 flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
-        <span>
-          {s.dataQuality.fieldReportCount > 0
-            ? `${s.dataQuality.fieldReportCount} family report${s.dataQuality.fieldReportCount !== 1 ? "s" : ""}`
-            : "Research data"}
-          {s.dataQuality.fieldReportsLast12Mo > 0 && ` (${s.dataQuality.fieldReportsLast12Mo} recent)`}
-        </span>
-        <span>{s.dataQuality.signalCount} signals &middot; {s.dataQuality.dataCompleteness}% complete</span>
-      </div>
     </div>
   )
 }
