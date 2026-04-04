@@ -86,6 +86,8 @@ export async function POST(req: NextRequest) {
     const results: RefreshResult[] = []
     const signalUpdates: Record<string, unknown> = {}
 
+    console.log(`[refresh] Processing ${city.slug}...`)
+
     // A. Open-Meteo — weather + air quality
     try {
       const meteo = await fetchOpenMeteo(city.lat, city.lng)
@@ -120,6 +122,7 @@ export async function POST(req: NextRequest) {
         if (upsertErr) console.error(`[${city.slug}] Upsert failed for ${r.signal}:`, upsertErr.message)
       }
     } catch (err) {
+      console.error(`[refresh][${city.slug}] Open-Meteo FAILED:`, String(err))
       results.push({ source: "Open-Meteo", signal: "weather+aq", value: null, error: String(err) })
     }
 
@@ -146,6 +149,7 @@ export async function POST(req: NextRequest) {
       }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
       if (upsertErr) console.error(`[${city.slug}] Upsert failed for meta.country:`, upsertErr.message)
     } catch (err) {
+      console.error(`[refresh][${city.slug}] REST Countries FAILED:`, String(err))
       results.push({ source: "REST Countries", signal: "country", value: null, error: String(err) })
     }
 
@@ -188,6 +192,7 @@ export async function POST(req: NextRequest) {
         if (upsertErr) console.error(`[${city.slug}] Upsert failed for teleport.scores:`, upsertErr.message)
       }
     } catch (err) {
+      console.error(`[refresh][${city.slug}] Teleport FAILED:`, String(err))
       results.push({ source: "Teleport", signal: "scores", value: null, error: String(err) })
     }
 
@@ -213,6 +218,7 @@ export async function POST(req: NextRequest) {
         if (upsertErr) console.error(`[${city.slug}] Upsert failed for childSafety.airQuality:`, upsertErr.message)
       }
     } catch (err) {
+      console.error(`[refresh][${city.slug}] AQICN FAILED:`, String(err))
       results.push({ source: "AQICN", signal: "airQuality", value: null, error: String(err) })
     }
 
@@ -256,6 +262,7 @@ export async function POST(req: NextRequest) {
       }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
       if (upsertErr) console.error(`[${city.slug}] Upsert failed for worldbank.indicators:`, upsertErr.message)
     } catch (err) {
+      console.error(`[refresh][${city.slug}] World Bank FAILED:`, String(err))
       results.push({ source: "World Bank", signal: "indicators", value: null, error: String(err) })
     }
 
@@ -283,6 +290,7 @@ export async function POST(req: NextRequest) {
         if (upsertErr) console.error(`[${city.slug}] Upsert failed for weather.current:`, upsertErr.message)
       }
     } catch (err) {
+      console.error(`[refresh][${city.slug}] OpenWeatherMap FAILED:`, String(err))
       results.push({ source: "OpenWeatherMap", signal: "weather", value: null, error: String(err) })
     }
 
@@ -321,11 +329,25 @@ export async function POST(req: NextRequest) {
   const totalSignals = Object.values(allResults).flat().filter((r) => !r.error).length
   const totalErrors = Object.values(allResults).flat().filter((r) => r.error).length
 
+  // Build per-city error summary for easier debugging
+  const errorsByCity: Record<string, string[]> = {}
+  for (const [slug, results] of Object.entries(allResults)) {
+    const errors = results.filter((r) => r.error).map((r) => `${r.source}: ${r.error}`)
+    if (errors.length > 0) errorsByCity[slug] = errors
+  }
+
+  // Log summary to Vercel function logs
+  console.log(`[refresh] Done: ${citiesToRefresh.length} cities, ${totalSignals} signals, ${totalErrors} errors`)
+  if (Object.keys(errorsByCity).length > 0) {
+    console.log(`[refresh] Error breakdown:`, JSON.stringify(errorsByCity, null, 2))
+  }
+
   return NextResponse.json({
     cities: citiesToRefresh.length,
     signals: totalSignals,
     errors: totalErrors,
     exchangeRates: Object.keys(exchangeRates).length > 0,
+    errorsByCity,
     results: allResults,
   })
 }

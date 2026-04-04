@@ -202,6 +202,12 @@ export default function AdminPage() {
                   } else {
                     totalSignals += data.signals || 0
                     totalErrors += data.errors || 0
+                    if (data.errorsByCity && Object.keys(data.errorsByCity).length > 0) {
+                      for (const [slug, errs] of Object.entries(data.errorsByCity)) {
+                        console.warn(`[${slug}]`, (errs as string[]).join(" | "))
+                      }
+                      failed.push(`${city.name} (${data.errors} API errors)`)
+                    }
                   }
                 } catch {
                   totalErrors++
@@ -209,8 +215,8 @@ export default function AdminPage() {
                 }
               }
 
-              const errSuffix = failed.length > 0 ? ` | Failed: ${failed.slice(0, 3).join(", ")}` : ""
-              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix}`)
+              const errSuffix = failed.length > 0 ? ` | Issues: ${failed.slice(0, 5).join(", ")}` : ""
+              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix} — check browser console for details`)
             }}
             accent
           />
