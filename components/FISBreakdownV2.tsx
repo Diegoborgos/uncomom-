@@ -93,7 +93,7 @@ function DimensionRow({
         className="w-full flex items-center gap-3 text-left group hover:opacity-80 transition-opacity"
       >
         <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0">
-          {dim.label}
+          {dim.label} <span className="text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors">&#9432;</span>
         </span>
         <div className="flex-1 h-2.5 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
           <div
@@ -115,9 +115,6 @@ function DimensionRow({
             {adjustmentText}%
           </span>
         )}
-        <span className="text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors shrink-0">
-          &#9432;
-        </span>
       </button>
 
       {/* Tooltip — absolute positioned, floats above without shifting layout */}
@@ -131,13 +128,9 @@ function DimensionRow({
             )}
             <p>
               {sources.map(s => s.name).join(", ")}
+              {sources[0]?.confidence != null && ` \u00b7 ${sources[0].confidence}%`}
+              {sources[0]?.updatedAt && ` \u00b7 Updated ${getTimeAgo(new Date(sources[0].updatedAt))}`}
             </p>
-            {sources[0]?.confidence != null && (
-              <p className="mt-0.5">{sources[0].confidence}% confidence</p>
-            )}
-            {sources[0]?.updatedAt && (
-              <p className="mt-0.5">Updated {getTimeAgo(new Date(sources[0].updatedAt))}</p>
-            )}
           </div>
           {/* Arrow pointing down */}
           <div className="ml-6 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[var(--surface-elevated)]" />

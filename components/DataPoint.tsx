@@ -24,6 +24,7 @@ export default function DataPoint({
   const [open, setOpen] = useState(false)
   const [source, setSource] = useState<Source | null>(null)
   const [loading, setLoading] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function DataPoint({
 
   const handleTap = async () => {
     if (open) { setOpen(false); return }
-    if (source) { setOpen(true); return } // already loaded, show it
+    if (loaded) { setOpen(true); return } // already fetched, show result
 
     setOpen(true)
     setLoading(true)
@@ -52,7 +53,7 @@ export default function DataPoint({
 
     setSource(data)
     setLoading(false)
-    if (!data) setOpen(false) // no source — don't show empty tooltip
+    setLoaded(true)
   }
 
   const sourceLabel = source?.source_type === "field_report"
@@ -110,6 +111,12 @@ export default function DataPoint({
       {open && loading && (
         <div className="absolute z-30 bottom-full left-0 mb-2 w-56 rounded-lg border border-[var(--border)] bg-[var(--bg)] shadow-xl p-3 text-left">
           <p className="text-[10px] text-[var(--text-secondary)]">Loading source...</p>
+          <div className="absolute bottom-0 left-4 translate-y-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[var(--border)]" />
+        </div>
+      )}
+      {open && !loading && loaded && !source && (
+        <div className="absolute z-30 bottom-full left-0 mb-2 w-56 rounded-lg border border-[var(--border)] bg-[var(--bg)] shadow-xl p-3 text-left">
+          <p className="text-[10px] text-[var(--text-secondary)]">Estimated data &mdash; no tracked source yet</p>
           <div className="absolute bottom-0 left-4 translate-y-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[var(--border)]" />
         </div>
       )}
