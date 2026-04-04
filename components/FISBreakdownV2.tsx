@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useCityOverviewContext } from "@/lib/use-city-overview"
 import { FISDimensionData } from "@/lib/city-overview-data"
 
 export default function FISBreakdownV2() {
   const overview = useCityOverviewContext()
-  const [expandedDim, setExpandedDim] = useState<string | null>(null)
 
   if (!overview) return <FISBreakdownSkeleton />
 
@@ -30,15 +29,13 @@ export default function FISBreakdownV2() {
         </div>
       )}
 
-      {/* Dimension rows — tappable */}
+      {/* Dimension rows — hover to preview, tap to pin */}
       <div className="space-y-2.5">
         {fis.dimensions.map((dim, i) => (
           <DimensionRow
             key={dim.key}
             dim={dim}
             index={i}
-            isExpanded={expandedDim === dim.key}
-            onTap={() => setExpandedDim(expandedDim === dim.key ? null : dim.key)}
             dataHealth={dataHealth}
           />
         ))}
@@ -70,16 +67,27 @@ export default function FISBreakdownV2() {
 function DimensionRow({
   dim,
   index,
-  isExpanded,
-  onTap,
   dataHealth,
 }: {
   dim: FISDimensionData
   index: number
-  isExpanded: boolean
-  onTap: () => void
   dataHealth: { totalSignals: number; totalSources: number; fieldReportCount: number; lastUpdated: string | null }
 }) {
+  const [hovered, setHovered] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!pinned) return
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setPinned(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [pinned])
+
+  const showTooltip = hovered || pinned
+
   const adjustmentText = dim.personalAdjustment > 0
     ? `+${dim.personalAdjustment}`
     : dim.personalAdjustment < 0
@@ -87,9 +95,14 @@ function DimensionRow({
     : null
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <button
-        onClick={onTap}
+        onClick={() => setPinned(!pinned)}
         className="w-full flex items-center gap-3 text-left group hover:opacity-80 transition-opacity"
       >
         <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0">
@@ -117,8 +130,8 @@ function DimensionRow({
         )}
       </button>
 
-      {/* Tooltip — absolute positioned, floats above without shifting layout */}
-      {isExpanded && (
+      {/* Tooltip — hover to preview, click to pin, click-outside to dismiss */}
+      {showTooltip && (
         <div className="absolute left-8 sm:left-32 bottom-full mb-1.5 z-40 max-w-[280px]">
           <div className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] text-[10px] text-[var(--text-secondary)] shadow-lg">
             {dim.isPersonalized && (

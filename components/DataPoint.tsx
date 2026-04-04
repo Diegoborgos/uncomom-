@@ -21,26 +21,26 @@ export default function DataPoint({
   signalKey: string
   children: React.ReactNode
 }) {
-  const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const [pinned, setPinned] = useState(false)
   const [source, setSource] = useState<Source | null>(null)
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
+  const open = hovered || pinned
+
   useEffect(() => {
-    if (!open) return
+    if (!pinned) return
     const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target as Node)) setPinned(false)
     }
     document.addEventListener("mousedown", handleClick)
     return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
+  }, [pinned])
 
-  const handleTap = async () => {
-    if (open) { setOpen(false); return }
-    if (loaded) { setOpen(true); return } // already fetched, show result
-
-    setOpen(true)
+  const fetchSource = async () => {
+    if (loaded) return
     setLoading(true)
     try {
       const { data } = await supabase
@@ -60,6 +60,16 @@ export default function DataPoint({
     setLoaded(true)
   }
 
+  const handleHoverIn = () => {
+    setHovered(true)
+    fetchSource()
+  }
+
+  const handleTap = () => {
+    setPinned(!pinned)
+    fetchSource()
+  }
+
   const sourceLabel = source?.source_type === "field_report"
     ? "Family reports"
     : source?.source_type === "public_api"
@@ -73,11 +83,15 @@ export default function DataPoint({
     : null
 
   return (
-    <div className="relative inline-block" ref={ref}>
+    <div
+      className="relative inline-block"
+      ref={ref}
+      onMouseEnter={handleHoverIn}
+      onMouseLeave={() => setHovered(false)}
+    >
       <button
         onClick={handleTap}
         className="text-left w-full cursor-pointer group hover:opacity-80 transition-opacity relative"
-        title="Tap to see source"
       >
         {children}
         <span className="absolute top-1.5 right-1.5 text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors">
