@@ -127,9 +127,9 @@ function DimensionRow({
               </p>
             )}
             <p>
-              {sources.map(s => s.name).join(", ")}
-              {sources[0]?.confidence != null && ` \u00b7 ${sources[0].confidence}%`}
-              {sources[0]?.updatedAt && ` \u00b7 Updated ${getTimeAgo(new Date(sources[0].updatedAt))}`}
+              {sources.slice(0, 2).map(s => s.name).join(", ")}
+              {sources.length > 2 && ` +${sources.length - 2} more`}
+              {` \u00b7 Updated ${sources[0]?.updatedAt ? getTimeAgo(new Date(sources[0].updatedAt)) : "recently"}`}
             </p>
           </div>
           {/* Arrow pointing down */}
