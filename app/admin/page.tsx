@@ -202,11 +202,15 @@ export default function AdminPage() {
                   } else {
                     totalSignals += data.signals || 0
                     totalErrors += data.errors || 0
-                    if (data.errorsByCity && Object.keys(data.errorsByCity).length > 0) {
+                    // Log per-city error details to browser console
+                    if (data.errorsByCity) {
                       for (const [slug, errs] of Object.entries(data.errorsByCity)) {
                         console.warn(`[${slug}]`, (errs as string[]).join(" | "))
                       }
-                      failed.push(`${city.name} (${data.errors} API errors)`)
+                    }
+                    // Only mark as failed if majority of APIs errored (3+)
+                    if (data.errors >= 3) {
+                      failed.push(city.name)
                     }
                   }
                 } catch {
@@ -215,8 +219,8 @@ export default function AdminPage() {
                 }
               }
 
-              const errSuffix = failed.length > 0 ? ` | Issues: ${failed.slice(0, 5).join(", ")}` : ""
-              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix} — check browser console for details`)
+              const errSuffix = failed.length > 0 ? ` | Failed: ${failed.slice(0, 5).join(", ")}` : ""
+              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix}${totalErrors > 0 ? " — check browser console for details" : ""}`)
             }}
             accent
           />
