@@ -118,7 +118,7 @@ function DimensionRow({
       </button>
 
       {/* Tooltip — absolute positioned, floats above without shifting layout */}
-      {isExpanded && dataHealth.totalSignals > 0 && (
+      {isExpanded && (
         <div className="absolute left-8 sm:left-32 bottom-full mb-1.5 z-40 max-w-[280px]">
           <div className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] text-[10px] text-[var(--text-secondary)] shadow-lg">
             {dim.isPersonalized && (
@@ -127,8 +127,9 @@ function DimensionRow({
               </p>
             )}
             <p>
-              {`${dataHealth.totalSignals} signals from ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.fieldReportCount > 0 ? ` + ${dataHealth.fieldReportCount} family report${dataHealth.fieldReportCount !== 1 ? "s" : ""}` : ""}`}
-              {dataHealth.lastUpdated && ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}`}
+              {dataHealth.totalSignals > 0
+                ? `${dataHealth.totalSignals} signals \u00b7 ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.lastUpdated ? ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}` : ""}`
+                : "Estimated data"}
             </p>
           </div>
           {/* Arrow pointing down */}
