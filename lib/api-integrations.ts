@@ -119,9 +119,33 @@ const TELEPORT_SLUGS: Record<string, string> = {
   "bogota": "bogota",
   "florianopolis": "florianopolis",
   "belgrade": "belgrade",
-  "ericeira": "lisbon", // Ericeira not in Teleport, use Lisbon as proxy
-  "bansko": "sofia", // Bansko not in Teleport, use Sofia as proxy
+  "ericeira": "lisbon",
+  "bansko": "sofia",
   "sarajevo": "sarajevo",
+  // Added — proxied to nearest Teleport city
+  "antigua-guatemala": "guatemala-city",
+  "ubud": "bali",
+  "nazare": "lisbon",
+  "porto-alegre": "porto-alegre",
+  "santa-teresa": "san-jose",
+  "kotor": "belgrade",       // Montenegro → nearest available
+  "lefkada": "athens",
+  "montanita": "quito",
+  "da-nang": "ho-chi-minh-city",
+  "split": "zagreb",
+  "tulum": "playa-del-carmen",
+  "taipei": "taipei",
+  "tallinn": "tallinn",
+  "buenos-aires": "buenos-aires",
+  "kuala-lumpur": "kuala-lumpur",
+  "dubai": "dubai",
+  "auckland": "auckland",
+  "marrakech": "marrakech",
+  "prague": "prague",
+  "medellin-envigado": "medellin",
+  "crete": "athens",
+  "ho-chi-minh": "ho-chi-minh-city",
+  "funchal": "lisbon",       // Madeira → Lisbon proxy
 }
 
 export async function fetchTeleport(citySlug: string): Promise<TeleportResult | null> {

@@ -169,7 +169,7 @@ function JoinPageContent() {
     } finally {
       setLoading(false)
     }
-  }, [input, loading, messages, family, user, refreshFamily, showResults, loadResults])
+  }, [input, loading, messages, family, user, refreshFamily, showResults, loadResults, citySlug, mode])
 
   type CityMatch = { slug: string; name: string; country: string; score: number; personalizedInsight: string; photo: string }
   const top5 = matchData?.top5 as CityMatch[] | undefined

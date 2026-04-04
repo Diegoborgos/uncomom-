@@ -5,39 +5,42 @@ import { useAuth } from "@/lib/auth-context"
 import { getVisaBadgeColor, getHomeschoolBadgeColor } from "@/lib/scores"
 import { PaywallBlur } from "./Paywall"
 import { personalizedVisa } from "@/lib/personalize"
+import { useCityOverviewContext } from "@/lib/use-city-overview"
 
 export default function MetaPanelGated({ city }: { city: City }) {
   const { family, isPaid } = useAuth()
+  const overview = useCityOverviewContext()
 
-  const visa = isPaid ? personalizedVisa(city, family) : null
-  const isHomeschooler = family?.education_approach?.toLowerCase().includes("homeschool") ||
+  // Use context if available, fallback to direct calculation
+  const meta = overview?.meta
+  const visa = meta?.visa?.details || (isPaid ? personalizedVisa(city, family) : null)
+  const isHomeschooler = meta?.homeschoolLegal?.isRelevant ||
+    family?.education_approach?.toLowerCase().includes("homeschool") ||
     family?.education_approach?.toLowerCase().includes("unschool") ||
-    family?.education_approach?.toLowerCase().includes("worldschool")
+    family?.education_approach?.toLowerCase().includes("worldschool") || false
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 space-y-4">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
       <MetaRow emoji="⏰" label="Timezone" value={city.meta.timezone} />
       <MetaRow emoji="🗣" label="Languages" value={city.meta.language.join(", ")} />
       <MetaRow emoji="👶" label="Ideal for kids" value={city.meta.kidsAgeIdeal} />
 
       {isPaid ? (
         <>
-          {city.meta.familiesNow > 0 && <MetaRow emoji="🏠" label="Families here now" value={`${city.meta.familiesNow}`} highlight />}
-          {city.meta.familiesBeen > 0 && <MetaRow emoji="📊" label="Families have been here" value={`${city.meta.familiesBeen}`} />}
-          {city.meta.returnRate > 0 && <MetaRow emoji="🔄" label="Return rate" value={`${city.meta.returnRate}%`} />}
-
-          {/* Homeschool — highlighted if user homeschools */}
+          {/* Homeschool — highlighted if relevant */}
           <div className="flex items-start gap-3">
             <span className="text-sm">📚</span>
             <div className="flex-1">
-              <p className="text-xs text-[var(--text-secondary)]">
-                Homeschool legal
-                {isHomeschooler && <span className="text-[var(--accent-green)] ml-1">· Relevant to you</span>}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-[var(--text-secondary)]">Homeschool legal</p>
+                {isHomeschooler && (
+                  <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
+                    For you
+                  </span>
+                )}
+              </div>
               <span
-                className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5 ${
-                  isHomeschooler ? "ring-2 ring-[var(--accent-green)]/30" : ""
-                }`}
+                className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5"
                 style={{
                   backgroundColor: getHomeschoolBadgeColor(city.meta.homeschoolLegal) + "22",
                   color: getHomeschoolBadgeColor(city.meta.homeschoolLegal),
@@ -48,14 +51,18 @@ export default function MetaPanelGated({ city }: { city: City }) {
             </div>
           </div>
 
-          {/* Visa — personalized for their passport */}
+          {/* Visa — personalized */}
           <div className="flex items-start gap-3">
             <span className="text-sm">🛂</span>
             <div className="flex-1">
-              <p className="text-xs text-[var(--text-secondary)]">
-                Visa friendly
-                {visa && <span className="text-[var(--accent-green)] ml-1">· {visa.tierLabel}</span>}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-[var(--text-secondary)]">Visa friendly</p>
+                {visa && (
+                  <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
+                    {visa.tierLabel}
+                  </span>
+                )}
+              </div>
               <span
                 className="inline-block text-xs font-medium px-2 py-0.5 rounded-full mt-0.5"
                 style={{
@@ -76,9 +83,6 @@ export default function MetaPanelGated({ city }: { city: City }) {
       ) : (
         <PaywallBlur>
           <div className="space-y-4">
-            {city.meta.familiesNow > 0 && <MetaRow emoji="🏠" label="Families here now" value={`${city.meta.familiesNow}`} />}
-            {city.meta.familiesBeen > 0 && <MetaRow emoji="📊" label="Families have been here" value={`${city.meta.familiesBeen}`} />}
-            {city.meta.returnRate > 0 && <MetaRow emoji="🔄" label="Return rate" value={`${city.meta.returnRate}%`} />}
             <MetaRow emoji="📚" label="Homeschool legal" value={city.meta.homeschoolLegal} />
             <MetaRow emoji="🛂" label="Visa friendly" value={city.meta.visaFriendly} />
           </div>
@@ -88,13 +92,13 @@ export default function MetaPanelGated({ city }: { city: City }) {
   )
 }
 
-function MetaRow({ emoji, label, value, highlight }: { emoji: string; label: string; value: string; highlight?: boolean }) {
+function MetaRow({ emoji, label, value }: { emoji: string; label: string; value: string }) {
   return (
     <div className="flex items-start gap-3">
       <span className="text-sm">{emoji}</span>
       <div className="flex-1">
         <p className="text-xs text-[var(--text-secondary)]">{label}</p>
-        <p className={`text-sm ${highlight ? "text-[var(--accent-warm)] font-medium" : ""}`}>{value}</p>
+        <p className="text-sm">{value}</p>
       </div>
     </div>
   )

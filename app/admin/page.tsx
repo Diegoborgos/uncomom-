@@ -202,6 +202,16 @@ export default function AdminPage() {
                   } else {
                     totalSignals += data.signals || 0
                     totalErrors += data.errors || 0
+                    // Log per-city error details to browser console
+                    if (data.errorsByCity) {
+                      for (const [slug, errs] of Object.entries(data.errorsByCity)) {
+                        console.warn(`[${slug}]`, (errs as string[]).join(" | "))
+                      }
+                    }
+                    // Only mark as failed if majority of APIs errored (3+)
+                    if (data.errors >= 3) {
+                      failed.push(city.name)
+                    }
                   }
                 } catch {
                   totalErrors++
@@ -209,8 +219,8 @@ export default function AdminPage() {
                 }
               }
 
-              const errSuffix = failed.length > 0 ? ` | Failed: ${failed.slice(0, 3).join(", ")}` : ""
-              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix}`)
+              const errSuffix = failed.length > 0 ? ` | Failed: ${failed.slice(0, 5).join(", ")}` : ""
+              setStatus(`Done: ${cities.length} cities, ${totalSignals} signals, ${totalErrors} errors${errSuffix}${totalErrors > 0 ? " — check browser console for details" : ""}`)
             }}
             accent
           />

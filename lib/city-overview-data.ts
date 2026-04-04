@@ -41,6 +41,9 @@ export type FISDimensionData = {
   weightPercent: number       // 0-100
   personalAdjustment: number  // e.g. +26, -1, 0
   isPersonalized: boolean
+  signalCount: number         // signals matching this dimension prefix
+  sourceCount: number         // unique sources for this dimension
+  lastUpdated: string | null  // most recent fetch for this dimension
 }
 
 export type CityOverviewData = {
@@ -138,6 +141,16 @@ export async function buildCityOverviewData(
     const defaultScore = defaultFIS.dimensionScores[key]
     const adjustment = isPersonalFIS ? personalScore - defaultScore : 0
 
+    // Per-dimension source stats: match signal_key prefix before the first dot
+    const dimSources = dataSources.filter(s => {
+      const prefix = s.signal_key.split(".")[0]
+      return prefix === key
+    })
+    const uniqueSourceNames = new Set(dimSources.map(s => s.source_name))
+    const dimLastUpdated = dimSources.length > 0
+      ? dimSources.reduce((latest, s) => s.fetched_at > latest ? s.fetched_at : latest, dimSources[0].fetched_at)
+      : null
+
     return {
       key,
       label: DIMENSION_LABELS[key],
@@ -146,6 +159,9 @@ export async function buildCityOverviewData(
       weightPercent: Math.round(fis.weights[key] * 100),
       personalAdjustment: adjustment,
       isPersonalized: adjustment !== 0,
+      signalCount: dimSources.length,
+      sourceCount: uniqueSourceNames.size,
+      lastUpdated: dimLastUpdated,
     }
   })
 
