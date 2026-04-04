@@ -39,6 +39,7 @@ export default function FISBreakdownV2() {
             index={i}
             isExpanded={expandedDim === dim.key}
             onTap={() => setExpandedDim(expandedDim === dim.key ? null : dim.key)}
+            sources={dataHealth.sources}
           />
         ))}
       </div>
@@ -71,11 +72,13 @@ function DimensionRow({
   index,
   isExpanded,
   onTap,
+  sources,
 }: {
   dim: FISDimensionData
   index: number
   isExpanded: boolean
   onTap: () => void
+  sources: { name: string; confidence: number; updatedAt: string | null }[]
 }) {
   const adjustmentText = dim.personalAdjustment > 0
     ? `+${dim.personalAdjustment}`
@@ -87,7 +90,7 @@ function DimensionRow({
     <div className="relative">
       <button
         onClick={onTap}
-        className="w-full flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+        className="w-full flex items-center gap-3 text-left group hover:opacity-80 transition-opacity"
       >
         <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0">
           {dim.label}
@@ -112,20 +115,29 @@ function DimensionRow({
             {adjustmentText}%
           </span>
         )}
+        <span className="text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors shrink-0">
+          &#9432;
+        </span>
       </button>
 
       {/* Tooltip — absolute positioned, floats above without shifting layout */}
-      {isExpanded && (
+      {isExpanded && sources.length > 0 && (
         <div className="absolute left-8 sm:left-32 bottom-full mb-1.5 z-40 max-w-[260px]">
           <div className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] text-[10px] text-[var(--text-secondary)] shadow-lg">
+            {dim.isPersonalized && (
+              <p className="text-[var(--accent-green)] mb-1">
+                Adjusted {dim.personalAdjustment > 0 ? "up" : "down"} for your family
+              </p>
+            )}
             <p>
-              {dim.isPersonalized
-                ? `Score adjusted ${dim.personalAdjustment > 0 ? "up" : "down"} for your family profile`
-                : "Base score \u2014 not personalized"}
+              {sources.map(s => s.name).join(", ")}
             </p>
-            <p className="mt-0.5">
-              Weight: {dim.weightPercent}% of total FIS&trade;
-            </p>
+            {sources[0]?.confidence != null && (
+              <p className="mt-0.5">{sources[0].confidence}% confidence</p>
+            )}
+            {sources[0]?.updatedAt && (
+              <p className="mt-0.5">Updated {getTimeAgo(new Date(sources[0].updatedAt))}</p>
+            )}
           </div>
           {/* Arrow pointing down */}
           <div className="ml-6 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[var(--surface-elevated)]" />

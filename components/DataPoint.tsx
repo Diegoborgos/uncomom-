@@ -37,9 +37,9 @@ export default function DataPoint({
 
   const handleTap = async () => {
     if (open) { setOpen(false); return }
-    setOpen(true)
-    if (source) return // already loaded
+    if (source) { setOpen(true); return } // already loaded, show it
 
+    setOpen(true)
     setLoading(true)
     const { data } = await supabase
       .from("city_data_sources")
@@ -52,6 +52,7 @@ export default function DataPoint({
 
     setSource(data)
     setLoading(false)
+    if (!data) setOpen(false) // no source — don't show empty tooltip
   }
 
   const sourceLabel = source?.source_type === "field_report"
@@ -70,44 +71,45 @@ export default function DataPoint({
     <div className="relative inline-block" ref={ref}>
       <button
         onClick={handleTap}
-        className="text-left w-full cursor-pointer hover:opacity-80 transition-opacity"
+        className="text-left w-full cursor-pointer group hover:opacity-80 transition-opacity relative"
         title="Tap to see source"
       >
         {children}
+        <span className="absolute top-1.5 right-1.5 text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors">
+          &#9432;
+        </span>
       </button>
 
-      {open && (
+      {open && !loading && source && (
         <div className="absolute z-30 bottom-full left-0 mb-2 w-56 rounded-lg border border-[var(--border)] bg-[var(--bg)] shadow-xl p-3 text-left">
-          {loading ? (
-            <p className="text-[10px] text-[var(--text-secondary)]">Loading source...</p>
-          ) : source ? (
-            <>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-medium text-[var(--text-primary)]">{sourceLabel}</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-                  {source.confidence}%
-                </span>
-              </div>
-              {timeAgo && (
-                <p className="text-[9px] text-[var(--text-secondary)] mb-1">Updated {timeAgo}</p>
-              )}
-              {source.report_count > 1 && (
-                <p className="text-[9px] text-[var(--text-secondary)] mb-1">Based on {source.report_count} data points</p>
-              )}
-              {source.source_url && (
-                <a
-                  href={source.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[9px] text-[var(--accent-green)] hover:underline"
-                >
-                  View source →
-                </a>
-              )}
-            </>
-          ) : (
-            <p className="text-[10px] text-[var(--text-secondary)]">No source tracked yet for this data point.</p>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-medium text-[var(--text-primary)]">{sourceLabel}</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
+              {source.confidence}%
+            </span>
+          </div>
+          {timeAgo && (
+            <p className="text-[9px] text-[var(--text-secondary)] mb-1">Updated {timeAgo}</p>
           )}
+          {source.report_count > 1 && (
+            <p className="text-[9px] text-[var(--text-secondary)] mb-1">Based on {source.report_count} data points</p>
+          )}
+          {source.source_url && (
+            <a
+              href={source.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[9px] text-[var(--accent-green)] hover:underline"
+            >
+              View source &rarr;
+            </a>
+          )}
+          <div className="absolute bottom-0 left-4 translate-y-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[var(--border)]" />
+        </div>
+      )}
+      {open && loading && (
+        <div className="absolute z-30 bottom-full left-0 mb-2 w-56 rounded-lg border border-[var(--border)] bg-[var(--bg)] shadow-xl p-3 text-left">
+          <p className="text-[10px] text-[var(--text-secondary)]">Loading source...</p>
           <div className="absolute bottom-0 left-4 translate-y-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[var(--border)]" />
         </div>
       )}

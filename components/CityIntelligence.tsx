@@ -269,13 +269,14 @@ function IntelSection({ title, subtitle, children }: { title: string; subtitle: 
 }
 
 function TimelineItem({ label, value, citySlug, signalKey }: { label: string; value: string; citySlug?: string; signalKey?: string }) {
+  const hasSource = !!(citySlug && signalKey)
   const inner = (
-    <div className="rounded-lg bg-[var(--surface-elevated)] px-3 py-2">
+    <div className="rounded-lg bg-[var(--surface-elevated)] px-3 py-2 relative">
       <p className="text-[10px] text-[var(--text-secondary)]">{label}</p>
       <p className="text-sm font-mono">{value}</p>
     </div>
   )
-  if (citySlug && signalKey) {
+  if (hasSource) {
     return <DataPoint citySlug={citySlug} signalKey={signalKey}>{inner}</DataPoint>
   }
   return inner
