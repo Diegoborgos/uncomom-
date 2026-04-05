@@ -408,3 +408,149 @@ export async function fetchTravelBuddy(
     return null
   }
 }
+
+// ============================================================
+// H. OSM OVERPASS — Points of interest counting (no key, free)
+// ============================================================
+
+export type OverpassResult = {
+  playgrounds: number
+  parks: number
+  schools: number
+  internationalSchools: number
+  hospitals: number
+  pediatricHospitals: number
+  coworkingSpaces: number
+  libraries: number
+  swimmingPools: number
+  sportsCentres: number
+}
+
+export async function fetchOverpass(lat: number, lng: number, radiusMeters: number = 10000): Promise<OverpassResult> {
+  // Single query fetches ALL relevant POI types at once, then we count locally by tag.
+  // 1 API call per city regardless of how many POI types we track.
+  const overpassQL = `[out:json][timeout:30];(
+    node["leisure"="playground"](around:${radiusMeters},${lat},${lng});
+    way["leisure"="park"](around:${radiusMeters},${lat},${lng});
+    relation["leisure"="park"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="school"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="school"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});
+    node["office"="coworking"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="library"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="library"](around:${radiusMeters},${lat},${lng});
+    node["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});
+    way["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});
+    node["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});
+    way["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});
+  );out tags;`
+
+  const result: OverpassResult = {
+    playgrounds: 0,
+    parks: 0,
+    schools: 0,
+    internationalSchools: 0,
+    hospitals: 0,
+    pediatricHospitals: 0,
+    coworkingSpaces: 0,
+    libraries: 0,
+    swimmingPools: 0,
+    sportsCentres: 0,
+  }
+
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(overpassQL)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    })
+
+    if (!res.ok) {
+      console.warn(`Overpass: HTTP ${res.status}`)
+      return result
+    }
+
+    const data = await res.json()
+    const elements: Array<{ tags?: Record<string, string> }> = data.elements || []
+
+    for (const el of elements) {
+      const tags = el.tags || {}
+      const leisure = tags.leisure
+      const amenity = tags.amenity
+      const office = tags.office
+      const name = tags.name || ""
+      const speciality = tags["healthcare:speciality"] || ""
+
+      if (leisure === "playground") result.playgrounds++
+      else if (leisure === "park") result.parks++
+      else if (leisure === "swimming_pool") result.swimmingPools++
+      else if (leisure === "sports_centre") result.sportsCentres++
+      else if (amenity === "school") {
+        result.schools++
+        if (/international/i.test(name)) result.internationalSchools++
+      }
+      else if (amenity === "hospital") {
+        result.hospitals++
+        if (/pa?ediatrics/i.test(speciality)) result.pediatricHospitals++
+      }
+      else if (amenity === "coworking_space" || office === "coworking") result.coworkingSpaces++
+      else if (amenity === "library") result.libraries++
+    }
+  } catch (err) {
+    console.warn("Overpass failed:", err)
+  }
+
+  return result
+}
+
+// ============================================================
+// I. GDELT — Global news monitoring (no key, free, real-time)
+// ============================================================
+
+export type GdeltArticle = {
+  title: string
+  url: string
+  source: string
+  publishDate: string
+  language: string
+}
+
+export type GdeltResult = {
+  articles: GdeltArticle[]
+  totalResults: number
+}
+
+/**
+ * Search GDELT for recent news about a city.
+ * Uses the GDELT DOC 2.0 API — free, no key, no rate limit at our volume.
+ * Returns up to 20 articles from the last 7 days.
+ */
+export async function fetchGdelt(cityName: string, countryName: string): Promise<GdeltResult> {
+  const query = encodeURIComponent(`"${cityName}" "${countryName}"`)
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=ArtList&maxrecords=20&timespan=7d&format=json&sort=DateDesc`
+
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`GDELT: ${res.status}`)
+
+  const data = await res.json()
+
+  if (!data.articles || !Array.isArray(data.articles)) {
+    return { articles: [], totalResults: 0 }
+  }
+
+  const articles: GdeltArticle[] = data.articles.map((a: Record<string, string>) => ({
+    title: a.title || "",
+    url: a.url || "",
+    source: a.domain || a.source || "",
+    publishDate: a.seendate || "",
+    language: a.language || "English",
+  }))
+
+  return {
+    articles,
+    totalResults: articles.length,
+  }
+}

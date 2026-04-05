@@ -170,9 +170,11 @@ export default function AdminPage() {
           <AdminAction
             label="Refresh all public data"
             onClick={async (setStatus) => {
+              setStatus("Connecting...")
               const { data: { session } } = await supabase.auth.getSession()
               if (!session) throw new Error("Not logged in — refresh the page")
 
+              setStatus("Loading cities...")
               const { data: cities, error: citiesErr } = await supabase
                 .from("cities")
                 .select("slug, name")
@@ -370,7 +372,7 @@ function AdminAction({ label, onClick, accent }: { label: string; onClick: (setS
         {running ? "Running…" : label}
       </button>
       {status && (
-        <p className={`text-[10px] mt-1.5 ${status.startsWith("Error") ? "text-[var(--score-low)]" : "text-[var(--accent-green)]"}`}>
+        <p className={`text-xs mt-2 ${status.startsWith("Error") ? "text-[var(--score-low)]" : "text-[var(--accent-green)]"}`}>
           {status}
         </p>
       )}
