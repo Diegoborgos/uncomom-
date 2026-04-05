@@ -18,6 +18,7 @@ import MetaPanelGated from "./MetaPanelGated"
 import { useCityOverview, CityOverviewContext } from "@/lib/use-city-overview"
 import PersonalBadge from "./ui/PersonalBadge"
 import CityWhatsHappening from "./CityWhatsHappening"
+import CityAtAGlance from "./CityAtAGlance"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -104,6 +105,9 @@ export default function CityPageTabs({
                 </div>
               )}
             </section>
+
+            {/* City facts + nearby POIs */}
+            <CityAtAGlance citySlug={city.slug} />
 
             {/* Cost + Meta — consistent card style */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
