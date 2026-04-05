@@ -19,6 +19,7 @@ type ProfileFields = {
   languages: string[]
   interests: string[]
   cities_visited: string[]
+  next_destinations: string[]
   bio: string
   done: boolean
 }
@@ -27,7 +28,7 @@ const emptyProfile: ProfileFields = {
   family_name: "", home_country: "", country_code: "",
   kids_ages: [], parent_work_type: "", education_approach: "",
   travel_style: "", languages: [], interests: [],
-  cities_visited: [], bio: "", done: false,
+  cities_visited: [], next_destinations: [], bio: "", done: false,
 }
 
 export default function OnboardingPage() {
@@ -258,6 +259,22 @@ export default function OnboardingPage() {
                 status: "been_here" as const,
               })
             }
+          }
+        }
+      }
+
+      // Save next destinations to saved_cities
+      if (profile.next_destinations && profile.next_destinations.length > 0 && familyId) {
+        for (const cityName of profile.next_destinations) {
+          const matched = cities.find((c) =>
+            c.name.toLowerCase() === cityName.toLowerCase() ||
+            c.slug === cityName.toLowerCase().replace(/\s+/g, "-")
+          )
+          if (matched) {
+            await supabase.from("saved_cities").upsert({
+              family_id: familyId,
+              city_slug: matched.slug,
+            }, { onConflict: "family_id,city_slug" })
           }
         }
       }

@@ -14,6 +14,7 @@ FIELDS TO EXTRACT:
 - languages: string[]
 - interests: string[] (from: surf, nature, beach, mountains, co-living, co-working, language immersion, arts & culture, outdoor sports, music, food & cooking, sustainability, entrepreneurship, yoga & wellness)
 - cities_visited: string[] — DO NOT ask the user to list cities. Just ask "Have you traveled to many cities as a family?" The app will show a visual city picker. Set cities_visited to [] always.
+- next_destinations: string[] — cities they're planning or considering in the next 6 months
 - bio: polished 1-2 sentence summary YOU write. Never use their raw text.
 
 FLOW (strict order — do NOT skip steps):
@@ -22,8 +23,9 @@ FLOW (strict order — do NOT skip steps):
 3. Ask about education: "How do your kids learn?"
 4. Ask about travel style: "How do you travel — slow, fast, seasonal?"
 5. Ask about languages: "What languages does your family speak?"
-6. When you have family_name + country + kids + work + education + travel style + languages → write a polished bio and present it
-7. When user confirms bio → set done: true
+6. Ask about next destinations: "Any cities you're planning to visit in the next 6 months?"
+7. When you have family_name + country + kids + work + education + travel style + languages → write a polished bio and present it
+8. When user confirms bio → set done: true
 
 IMPORTANT: You MUST ask for family_name early. Never skip it. Never guess it (don't say "Brazilian Family" — ask them).
 
@@ -33,7 +35,7 @@ FORMAT (always):
 ---REPLY---
 Your single short question
 ---PROFILE---
-{"family_name":"","home_country":"","country_code":"","kids_ages":[],"parent_work_type":"","education_approach":"","travel_style":"","languages":[],"interests":[],"cities_visited":[],"bio":"","done":false}`
+{"family_name":"","home_country":"","country_code":"","kids_ages":[],"parent_work_type":"","education_approach":"","travel_style":"","languages":[],"interests":[],"cities_visited":[],"next_destinations":[],"bio":"","done":false}`
 
 export type ExtractedProfile = {
   family_name: string
@@ -46,6 +48,7 @@ export type ExtractedProfile = {
   languages: string[]
   interests: string[]
   cities_visited: string[]
+  next_destinations: string[]
   bio: string
   done: boolean
 }
