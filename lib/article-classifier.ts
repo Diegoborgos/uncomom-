@@ -1,14 +1,9 @@
 import { extractionCompletion } from "./llm"
 import { FISDimensionKey } from "./types"
 import { ClassifiedArticle } from "./intelligence-types"
+import { GdeltArticle } from "./api-integrations"
 
-// GDELT article shape — defined here until api-integrations adds GDELT fetch
-export type GdeltArticle = {
-  title: string
-  url: string
-  source: string
-  publishDate: string
-}
+export type { GdeltArticle } from "./api-integrations"
 
 const DIMENSION_DESCRIPTIONS: Record<FISDimensionKey, string> = {
   childSafety: "Crime, safety, air quality, traffic, natural disasters, political stability",

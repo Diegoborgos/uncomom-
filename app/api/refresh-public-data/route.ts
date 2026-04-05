@@ -8,6 +8,8 @@ import {
   fetchExchangeRates,
   fetchWorldBank,
   fetchOpenWeather,
+  fetchOverpass,
+  fetchGdelt,
 } from "@/lib/api-integrations"
 
 export const maxDuration = 300 // 5 minutes — processes cities in batches
@@ -292,6 +294,69 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       console.error(`[refresh][${city.slug}] OpenWeatherMap FAILED:`, String(err))
       results.push({ source: "OpenWeatherMap", signal: "weather", value: null, error: String(err) })
+    }
+
+    // OSM Overpass — POI counts (no key, free)
+    try {
+      const osm = await fetchOverpass(city.lat, city.lng)
+      if (osm) {
+        const osmSignals: Record<string, number> = {
+          "nature.playgrounds": osm.playgrounds,
+          "nature.parks": osm.parks,
+          "educationAccess.schoolCount": osm.schools,
+          "educationAccess.internationalSchoolCountOSM": osm.internationalSchools,
+          "healthcare.hospitalCount": osm.hospitals,
+          "remoteWork.coworkingCount": osm.coworkingSpaces,
+          "community.libraryCount": osm.libraries,
+          "nature.swimmingPools": osm.swimmingPools,
+          "nature.sportsCentres": osm.sportsCentres,
+        }
+
+        for (const [signalKey, value] of Object.entries(osmSignals)) {
+          signalUpdates[signalKey] = value
+          results.push({ source: "OSM Overpass", signal: signalKey, value })
+
+          const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
+            city_slug: city.slug,
+            signal_key: signalKey,
+            signal_value: String(value),
+            source_name: "OSM Overpass",
+            source_url: "https://overpass-api.de",
+            source_type: "public_api",
+            fetched_at: new Date().toISOString(),
+            valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            confidence: 75,
+          }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+          if (upsertErr) console.error(`[${city.slug}] Upsert failed for ${signalKey}:`, upsertErr.message)
+        }
+      }
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] OSM Overpass FAILED:`, String(err))
+      results.push({ source: "OSM Overpass", signal: "pois", value: null, error: String(err) })
+    }
+
+    // GDELT — news articles
+    try {
+      const gdelt = await fetchGdelt(city.name, city.country)
+      const articleCount = gdelt.articles.length
+
+      results.push({ source: "GDELT", signal: "news.weeklyArticleCount", value: articleCount })
+
+      const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
+        city_slug: city.slug,
+        signal_key: "news.weeklyArticleCount",
+        signal_value: String(articleCount),
+        source_name: "GDELT",
+        source_url: "https://api.gdeltproject.org",
+        source_type: "public_api",
+        fetched_at: new Date().toISOString(),
+        valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        confidence: 70,
+      }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      if (upsertErr) console.error(`[${city.slug}] Upsert failed for news.weeklyArticleCount:`, upsertErr.message)
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] GDELT FAILED:`, String(err))
+      results.push({ source: "GDELT", signal: "news", value: null, error: String(err) })
     }
 
     // Update the city's signals JSONB with new values

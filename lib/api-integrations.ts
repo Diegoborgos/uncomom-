@@ -408,3 +408,116 @@ export async function fetchTravelBuddy(
     return null
   }
 }
+
+// ============================================================
+// I. OSM OVERPASS — POI counts (no key, free, rate-limited)
+// ============================================================
+
+export type OverpassResult = {
+  playgrounds: number
+  parks: number
+  schools: number
+  internationalSchools: number
+  hospitals: number
+  pediatricHospitals: number
+  coworkingSpaces: number
+  libraries: number
+  swimmingPools: number
+  sportsCentres: number
+}
+
+export async function fetchOverpass(lat: number, lng: number, radiusKm = 10): Promise<OverpassResult | null> {
+  const r = radiusKm * 1000 // convert to meters
+  // Single batched query — fetch all POI types in one request
+  const query = `[out:json][timeout:15];
+(
+  nwr["leisure"="playground"](around:${r},${lat},${lng});
+  nwr["leisure"="park"](around:${r},${lat},${lng});
+  nwr["amenity"="school"](around:${r},${lat},${lng});
+  nwr["amenity"="hospital"](around:${r},${lat},${lng});
+  nwr["amenity"="coworking_space"](around:${r},${lat},${lng});
+  nwr["amenity"="library"](around:${r},${lat},${lng});
+  nwr["leisure"="swimming_pool"](around:${r},${lat},${lng});
+  nwr["leisure"="sports_centre"](around:${r},${lat},${lng});
+);
+out tags;`
+
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: AbortSignal.timeout(20000),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+
+    const elements = data.elements || []
+    let playgrounds = 0, parks = 0, schools = 0, internationalSchools = 0
+    let hospitals = 0, pediatricHospitals = 0, coworkingSpaces = 0
+    let libraries = 0, swimmingPools = 0, sportsCentres = 0
+
+    for (const el of elements) {
+      const tags = el.tags || {}
+      const name = (tags.name || "").toLowerCase()
+
+      if (tags.leisure === "playground") playgrounds++
+      else if (tags.leisure === "park") parks++
+      else if (tags.amenity === "school") {
+        schools++
+        if (name.includes("international") || name.includes("intl") || name.includes("british") || name.includes("american")) {
+          internationalSchools++
+        }
+      }
+      else if (tags.amenity === "hospital") {
+        hospitals++
+        if (name.includes("pediatric") || name.includes("paediatric") || name.includes("children") || name.includes("kids")) {
+          pediatricHospitals++
+        }
+      }
+      else if (tags.amenity === "coworking_space") coworkingSpaces++
+      else if (tags.amenity === "library") libraries++
+      else if (tags.leisure === "swimming_pool") swimmingPools++
+      else if (tags.leisure === "sports_centre") sportsCentres++
+    }
+
+    return { playgrounds, parks, schools, internationalSchools, hospitals, pediatricHospitals, coworkingSpaces, libraries, swimmingPools, sportsCentres }
+  } catch {
+    return null
+  }
+}
+
+// ============================================================
+// J. GDELT — News articles (no key, free)
+// ============================================================
+
+export type GdeltArticle = {
+  title: string
+  url: string
+  source: string
+  publishDate: string
+}
+
+export type GdeltResult = {
+  articles: GdeltArticle[]
+}
+
+export async function fetchGdelt(cityName: string, country: string): Promise<GdeltResult> {
+  const query = encodeURIComponent(`"${cityName} ${country}"`)
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=ArtList&maxrecords=20&timespan=7d&format=json`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return { articles: [] }
+    const data = await res.json()
+    return {
+      articles: (data.articles || []).map((a: Record<string, string>) => ({
+        title: a.title || "",
+        url: a.url || "",
+        source: a.domain || a.source || "",
+        publishDate: a.seendate || a.dateadded || "",
+      })),
+    }
+  } catch {
+    return { articles: [] }
+  }
+}

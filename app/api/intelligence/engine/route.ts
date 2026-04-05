@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { cities } from "@/data/cities"
-import { classifyArticles, GdeltArticle } from "@/lib/article-classifier"
+import { classifyArticles } from "@/lib/article-classifier"
+import { fetchGdelt } from "@/lib/api-integrations"
 import { extractionCompletion } from "@/lib/llm"
 import { FISDimensionKey } from "@/lib/types"
 import { DIMENSION_LABELS } from "@/lib/fis"
@@ -14,27 +15,6 @@ const ALL_DIMENSIONS: FISDimensionKey[] = [
   "childSafety", "educationAccess", "familyCost", "healthcare",
   "nature", "community", "remoteWork", "visa", "lifestyle",
 ]
-
-// Stub until GDELT integration is added to api-integrations.ts
-async function fetchGdelt(cityName: string, country: string): Promise<{ articles: GdeltArticle[] }> {
-  const query = encodeURIComponent(`${cityName} ${country}`)
-  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=artlist&maxrecords=20&format=json`
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
-    if (!res.ok) return { articles: [] }
-    const data = await res.json()
-    return {
-      articles: (data.articles || []).map((a: Record<string, string>) => ({
-        title: a.title || "",
-        url: a.url || "",
-        source: a.domain || a.source || "",
-        publishDate: a.seendate || a.dateadded || "",
-      })),
-    }
-  } catch {
-    return { articles: [] }
-  }
-}
 
 export async function GET(req: NextRequest) { return POST(req) }
 
