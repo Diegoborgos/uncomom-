@@ -8,9 +8,10 @@ import {
   fetchExchangeRates,
   fetchWorldBank,
   fetchOpenWeather,
+  fetchOverpass,
 } from "@/lib/api-integrations"
 
-export const maxDuration = 300 // 5 minutes — this route processes all cities
+export const maxDuration = 600 // 10 minutes — this route processes all cities including OSM Overpass
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
@@ -292,6 +293,58 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       console.error(`[refresh][${city.slug}] OpenWeatherMap FAILED:`, String(err))
       results.push({ source: "OpenWeatherMap", signal: "weather", value: null, error: String(err) })
+    }
+
+    // H. OSM Overpass — POI counts (no key, free)
+    try {
+      const osm = await fetchOverpass(city.lat, city.lng, 10000) // 10km radius
+
+      signalUpdates["nature.playgrounds"] = osm.playgrounds
+      signalUpdates["nature.parks"] = osm.parks
+      signalUpdates["educationAccess.schoolCount"] = osm.schools
+      signalUpdates["educationAccess.internationalSchoolCountOSM"] = osm.internationalSchools
+      signalUpdates["healthcare.hospitalCount"] = osm.hospitals
+      signalUpdates["remoteWork.coworkingCount"] = osm.coworkingSpaces
+      signalUpdates["community.libraryCount"] = osm.libraries
+      signalUpdates["nature.swimmingPools"] = osm.swimmingPools
+      signalUpdates["nature.sportsCentres"] = osm.sportsCentres
+
+      results.push(
+        { source: "OSM Overpass", signal: "nature.playgrounds", value: osm.playgrounds },
+        { source: "OSM Overpass", signal: "nature.parks", value: osm.parks },
+        { source: "OSM Overpass", signal: "educationAccess.schoolCount", value: osm.schools },
+        { source: "OSM Overpass", signal: "educationAccess.internationalSchoolCountOSM", value: osm.internationalSchools },
+        { source: "OSM Overpass", signal: "healthcare.hospitalCount", value: osm.hospitals },
+        { source: "OSM Overpass", signal: "remoteWork.coworkingCount", value: osm.coworkingSpaces },
+        { source: "OSM Overpass", signal: "community.libraryCount", value: osm.libraries },
+      )
+
+      // Upsert each signal to city_data_sources
+      for (const signal of [
+        "nature.playgrounds", "nature.parks", "educationAccess.schoolCount",
+        "educationAccess.internationalSchoolCountOSM", "healthcare.hospitalCount",
+        "remoteWork.coworkingCount", "community.libraryCount",
+        "nature.swimmingPools", "nature.sportsCentres",
+      ]) {
+        const value = signalUpdates[signal]
+        if (value !== undefined) {
+          const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
+            city_slug: city.slug,
+            signal_key: signal,
+            signal_value: String(value),
+            source_name: "OSM Overpass",
+            source_url: `https://www.openstreetmap.org/#map=13/${city.lat}/${city.lng}`,
+            source_type: "public_api",
+            fetched_at: new Date().toISOString(),
+            valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+            confidence: 75, // OSM coverage varies by city
+          }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+          if (upsertErr) console.error(`[${city.slug}] Upsert failed for ${signal}:`, upsertErr.message)
+        }
+      }
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] OSM Overpass FAILED:`, String(err))
+      results.push({ source: "OSM Overpass", signal: "poi-counts", value: null, error: String(err) })
     }
 
     // Update the city's signals JSONB with new values
