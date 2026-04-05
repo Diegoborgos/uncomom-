@@ -505,3 +505,52 @@ export async function fetchOverpass(lat: number, lng: number, radiusMeters: numb
 
   return result
 }
+
+// ============================================================
+// I. GDELT — Global news monitoring (no key, free, real-time)
+// ============================================================
+
+export type GdeltArticle = {
+  title: string
+  url: string
+  source: string
+  publishDate: string
+  language: string
+}
+
+export type GdeltResult = {
+  articles: GdeltArticle[]
+  totalResults: number
+}
+
+/**
+ * Search GDELT for recent news about a city.
+ * Uses the GDELT DOC 2.0 API — free, no key, no rate limit at our volume.
+ * Returns up to 20 articles from the last 7 days.
+ */
+export async function fetchGdelt(cityName: string, countryName: string): Promise<GdeltResult> {
+  const query = encodeURIComponent(`"${cityName}" "${countryName}"`)
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=ArtList&maxrecords=20&timespan=7d&format=json&sort=DateDesc`
+
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`GDELT: ${res.status}`)
+
+  const data = await res.json()
+
+  if (!data.articles || !Array.isArray(data.articles)) {
+    return { articles: [], totalResults: 0 }
+  }
+
+  const articles: GdeltArticle[] = data.articles.map((a: Record<string, string>) => ({
+    title: a.title || "",
+    url: a.url || "",
+    source: a.domain || a.source || "",
+    publishDate: a.seendate || "",
+    language: a.language || "English",
+  }))
+
+  return {
+    articles,
+    totalResults: articles.length,
+  }
+}
