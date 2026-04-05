@@ -26,19 +26,22 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
   const [signals, setSignals] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [latestFetch, setLatestFetch] = useState<string | null>(null)
+  const [totalItems, setTotalItems] = useState(0)
+  const [uniqueSources, setUniqueSources] = useState<string[]>([])
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from("city_data_sources")
-        .select("signal_key, signal_value, fetched_at")
+        .select("signal_key, signal_value, fetched_at, source_name")
         .eq("city_slug", citySlug)
         .in("signal_key", SIGNAL_KEYS)
         .order("fetched_at", { ascending: false })
 
+      const rows = data || []
       const map: Record<string, string> = {}
       let latest: string | null = null
-      for (const row of data || []) {
+      for (const row of rows) {
         if (!map[row.signal_key]) {
           map[row.signal_key] = row.signal_value
           if (!latest || row.fetched_at > latest) latest = row.fetched_at
@@ -46,6 +49,8 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
       }
       setSignals(map)
       setLatestFetch(latest)
+      setTotalItems(rows.length)
+      setUniqueSources([...new Set(rows.map((r: Record<string, string>) => r.source_name))])
       setLoading(false)
     }
     load()
@@ -53,14 +58,14 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
 
   if (loading) return null
 
-  const population = signals["meta.population"] ? parseInt(signals["meta.population"]) : null
-  const elevation = signals["meta.elevation"] ? parseInt(signals["meta.elevation"]) : null
-  const area = signals["meta.area"] ? parseInt(signals["meta.area"]) : null
-  const hdi = signals["meta.hdi"] ? parseFloat(signals["meta.hdi"]) : null
+  const population = parseNum(signals["meta.population"])
+  const elevation = parseNum(signals["meta.elevation"])
+  const area = parseNum(signals["meta.area"])
+  const hdi = parseNum(signals["meta.hdi"])
   const climate = signals["meta.climate"] || null
 
-  const hasFacts = population || elevation !== null || area || hdi !== null || climate
-  const hasPois = POI_ITEMS.some((p) => signals[p.key])
+  const hasFacts = population !== null || elevation !== null || area !== null || hdi !== null || climate !== null
+  const hasPois = POI_ITEMS.some((p) => signals[p.key] && parseInt(signals[p.key]) > 0)
 
   if (!hasFacts && !hasPois) return null
 
@@ -70,13 +75,13 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
 
       {hasFacts && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
-          {population && (
+          {population !== null && (
             <StatBlock label="Population" value={formatPopulation(population)} />
           )}
           {elevation !== null && (
             <StatBlock label="Elevation" value={`${elevation.toLocaleString()}m`} />
           )}
-          {area && (
+          {area !== null && (
             <StatBlock label="Area" value={`${area.toLocaleString()} km\u00B2`} />
           )}
           {hdi !== null && (
@@ -98,7 +103,7 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
             {POI_ITEMS.map((poi) => {
               const count = signals[poi.key] ? parseInt(signals[poi.key]) : null
-              if (count === null) return null
+              if (!count) return null
               return (
                 <div key={poi.key} className="flex items-center gap-1.5 text-xs">
                   <span className="text-sm">{poi.icon}</span>
@@ -112,9 +117,11 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
       )}
 
       {latestFetch && (
-        <p className="text-[9px] text-[var(--text-secondary)] mt-4">
-          Sources: OSM Overpass, Wikidata &middot; Updated {getTimeAgo(new Date(latestFetch))}
-        </p>
+        <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)] mt-4">
+          <span>
+            {totalItems} signals from {uniqueSources.length} sources &middot; Updated {getTimeAgo(new Date(latestFetch))}
+          </span>
+        </div>
       )}
     </section>
   )
@@ -127,6 +134,12 @@ function StatBlock({ label, value, color }: { label: string; value: string; colo
       <p className={`text-sm font-medium ${color || "text-[var(--text-primary)]"}`}>{value}</p>
     </div>
   )
+}
+
+function parseNum(s: string | undefined): number | null {
+  if (!s) return null
+  const n = Number(s)
+  return isNaN(n) ? null : n
 }
 
 function formatPopulation(n: number): string {
