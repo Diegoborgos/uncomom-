@@ -427,18 +427,26 @@ export type OverpassResult = {
 }
 
 export async function fetchOverpass(lat: number, lng: number, radiusMeters: number = 10000): Promise<OverpassResult> {
-  const queries: Array<{ key: keyof OverpassResult; query: string }> = [
-    { key: "playgrounds", query: `node["leisure"="playground"](around:${radiusMeters},${lat},${lng});` },
-    { key: "parks", query: `way["leisure"="park"](around:${radiusMeters},${lat},${lng});relation["leisure"="park"](around:${radiusMeters},${lat},${lng});` },
-    { key: "schools", query: `node["amenity"="school"](around:${radiusMeters},${lat},${lng});way["amenity"="school"](around:${radiusMeters},${lat},${lng});` },
-    { key: "internationalSchools", query: `node["amenity"="school"]["name"~"[Ii]nternational"](around:${radiusMeters},${lat},${lng});way["amenity"="school"]["name"~"[Ii]nternational"](around:${radiusMeters},${lat},${lng});` },
-    { key: "hospitals", query: `node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});` },
-    { key: "pediatricHospitals", query: `node["amenity"="hospital"]["healthcare:speciality"~"paediatrics|pediatrics"](around:${radiusMeters},${lat},${lng});way["amenity"="hospital"]["healthcare:speciality"~"paediatrics|pediatrics"](around:${radiusMeters},${lat},${lng});` },
-    { key: "coworkingSpaces", query: `node["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});way["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});node["office"="coworking"](around:${radiusMeters},${lat},${lng});` },
-    { key: "libraries", query: `node["amenity"="library"](around:${radiusMeters},${lat},${lng});way["amenity"="library"](around:${radiusMeters},${lat},${lng});` },
-    { key: "swimmingPools", query: `node["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});way["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});` },
-    { key: "sportsCentres", query: `node["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});way["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});` },
-  ]
+  // Single query fetches ALL relevant POI types at once, then we count locally by tag.
+  // 1 API call per city regardless of how many POI types we track.
+  const overpassQL = `[out:json][timeout:30];(
+    node["leisure"="playground"](around:${radiusMeters},${lat},${lng});
+    way["leisure"="park"](around:${radiusMeters},${lat},${lng});
+    relation["leisure"="park"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="school"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="school"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});
+    node["office"="coworking"](around:${radiusMeters},${lat},${lng});
+    node["amenity"="library"](around:${radiusMeters},${lat},${lng});
+    way["amenity"="library"](around:${radiusMeters},${lat},${lng});
+    node["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});
+    way["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});
+    node["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});
+    way["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});
+  );out tags;`
 
   const result: OverpassResult = {
     playgrounds: 0,
@@ -453,32 +461,46 @@ export async function fetchOverpass(lat: number, lng: number, radiusMeters: numb
     sportsCentres: 0,
   }
 
-  for (const { key, query } of queries) {
-    try {
-      const overpassQL = `[out:json][timeout:15];(${query});out count;`
-      const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: `data=${encodeURIComponent(overpassQL)}`,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      })
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(overpassQL)}`,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    })
 
-      if (!res.ok) {
-        console.warn(`Overpass ${key}: HTTP ${res.status}`)
-        continue
-      }
-
-      const data = await res.json()
-      // Overpass count mode returns elements with tags.total
-      const count = data.elements?.[0]?.tags?.total
-        ? parseInt(data.elements[0].tags.total)
-        : data.elements?.length || 0
-      result[key] = count
-
-      // Small delay between requests to be polite (450 total/week is well within fair use)
-      await new Promise(resolve => setTimeout(resolve, 200))
-    } catch (err) {
-      console.warn(`Overpass ${key} failed:`, err)
+    if (!res.ok) {
+      console.warn(`Overpass: HTTP ${res.status}`)
+      return result
     }
+
+    const data = await res.json()
+    const elements: Array<{ tags?: Record<string, string> }> = data.elements || []
+
+    for (const el of elements) {
+      const tags = el.tags || {}
+      const leisure = tags.leisure
+      const amenity = tags.amenity
+      const office = tags.office
+      const name = tags.name || ""
+      const speciality = tags["healthcare:speciality"] || ""
+
+      if (leisure === "playground") result.playgrounds++
+      else if (leisure === "park") result.parks++
+      else if (leisure === "swimming_pool") result.swimmingPools++
+      else if (leisure === "sports_centre") result.sportsCentres++
+      else if (amenity === "school") {
+        result.schools++
+        if (/international/i.test(name)) result.internationalSchools++
+      }
+      else if (amenity === "hospital") {
+        result.hospitals++
+        if (/pa?ediatrics/i.test(speciality)) result.pediatricHospitals++
+      }
+      else if (amenity === "coworking_space" || office === "coworking") result.coworkingSpaces++
+      else if (amenity === "library") result.libraries++
+    }
+  } catch (err) {
+    console.warn("Overpass failed:", err)
   }
 
   return result
