@@ -11,6 +11,10 @@
     {
       "path": "/api/aggregate-signals",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/intelligence/engine",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
