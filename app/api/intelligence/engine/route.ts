@@ -6,7 +6,7 @@ import { extractionCompletion } from "@/lib/llm"
 import { FISDimensionKey } from "@/lib/types"
 import { DIMENSION_LABELS } from "@/lib/fis"
 
-export const maxDuration = 600
+export const maxDuration = 300
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
