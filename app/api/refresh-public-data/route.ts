@@ -10,6 +10,7 @@ import {
   fetchOpenWeather,
   fetchOverpass,
   fetchGdelt,
+  fetchWikidata,
 } from "@/lib/api-integrations"
 
 export const maxDuration = 300 // 5 minutes — processes cities in batches
@@ -357,6 +358,56 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       console.error(`[refresh][${city.slug}] GDELT FAILED:`, String(err))
       results.push({ source: "GDELT", signal: "news", value: null, error: String(err) })
+    }
+
+    // K. Wikidata — structured city metadata (no key, free)
+    try {
+      const wiki = await fetchWikidata(city.name, city.country)
+
+      if (wiki.population) {
+        results.push({ source: "Wikidata", signal: "meta.population", value: wiki.population })
+      }
+      if (wiki.elevation !== null) {
+        results.push({ source: "Wikidata", signal: "meta.elevation", value: wiki.elevation })
+      }
+      if (wiki.hdi !== null) {
+        results.push({ source: "Wikidata", signal: "meta.hdi", value: wiki.hdi })
+      }
+      if (wiki.climateClassification) {
+        results.push({ source: "Wikidata", signal: "meta.climate", value: wiki.climateClassification })
+      }
+      if (wiki.area) {
+        results.push({ source: "Wikidata", signal: "meta.area", value: wiki.area })
+      }
+
+      // Upsert to city_data_sources
+      const wikiSignals = [
+        { key: "meta.population", value: wiki.population },
+        { key: "meta.elevation", value: wiki.elevation },
+        { key: "meta.hdi", value: wiki.hdi },
+        { key: "meta.climate", value: wiki.climateClassification },
+        { key: "meta.area", value: wiki.area },
+        { key: "meta.demonym", value: wiki.demonym },
+        { key: "meta.officialWebsite", value: wiki.officialWebsite },
+        { key: "meta.wikidataId", value: wiki.wikidataId },
+      ].filter(s => s.value !== null && s.value !== undefined)
+
+      for (const signal of wikiSignals) {
+        await supabase.from("city_data_sources").upsert({
+          city_slug: city.slug,
+          signal_key: signal.key,
+          signal_value: String(signal.value),
+          source_name: "Wikidata",
+          source_url: wiki.wikidataId ? `https://www.wikidata.org/wiki/${wiki.wikidataId}` : "https://www.wikidata.org",
+          source_type: "public_api",
+          fetched_at: new Date().toISOString(),
+          valid_until: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days
+          confidence: 90,
+        }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      }
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] Wikidata FAILED:`, String(err))
+      results.push({ source: "Wikidata", signal: "metadata", value: null, error: String(err) })
     }
 
     // Update the city's signals JSONB with new values

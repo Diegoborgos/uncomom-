@@ -521,3 +521,136 @@ export async function fetchGdelt(cityName: string, country: string): Promise<Gde
     return { articles: [] }
   }
 }
+
+// ============================================================
+// K. WIKIDATA — Structured city metadata (no key, free)
+// ============================================================
+
+export type WikidataResult = {
+  population: number | null
+  elevation: number | null        // meters above sea level
+  area: number | null             // km²
+  hdi: number | null              // Human Development Index (country-level, 0-1)
+  climateClassification: string | null  // Köppen climate classification
+  demonym: string | null          // e.g. "Penangite", "Lisboner"
+  officialWebsite: string | null
+  wikidataId: string | null       // Q-id for reference
+}
+
+export async function fetchWikidata(cityName: string, countryName: string): Promise<WikidataResult> {
+  const result: WikidataResult = {
+    population: null,
+    elevation: null,
+    area: null,
+    hdi: null,
+    climateClassification: null,
+    demonym: null,
+    officialWebsite: null,
+    wikidataId: null,
+  }
+
+  try {
+    // Step 1: Find the city's Wikidata Q-id via search
+    const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(cityName + " " + countryName)}&language=en&limit=5&format=json&origin=*`
+    const searchRes = await fetch(searchUrl)
+    if (!searchRes.ok) return result
+    const searchData = await searchRes.json()
+
+    // Find the best match — prefer items with "city" or location-related descriptions
+    const candidates = searchData.search || []
+    const cityItem = candidates.find((c: { description?: string }) => {
+      const desc = (c.description || "").toLowerCase()
+      return desc.includes("city") || desc.includes("capital") || desc.includes("municipality") ||
+             desc.includes("district") || desc.includes("island") || desc.includes("state") ||
+             desc.includes("prefecture") || desc.includes("province")
+    }) || candidates[0]
+
+    if (!cityItem?.id) return result
+    result.wikidataId = cityItem.id
+
+    // Step 2: Fetch properties for the entity
+    const entityUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${cityItem.id}&props=claims&format=json&origin=*`
+    const entityRes = await fetch(entityUrl)
+    if (!entityRes.ok) return result
+    const entityData = await entityRes.json()
+
+    const claims = entityData.entities?.[cityItem.id]?.claims || {}
+
+    // Extract population (most recent value)
+    if (claims.P1082?.length) {
+      const popClaims = claims.P1082
+      const preferred = popClaims.find((c: Record<string, unknown>) => c.rank === "preferred") || popClaims[popClaims.length - 1]
+      const amount = preferred?.mainsnak?.datavalue?.value?.amount
+      if (amount) result.population = parseInt(amount.replace("+", ""))
+    }
+
+    // Extract elevation
+    if (claims.P2044?.length) {
+      const amount = claims.P2044[0]?.mainsnak?.datavalue?.value?.amount
+      if (amount) result.elevation = Math.round(parseFloat(amount.replace("+", "")))
+    }
+
+    // Extract area (km²)
+    if (claims.P2046?.length) {
+      const amount = claims.P2046[0]?.mainsnak?.datavalue?.value?.amount
+      if (amount) result.area = Math.round(parseFloat(amount.replace("+", "")))
+    }
+
+    // Extract Köppen climate
+    if (claims.P2564?.length) {
+      const value = claims.P2564[0]?.mainsnak?.datavalue?.value
+      if (typeof value === "string") {
+        result.climateClassification = value
+      } else if (value?.id) {
+        try {
+          const labelUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${value.id}&props=labels&languages=en&format=json&origin=*`
+          const labelRes = await fetch(labelUrl)
+          const labelData = await labelRes.json()
+          result.climateClassification = labelData.entities?.[value.id]?.labels?.en?.value || null
+        } catch { /* skip */ }
+      }
+    }
+
+    // Extract demonym
+    if (claims.P1549?.length) {
+      const value = claims.P1549[0]?.mainsnak?.datavalue?.value
+      if (value?.text) result.demonym = value.text
+    }
+
+    // Extract official website
+    if (claims.P856?.length) {
+      const value = claims.P856[0]?.mainsnak?.datavalue?.value
+      if (typeof value === "string") result.officialWebsite = value
+    }
+
+    // Step 3: Try to get HDI from the country entity
+    if (!result.hdi) {
+      try {
+        const countrySearchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(countryName)}&language=en&limit=3&format=json&origin=*`
+        const countrySearchRes = await fetch(countrySearchUrl)
+        const countrySearchData = await countrySearchRes.json()
+        const countryItem = (countrySearchData.search || []).find((c: { description?: string }) => {
+          const desc = (c.description || "").toLowerCase()
+          return desc.includes("country") || desc.includes("sovereign") || desc.includes("nation")
+        })
+
+        if (countryItem?.id) {
+          const countryEntityUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${countryItem.id}&props=claims&format=json&origin=*`
+          const countryEntityRes = await fetch(countryEntityUrl)
+          const countryEntityData = await countryEntityRes.json()
+          const countryClaims = countryEntityData.entities?.[countryItem.id]?.claims || {}
+
+          if (countryClaims.P6766?.length) {
+            const amount = countryClaims.P6766[0]?.mainsnak?.datavalue?.value?.amount
+            if (amount) result.hdi = parseFloat(amount.replace("+", ""))
+          }
+        }
+      } catch { /* HDI lookup failed, skip */ }
+    }
+
+  } catch (err) {
+    console.warn(`[Wikidata] Failed for ${cityName}:`, err)
+  }
+
+  return result
+}
