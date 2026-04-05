@@ -75,6 +75,8 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  console.log(`[briefing] Found ${families.length} families:`, families.map((f: { id: string; family_name: string }) => ({ id: f.id, name: f.family_name })))
+
   const periodEnd = new Date()
   const periodStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
@@ -93,6 +95,9 @@ export async function POST(req: NextRequest) {
         ...(savedCities || []).map((sc: Record<string, string>) => sc.city_slug),
         ...(family.next_destination_candidates || []),
       ])
+
+      console.log(`[briefing][${family.family_name}] Saved cities:`, savedCities?.map((sc: Record<string, string>) => sc.city_slug), 'next_dest:', family.next_destination_candidates)
+      console.log(`[briefing][${family.family_name}] Watched slugs:`, Array.from(watchedSlugs))
 
       if (watchedSlugs.size === 0) {
         results[family.id] = { status: "no_watched_cities" }
