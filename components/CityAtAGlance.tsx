@@ -50,7 +50,7 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
       setSignals(map)
       setLatestFetch(latest)
       setTotalItems(rows.length)
-      setUniqueSources([...new Set(rows.map((r: Record<string, string>) => r.source_name))])
+      setUniqueSources(Array.from(new Set(rows.map((r: Record<string, string>) => r.source_name))))
       setLoading(false)
     }
     load()
