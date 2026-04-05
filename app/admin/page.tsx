@@ -303,7 +303,7 @@ export default function AdminPage() {
               const data = await res.json()
               if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
               console.log('[briefing] Full response:', JSON.stringify(data, null, 2))
-              const statuses = Object.values(data.results || {}).map((r: Record<string, string>) => r.status)
+              const statuses = (Object.values(data.results || {}) as Record<string, string>[]).map(r => r.status)
               const statusCounts = statuses.reduce((acc: Record<string, number>, s: string) => { acc[s] = (acc[s] || 0) + 1; return acc }, {})
               const statusStr = Object.entries(statusCounts).map(([k, v]) => `${v} ${k}`).join(', ')
               setStatus(`Found ${data.families || 0} families: ${statusStr || 'none processed'} — check browser console for details`)
