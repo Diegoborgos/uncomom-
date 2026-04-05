@@ -9,7 +9,17 @@ import {
   fetchWorldBank,
   fetchOpenWeather,
   fetchOverpass,
+  fetchGdelt,
 } from "@/lib/api-integrations"
+import { chatCompletion } from "@/lib/llm"
+
+const FAMILY_NEWS_TOPICS = [
+  "school", "education", "children", "family", "safety", "crime",
+  "healthcare", "hospital", "visa", "immigration", "expat",
+  "cost of living", "rent", "housing", "pollution", "air quality",
+  "playground", "park", "transport", "digital nomad", "coworking",
+  "homeschool", "international school", "childcare", "kindergarten",
+]
 
 export const maxDuration = 300 // 5 minutes — Vercel hobby plan max
 
@@ -345,6 +355,74 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       console.error(`[refresh][${city.slug}] OSM Overpass FAILED:`, String(err))
       results.push({ source: "OSM Overpass", signal: "poi-counts", value: null, error: String(err) })
+    }
+
+    // I. GDELT + Groq — News monitoring + LLM summary (no key for GDELT, Groq via lib/llm)
+    try {
+      const gdelt = await fetchGdelt(city.name, city.country)
+
+      if (gdelt.articles.length > 0) {
+        const relevant = gdelt.articles.filter(article => {
+          const titleLower = article.title.toLowerCase()
+          return FAMILY_NEWS_TOPICS.some(topic => titleLower.includes(topic))
+        })
+
+        // Store article count
+        await supabase.from("city_data_sources").upsert({
+          city_slug: city.slug,
+          signal_key: "news.weeklyArticleCount",
+          signal_value: String(gdelt.articles.length),
+          source_name: "GDELT",
+          source_url: "https://www.gdeltproject.org/",
+          source_type: "public_api",
+          fetched_at: new Date().toISOString(),
+          valid_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          confidence: 70,
+        }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+
+        results.push({ source: "GDELT", signal: "news.weeklyArticleCount", value: gdelt.articles.length })
+
+        // If we have family-relevant articles, generate LLM summary
+        if (relevant.length > 0) {
+          const articleSummaries = relevant.slice(0, 10).map(a =>
+            `- "${a.title}" (${a.source}, ${a.publishDate})`
+          ).join("\n")
+
+          const summary = await chatCompletion([
+            {
+              role: "system",
+              content: `You are a city intelligence analyst for traveling families. Write a concise 2-3 sentence update about what's happening in ${city.name}, ${city.country} that would matter to a family considering living there. Focus on: safety changes, cost of living, education, healthcare, visa/immigration policy, environment, community. Be factual and specific. No fluff. If nothing is actionable for families, say so in one sentence.`,
+            },
+            {
+              role: "user",
+              content: `Here are this week's relevant news articles about ${city.name}:\n\n${articleSummaries}\n\nWrite the city update.`,
+            },
+          ])
+
+          await supabase.from("city_data_sources").upsert({
+            city_slug: city.slug,
+            signal_key: "news.weeklyUpdate",
+            signal_value: JSON.stringify({
+              summary,
+              articleCount: gdelt.articles.length,
+              relevantCount: relevant.length,
+              topArticles: relevant.slice(0, 5).map(a => ({ title: a.title, url: a.url, source: a.source })),
+              generatedAt: new Date().toISOString(),
+            }),
+            source_name: "GDELT + Groq",
+            source_url: "https://www.gdeltproject.org/",
+            source_type: "public_api",
+            fetched_at: new Date().toISOString(),
+            valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            confidence: 60,
+          }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+
+          results.push({ source: "GDELT + Groq", signal: "news.weeklyUpdate", value: relevant.length })
+        }
+      }
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] GDELT/News FAILED:`, String(err))
+      results.push({ source: "GDELT", signal: "news", value: null, error: String(err) })
     }
 
     // Update the city's signals JSONB with new values
