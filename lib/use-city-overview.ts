@@ -2,7 +2,7 @@
 
 import { useState, useEffect, createContext, useContext } from "react"
 import { supabase } from "./supabase"
-import { City } from "./types"
+import { City, FISDimensionKey } from "./types"
 import { useAuth } from "./auth-context"
 import { buildCityOverviewData, CityOverviewData } from "./city-overview-data"
 
@@ -32,6 +32,17 @@ export function useCityOverview(city: City): {
         .eq("city_slug", city.slug)
         .in("status", ["complete", "reviewed"])
 
+      // Fetch latest dimension modifiers from intelligence engine
+      const { data: latestIntel } = await supabase
+        .from("city_intelligence")
+        .select("dimension_modifiers")
+        .eq("city_slug", city.slug)
+        .order("generated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const dimensionModifiers = latestIntel?.dimension_modifiers as Partial<Record<FISDimensionKey, number>> | null
+
       if (cancelled) return
 
       const overview = await buildCityOverviewData(
@@ -40,6 +51,7 @@ export function useCityOverview(city: City): {
         isPaid,
         sources || [],
         reportCount || 0,
+        dimensionModifiers || null,
       )
 
       if (!cancelled) {
