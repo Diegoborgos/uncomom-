@@ -6,6 +6,7 @@ import { City } from "@/lib/types"
 import CityCard from "./CityCard"
 import { formatEuro } from "@/lib/scores"
 import FISBreakdownV2 from "./FISBreakdownV2"
+import { calculateDefaultFIS } from "@/lib/fis"
 import CityIntelligence from "./CityIntelligence"
 import PlacesGallery from "./PlacesGallery"
 import CityVisas from "./CityVisas"
@@ -152,7 +153,7 @@ export default function CityPageTabs({
                           <p className="font-serif font-bold truncate">{c.name}</p>
                           <p className="text-xs text-[var(--text-secondary)]">{formatEuro(c.cost.familyMonthly)}/mo</p>
                         </div>
-                        <span className="text-xs font-mono font-bold text-[var(--accent-green)] shrink-0">{c.scores.family} FIS&trade;</span>
+                        <span className="text-xs font-mono font-bold text-[var(--accent-green)] shrink-0">{calculateDefaultFIS(c).score} FIS&trade;</span>
                       </Link>
                     )
                   })}

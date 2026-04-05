@@ -69,7 +69,6 @@ function sortCities(cities: City[], sort: SortOption): City[] {
   return cities.sort((a, b) => {
     switch (sort) {
       case "fis": return calculateDefaultFIS(b).score - calculateDefaultFIS(a).score
-      case "family": return b.scores.family - a.scores.family
       case "cost": return a.cost.familyMonthly - b.cost.familyMonthly
       case "childSafety": return b.scores.childSafety - a.scores.childSafety
       case "nature": return b.scores.nature - a.scores.nature

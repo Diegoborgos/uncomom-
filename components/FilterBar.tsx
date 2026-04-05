@@ -7,7 +7,6 @@ import { track } from "@/lib/tracking"
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "fis", label: "FIS Score" },
-  { value: "family", label: "Family Score" },
   { value: "cost", label: "Family Cost" },
   { value: "childSafety", label: "Child Safety" },
   { value: "nature", label: "Nature" },

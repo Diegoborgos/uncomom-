@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     default: "Uncomun — Family Travel City Directory",
     template: "%s | Uncomun",
   },
-  description: "Find your family's next home. A city directory for entrepreneurial families who travel and live globally. Family Scores, costs, schools, visas for 45+ cities.",
+  description: "Find your family's next home. A city directory for entrepreneurial families who travel and live globally. FIS scores, costs, schools, visas for 45+ cities.",
   openGraph: {
     title: "Uncomun — Family Travel City Directory",
     description: "City scores, costs, schools, and visa guides for families who travel and live globally.",

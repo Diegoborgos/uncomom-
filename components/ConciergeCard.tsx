@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
+import { calculateDefaultFIS } from "@/lib/fis"
 
 type Recommendation = {
   type: "city" | "action" | "match" | "prompt"
@@ -97,7 +98,7 @@ function CityCard({ rec }: { rec: Recommendation }) {
         {/* Score + cost pills */}
         <div className="flex gap-2 mb-3 flex-wrap">
           <span className="text-[10px] px-2 py-1 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)] font-mono">
-            FIS {city.scores.family}
+            FIS {calculateDefaultFIS(city).score}
           </span>
           <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] font-mono">
             ${city.cost.familyMonthly.toLocaleString()}/mo

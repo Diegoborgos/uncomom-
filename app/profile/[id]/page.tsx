@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase"
 import { Family, Trip } from "@/lib/database.types"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
+import { calculateDefaultFIS } from "@/lib/fis"
 
 const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
   ssr: false,
@@ -406,7 +407,7 @@ function ProfileCityCard({ city, badge, href }: { city: { name: string; country:
           {badge}
         </div>
         <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.2)] text-[10px] font-mono text-[var(--accent-green)]">
-          {city.scores.family}
+          {calculateDefaultFIS(city).score}
         </div>
         <div className="absolute bottom-2 left-2 right-2">
           <p className="text-[10px] text-white/60">{countryCodeToFlag(city.countryCode)} {city.country}</p>

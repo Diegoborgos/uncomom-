@@ -373,7 +373,6 @@ export type City = {
 // ============================================================
 
 export type SortOption =
-  | "family"
   | "fis"
   | "cost"
   | "childSafety"
