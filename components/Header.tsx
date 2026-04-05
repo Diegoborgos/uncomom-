@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase"
 const NAV_LINKS = [
   { href: "/", label: "Cities" },
   { href: "/map", label: "Map" },
-  { href: "/member-map", label: "Members" },
+  { href: "/community", label: "Community" },
   { href: "/schools", label: "Schools" },
   { href: "/visas", label: "Visa Guide" },
 ]
