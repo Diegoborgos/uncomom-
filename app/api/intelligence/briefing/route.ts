@@ -44,12 +44,35 @@ export async function POST(req: NextRequest) {
       .single()
     families = data ? [data] : []
   } else {
-    // Get all paid families (or families with saved cities)
-    const { data } = await supabase
+    // Get paid families + admin families
+    const { data: paidFams } = await supabase
       .from("families")
       .select("*")
       .eq("membership_tier", "paid")
-    families = data || []
+
+    // Also get admin families by looking up their user_ids
+    const { data: { users: allUsers } } = await supabase.auth.admin.listUsers()
+    const adminUserIds = (allUsers || [])
+      .filter((u: { email?: string }) => u.email && ADMIN_EMAILS.includes(u.email))
+      .map((u: { id: string }) => u.id)
+
+    let adminFams: typeof paidFams = []
+    if (adminUserIds.length > 0) {
+      const { data } = await supabase
+        .from("families")
+        .select("*")
+        .in("user_id", adminUserIds)
+      adminFams = data || []
+    }
+
+    // Deduplicate by id
+    const allFams = [...(paidFams || []), ...(adminFams || [])]
+    const seen = new Set<string>()
+    families = allFams.filter((f: { id: string }) => {
+      if (seen.has(f.id)) return false
+      seen.add(f.id)
+      return true
+    })
   }
 
   const periodEnd = new Date()
