@@ -44,35 +44,22 @@ export async function POST(req: NextRequest) {
       .single()
     families = data ? [data] : []
   } else {
-    // Get paid families + admin families
-    const { data: paidFams } = await supabase
-      .from("families")
-      .select("*")
-      .eq("membership_tier", "paid")
+    // Get ALL families that have at least one saved city
+    const { data: familiesWithSaved } = await supabase
+      .from("saved_cities")
+      .select("family_id")
 
-    // Also get admin families by looking up their user_ids
-    const { data: { users: allUsers } } = await supabase.auth.admin.listUsers()
-    const adminUserIds = (allUsers || [])
-      .filter((u: { email?: string }) => u.email && ADMIN_EMAILS.includes(u.email))
-      .map((u: { id: string }) => u.id)
+    const uniqueFamilyIds = Array.from(new Set((familiesWithSaved || []).map((r: { family_id: string }) => r.family_id)))
 
-    let adminFams: typeof paidFams = []
-    if (adminUserIds.length > 0) {
+    if (uniqueFamilyIds.length > 0) {
       const { data } = await supabase
         .from("families")
         .select("*")
-        .in("user_id", adminUserIds)
-      adminFams = data || []
+        .in("id", uniqueFamilyIds)
+      families = data || []
+    } else {
+      families = []
     }
-
-    // Deduplicate by id
-    const allFams = [...(paidFams || []), ...(adminFams || [])]
-    const seen = new Set<string>()
-    families = allFams.filter((f: { id: string }) => {
-      if (seen.has(f.id)) return false
-      seen.add(f.id)
-      return true
-    })
   }
 
   console.log(`[briefing] Found ${families.length} families:`, families.map((f: { id: string; family_name: string }) => ({ id: f.id, name: f.family_name })))
