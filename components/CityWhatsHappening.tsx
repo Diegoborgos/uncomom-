@@ -54,7 +54,7 @@ export default function CityWhatsHappening({ citySlug }: { citySlug: string }) {
   return (
     <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-serif text-lg font-bold">What's happening</h3>
+        <h3 className="font-serif text-lg font-bold">What&apos;s happening</h3>
         <div className="flex items-center gap-2">
           {data.arrival_curve !== "established" && (
             <PersonalBadge label={curveLabel} />
