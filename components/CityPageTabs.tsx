@@ -17,6 +17,7 @@ import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
 import { useCityOverview, CityOverviewContext } from "@/lib/use-city-overview"
 import PersonalBadge from "./ui/PersonalBadge"
+import CityWhatsHappening from "./CityWhatsHappening"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -77,6 +78,9 @@ export default function CityPageTabs({
               </div>
               <FISBreakdownV2 />
             </section>
+
+            {/* What's happening — from intelligence engine */}
+            <CityWhatsHappening citySlug={city.slug} />
 
             {/* About */}
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
