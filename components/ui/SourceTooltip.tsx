@@ -63,14 +63,14 @@ export default function SourceTooltip({
       >
         {children}
         {showIcon && iconPosition === "inline" && (
-          <span className="text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors shrink-0">
+          <span className="text-[9px] text-[var(--text-secondary)] opacity-40 group-hover:opacity-100 transition-opacity shrink-0">
             &#9432;
           </span>
         )}
       </button>
 
       {showIcon && iconPosition === "top-right" && (
-        <span className="absolute top-1 right-1 text-[9px] text-[var(--text-secondary)]/40 pointer-events-none">
+        <span className="absolute top-1 right-1 text-[9px] text-[var(--text-secondary)] opacity-40 pointer-events-none">
           &#9432;
         </span>
       )}
