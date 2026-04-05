@@ -11,7 +11,7 @@ import {
   fetchOverpass,
 } from "@/lib/api-integrations"
 
-export const maxDuration = 600 // 10 minutes — this route processes all cities including OSM Overpass
+export const maxDuration = 300 // 5 minutes — Vercel hobby plan max
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 

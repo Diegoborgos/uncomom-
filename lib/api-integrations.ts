@@ -474,8 +474,8 @@ export async function fetchOverpass(lat: number, lng: number, radiusMeters: numb
         : data.elements?.length || 0
       result[key] = count
 
-      // Rate limit: 1 second between requests to be polite
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Small delay between requests to be polite (450 total/week is well within fair use)
+      await new Promise(resolve => setTimeout(resolve, 200))
     } catch (err) {
       console.warn(`Overpass ${key} failed:`, err)
     }
