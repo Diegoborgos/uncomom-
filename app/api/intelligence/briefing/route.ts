@@ -164,9 +164,21 @@ Each item: {"citySlug": "slug", "type": "visa|education|cost|safety|activity|leg
         const cleaned = briefingResponse.replace(/```json\s*|```/g, "").trim()
         items = JSON.parse(cleaned)
       } catch {
-        console.error(`[briefing][${family.id}] Parse failed`)
-        results[family.id] = { status: "parse_error" }
-        continue
+        // Try to extract JSON array from the response
+        const arrayMatch = briefingResponse.match(/\[[\s\S]*\]/)
+        if (arrayMatch) {
+          try {
+            items = JSON.parse(arrayMatch[0])
+          } catch {
+            console.error(`[briefing][${family.id}] Parse failed. Raw response:`, briefingResponse.slice(0, 500))
+            results[family.id] = { status: "parse_error" }
+            continue
+          }
+        } else {
+          console.error(`[briefing][${family.id}] No JSON array found. Raw response:`, briefingResponse.slice(0, 500))
+          results[family.id] = { status: "parse_error" }
+          continue
+        }
       }
 
       // Group by city
