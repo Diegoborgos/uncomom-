@@ -241,7 +241,7 @@ function MeetupsContent() {
                 {family && (
                   <button
                     onClick={() => handleRSVP(meetup.id)}
-                    className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-[var(--accent-green)]/15 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/25 transition-colors"
+                    className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)] hover:bg-[rgb(var(--accent-green-rgb)/0.25)] transition-colors"
                   >
                     RSVP
                   </button>

@@ -4,6 +4,7 @@ import { City } from "@/lib/types"
 import { getFISColor } from "@/lib/fis"
 import { useAuth } from "@/lib/auth-context"
 import { PaywallBlur } from "./Paywall"
+import PersonalBadge from "./ui/PersonalBadge"
 import DataPoint from "./DataPoint"
 
 /**
@@ -286,7 +287,7 @@ function SignalPill({ label, value, negative }: { label: string; value: boolean;
 
 function CurriculumChip({ label }: { label: string }) {
   return (
-    <span className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)]">
+    <span className="text-[10px] px-2 py-0.5 rounded-full border border-[rgb(var(--accent-green-rgb)/0.3)] text-[var(--accent-green)]">
       {label}
     </span>
   )
@@ -295,7 +296,7 @@ function CurriculumChip({ label }: { label: string }) {
 function MemberQuote({ quote }: { quote: string }) {
   if (!quote) return null
   return (
-    <div className="border-l-2 border-[var(--accent-warm)]/40 pl-3 py-1">
+    <div className="border-l-2 border-[rgb(var(--accent-warm-rgb)/0.4)] pl-3 py-1">
       <p className="text-xs text-[var(--text-secondary)] italic leading-relaxed">&ldquo;{quote}&rdquo;</p>
       <p className="text-[9px] text-[var(--text-secondary)]/60 mt-1">Researched estimate</p>
     </div>
@@ -308,18 +309,14 @@ function PassportRow({ tier, examples, days, approval, friendly, isUserTier }: {
   return (
     <div className={`rounded-lg p-3 ${
       isUserTier
-        ? "bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30"
+        ? "bg-[rgb(var(--accent-green-rgb)/0.1)] border border-[rgb(var(--accent-green-rgb)/0.3)]"
         : "bg-[var(--surface-elevated)]"
     }`}>
       <div className="flex items-center justify-between mb-1">
         <div>
           <p className="text-xs font-medium">
             {tier} passport
-            {isUserTier && (
-              <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-                Your passport
-              </span>
-            )}
+            {isUserTier && <PersonalBadge label="Your passport" />}
           </p>
           <p className="text-[10px] text-[var(--text-secondary)]">{examples}</p>
         </div>

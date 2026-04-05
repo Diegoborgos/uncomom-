@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useCityOverviewContext } from "@/lib/use-city-overview"
 import { FISDimensionData } from "@/lib/city-overview-data"
+import SourceTooltip from "./ui/SourceTooltip"
+import PersonalBadge from "./ui/PersonalBadge"
 
 export default function FISBreakdownV2() {
   const overview = useCityOverviewContext()
@@ -19,12 +20,7 @@ export default function FISBreakdownV2() {
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] text-[var(--text-secondary)]">Adjusted for:</span>
           {fis.adjustedFor.map((a) => (
-            <span
-              key={a}
-              className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]"
-            >
-              {a}
-            </span>
+            <PersonalBadge key={a} label={a} />
           ))}
         </div>
       )}
@@ -70,40 +66,22 @@ function DimensionRow({
   dim: FISDimensionData
   index: number
 }) {
-  const [hovered, setHovered] = useState(false)
-  const [pinned, setPinned] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!pinned) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setPinned(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [pinned])
-
-  const showTooltip = hovered || pinned
-
   const adjustmentText = dim.personalAdjustment > 0
     ? `+${dim.personalAdjustment}`
     : dim.personalAdjustment < 0
     ? `${dim.personalAdjustment}`
     : null
 
+  const tooltipContent = dim.signalCount > 0
+    ? `${dim.signalCount} signal${dim.signalCount !== 1 ? "s" : ""} · ${dim.sourceCount} source${dim.sourceCount !== 1 ? "s" : ""}${dim.lastUpdated ? ` · Updated ${getTimeAgo(new Date(dim.lastUpdated))}` : ""}`
+    : "Estimated data"
+
   return (
-    <div
-      className="relative"
-      ref={ref}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <button
-        onClick={() => setPinned(!pinned)}
-        className="w-full flex items-center gap-3 text-left group hover:opacity-80 transition-opacity"
-      >
-        <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0">
-          {dim.label} <span className="text-[9px] text-[var(--text-secondary)]/40 group-hover:text-[var(--text-secondary)] transition-colors">&#9432;</span>
+    <SourceTooltip content={tooltipContent} showIcon={false}>
+      <div className="flex items-center gap-3 w-full">
+        <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0 flex items-center gap-1">
+          {dim.label}
+          <span className="text-[9px] opacity-30 group-hover:opacity-70 transition-opacity">&#9432;</span>
         </span>
         <div className="flex-1 h-2.5 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
           <div
@@ -125,28 +103,8 @@ function DimensionRow({
             {adjustmentText}%
           </span>
         )}
-      </button>
-
-      {/* Tooltip — hover to preview, click to pin, click-outside to dismiss */}
-      {showTooltip && (
-        <div className="absolute left-8 sm:left-32 bottom-full mb-1.5 z-40 max-w-[280px]">
-          <div className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] text-[10px] text-[var(--text-secondary)] shadow-lg">
-            {dim.isPersonalized && (
-              <p className="text-[var(--accent-green)] mb-1">
-                Adjusted {dim.personalAdjustment > 0 ? "up" : "down"} for your family
-              </p>
-            )}
-            <p>
-              {dim.signalCount > 0
-                ? `${dim.signalCount} signal${dim.signalCount !== 1 ? "s" : ""} \u00b7 ${dim.sourceCount} source${dim.sourceCount !== 1 ? "s" : ""}${dim.lastUpdated ? ` \u00b7 Updated ${getTimeAgo(new Date(dim.lastUpdated))}` : ""}`
-                : "Estimated data"}
-            </p>
-          </div>
-          {/* Arrow pointing down */}
-          <div className="ml-6 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-[var(--surface-elevated)]" />
-        </div>
-      )}
-    </div>
+      </div>
+    </SourceTooltip>
   )
 }
 

@@ -16,6 +16,8 @@ import TripTracker from "./TripTracker"
 import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
 import { useCityOverview, CityOverviewContext } from "@/lib/use-city-overview"
+import PersonalBadge from "./ui/PersonalBadge"
+import CityWhatsHappening from "./CityWhatsHappening"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -72,14 +74,13 @@ export default function CityPageTabs({
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
               <div className="flex items-baseline justify-between mb-4">
                 <h2 className="font-serif text-xl font-bold">Family Intelligence Score&trade;</h2>
-                {overview?.fis.isPersonalized && (
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--accent-green)]/15 text-[var(--accent-green)]">
-                    Personalized
-                  </span>
-                )}
+                {overview?.fis.isPersonalized && <PersonalBadge label="Personalized" />}
               </div>
               <FISBreakdownV2 />
             </section>
+
+            {/* What's happening — from intelligence engine */}
+            <CityWhatsHappening citySlug={city.slug} />
 
             {/* About */}
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
@@ -90,7 +91,7 @@ export default function CityPageTabs({
                   <Link
                     key={tag}
                     href={`/?tags=${encodeURIComponent(tag)}`}
-                    className="text-xs px-2.5 py-1 rounded-full text-[var(--accent-green)] border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/10 hover:bg-[var(--accent-green)]/20 transition-colors"
+                    className="text-xs px-2.5 py-1 rounded-full text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.3)] bg-[rgb(var(--accent-green-rgb)/0.1)] hover:bg-[rgb(var(--accent-green-rgb)/0.2)] transition-colors"
                   >
                     {tag.charAt(0).toUpperCase() + tag.slice(1)}
                   </Link>

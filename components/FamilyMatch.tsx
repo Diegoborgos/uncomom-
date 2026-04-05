@@ -91,7 +91,7 @@ export default function FamilyMatch() {
 
   return (
     <section className="mb-8">
-      <div className="rounded-xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5">
+      <div className="rounded-xl border border-[rgb(var(--accent-green-rgb)/0.3)] bg-[rgb(var(--accent-green-rgb)/0.05)] p-5">
         <p className="text-[10px] text-[var(--accent-green)] uppercase tracking-wider font-medium mb-3">
           We think you should meet
         </p>
@@ -133,7 +133,7 @@ export default function FamilyMatch() {
             {accepting ? "Connecting..." : "Yes, make the introduction →"}
           </button>
         ) : (
-          <div className="text-center py-2 rounded-lg border border-[var(--accent-green)]/30 text-sm text-[var(--accent-green)]">
+          <div className="text-center py-2 rounded-lg border border-[rgb(var(--accent-green-rgb)/0.3)] text-sm text-[var(--accent-green)]">
             Introduction accepted — we&apos;ll connect you
           </div>
         )}

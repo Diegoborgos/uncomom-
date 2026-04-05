@@ -27,7 +27,7 @@ export default function WaitlistForm() {
 
   if (status === "success") {
     return (
-      <div className="rounded-xl border border-[var(--accent-green)] bg-[var(--accent-green)]/10 p-6 text-center">
+      <div className="rounded-xl border border-[var(--accent-green)] bg-[rgb(var(--accent-green-rgb)/0.1)] p-6 text-center">
         <p className="text-[var(--accent-green)] font-medium">You&apos;re on the list.</p>
         <p className="text-sm text-[var(--text-secondary)] mt-1">We&apos;ll reach out when new features launch.</p>
       </div>

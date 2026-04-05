@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
         {/* Onboarding prompt */}
         {needsOnboarding && (
-          <Link href="/onboarding" className="block rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-5 mb-6 text-center hover:bg-[var(--accent-green)]/10 transition-colors">
+          <Link href="/onboarding" className="block rounded-2xl border border-[rgb(var(--accent-green-rgb)/0.3)] bg-[rgb(var(--accent-green-rgb)/0.05)] p-5 mb-6 text-center hover:bg-[rgb(var(--accent-green-rgb)/0.1)] transition-colors">
             <p className="font-medium text-[var(--accent-green)] mb-1">Complete your profile</p>
             <p className="text-xs text-[var(--text-secondary)]">Quick chat — helps families find and connect with you.</p>
           </Link>
@@ -215,7 +215,7 @@ export default function DashboardPage() {
               const info = getCityInfo(trip.city_slug)
               return (
                 <Link key={trip.id} href={`/cities/${trip.city_slug}`}
-                  className="flex items-center justify-between rounded-2xl border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/5 p-4 hover:bg-[var(--accent-green)]/10 transition-colors">
+                  className="flex items-center justify-between rounded-2xl border border-[rgb(var(--accent-green-rgb)/0.3)] bg-[rgb(var(--accent-green-rgb)/0.05)] p-4 hover:bg-[rgb(var(--accent-green-rgb)/0.1)] transition-colors">
                   <div>
                     <p className="font-serif text-lg font-bold">{info.flag} {info.name}</p>
                     <p className="text-xs text-[var(--text-secondary)]">{info.country}</p>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
         <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center mb-12">
           {isPaid ? (
             <>
-              <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-[var(--accent-green)]/20 text-[var(--accent-green)] mb-2">Member</span>
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-[rgb(var(--accent-green-rgb)/0.2)] text-[var(--accent-green)] mb-2">Member</span>
               <p className="font-serif text-lg font-bold">Uncomun Member</p>
               <p className="text-xs text-[var(--text-secondary)] mt-1">Lifetime access</p>
             </>
@@ -340,7 +340,7 @@ function TagRow({ label, tags }: { label: string; tags: string[] }) {
       <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider w-16 shrink-0 pt-1.5">{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => (
-          <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20">
+          <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)]">
             {tag.charAt(0).toUpperCase() + tag.slice(1)}
           </span>
         ))}

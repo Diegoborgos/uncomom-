@@ -119,7 +119,7 @@ export default function DataFreshness({ citySlug }: { citySlug: string }) {
                 <span className="text-[var(--text-secondary)]">
                   {s.signal_count} signal{s.signal_count !== 1 ? "s" : ""}
                 </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)]">
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)]">
                   {s.avg_confidence}%
                 </span>
               </div>

@@ -410,7 +410,7 @@ export default function OnboardingPage() {
                     return (
                       <button key={c.slug} onClick={() => toggleCity(c.name)}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between transition-colors ${
-                          selected ? "bg-[var(--accent-green)]/15 text-[var(--accent-green)]" : "text-[var(--text-secondary)] hover:bg-[var(--surface)]"
+                          selected ? "bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)]" : "text-[var(--text-secondary)] hover:bg-[var(--surface)]"
                         }`}>
                         <span>{flag} {c.name}</span>
                         {selected && <span>✓</span>}

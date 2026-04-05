@@ -96,7 +96,7 @@ function CityCard({ rec }: { rec: Recommendation }) {
       <div className="bg-[var(--surface)] p-4">
         {/* Score + cost pills */}
         <div className="flex gap-2 mb-3 flex-wrap">
-          <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 font-mono">
+          <span className="text-[10px] px-2 py-1 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)] font-mono">
             FIS {city.scores.family}
           </span>
           <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] font-mono">
@@ -119,9 +119,9 @@ function CityCard({ rec }: { rec: Recommendation }) {
 /** Action recommendation — accent border, bold CTA */
 function ActionCard({ rec }: { rec: Recommendation }) {
   return (
-    <div className="rounded-xl border border-[var(--accent-green)]/20 bg-[var(--accent-green)]/5 p-4">
+    <div className="rounded-xl border border-[rgb(var(--accent-green-rgb)/0.2)] bg-[rgb(var(--accent-green-rgb)/0.05)] p-4">
       <div className="flex items-start gap-3">
-        <span className="w-8 h-8 rounded-full bg-[var(--accent-green)]/10 flex items-center justify-center text-sm shrink-0">✨</span>
+        <span className="w-8 h-8 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] flex items-center justify-center text-sm shrink-0">✨</span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium mb-1">{rec.title}</p>
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{rec.description}</p>

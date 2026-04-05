@@ -208,14 +208,14 @@ export default function SchoolsPage() {
                 {/* Cost + Tags row */}
                 <div className="flex flex-wrap items-center gap-3 mb-3">
                   {school.monthly_fee && school.monthly_fee > 0 && (
-                    <span className="text-xs px-3 py-1 rounded-full bg-[var(--accent-warm)]/15 text-[var(--accent-warm)] font-medium">
+                    <span className="text-xs px-3 py-1 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)] font-medium">
                       {formatEuro(school.monthly_fee)}/mo
                     </span>
                   )}
                   {school.school_type && (
                     <button
                       onClick={() => setTypeFilter(school.school_type)}
-                      className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
+                      className="text-xs px-2.5 py-1 rounded-full border border-[rgb(var(--accent-green-rgb)/0.3)] text-[var(--accent-green)] hover:bg-[rgb(var(--accent-green-rgb)/0.1)] transition-colors"
                     >
                       {school.school_type}
                     </button>
@@ -223,7 +223,7 @@ export default function SchoolsPage() {
                   {school.curriculum && school.curriculum !== school.school_type && (
                     <button
                       onClick={() => setCurriculumFilter(school.curriculum)}
-                      className="text-xs px-2.5 py-1 rounded-full border border-[var(--accent-green)]/30 text-[var(--accent-green)] hover:bg-[var(--accent-green)]/10 transition-colors"
+                      className="text-xs px-2.5 py-1 rounded-full border border-[rgb(var(--accent-green-rgb)/0.3)] text-[var(--accent-green)] hover:bg-[rgb(var(--accent-green-rgb)/0.1)] transition-colors"
                     >
                       {school.curriculum}
                     </button>
@@ -240,7 +240,7 @@ export default function SchoolsPage() {
                   )}
                   {school.website && (
                     <a href={school.website} target="_blank" rel="noopener noreferrer"
-                      className="text-xs px-3 py-1.5 rounded-lg border border-[var(--accent-green)] text-[var(--accent-green)] font-medium hover:bg-[var(--accent-green)]/10 transition-colors">
+                      className="text-xs px-3 py-1.5 rounded-lg border border-[var(--accent-green)] text-[var(--accent-green)] font-medium hover:bg-[rgb(var(--accent-green-rgb)/0.1)] transition-colors">
                       Website
                     </a>
                   )}
