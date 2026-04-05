@@ -80,6 +80,7 @@ export default function OnboardingPage() {
           languages: family.languages || [],
           interests: family.interests || [],
           cities_visited: [],
+          next_destinations: [],
           bio: family.bio || "",
           done: false,
         })
