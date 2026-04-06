@@ -62,11 +62,12 @@ export async function POST(req: NextRequest) {
         .eq("city_slug", trip.city_slug)
         .eq("status", "here_now")
 
-      const notifyFamilyIds = new Set([
+      const notifyFamilyIdSet = new Set([
         ...(savedByFamilies || []).map(s => s.family_id),
         ...(hereNowFamilies || []).map(s => s.family_id),
       ])
-      notifyFamilyIds.delete(trip.family_id) // don't notify yourself
+      notifyFamilyIdSet.delete(trip.family_id) // don't notify yourself
+      const notifyFamilyIds = Array.from(notifyFamilyIdSet)
 
       const flag = arriver.country_code
         ? arriver.country_code.toUpperCase().split("").map((c: string) => String.fromCodePoint(127397 + c.charCodeAt(0))).join("")
