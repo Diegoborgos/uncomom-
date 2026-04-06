@@ -35,6 +35,7 @@ export default function FamilyCard({
         className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--surface)] cursor-pointer transition-colors text-left"
       >
         {family.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={family.avatar_url}
             alt={family.family_name}

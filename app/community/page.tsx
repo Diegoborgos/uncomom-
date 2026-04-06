@@ -63,9 +63,9 @@ function CommunityPageInner() {
     <>
       {/* Mobile: list/map toggle */}
       <div className="lg:hidden flex flex-col h-[calc(100vh-64px)]">
+        {tabBar}
         {mobileView === "list" ? (
           <>
-            {tabBar}
             <div className="flex-1 overflow-y-auto">
               {renderTab()}
             </div>
