@@ -191,7 +191,12 @@ function MessagesContent() {
     <div className="flex" style={{ height: "calc(100dvh - 64px)" }}>
       {/* Conversation list — hidden on mobile when chat is active */}
       <div className={`${showChat ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 border-r border-[var(--border)] bg-[var(--bg)]`}>
-        <div className="p-4 border-b border-[var(--border)]">
+        <div className="flex items-center gap-3 p-4 border-b border-[var(--border)]">
+          <button onClick={() => router.back()} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Go back">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13 4l-6 6 6 6" />
+            </svg>
+          </button>
           <h1 className="font-serif text-xl font-bold">Messages</h1>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -253,7 +258,10 @@ function MessagesContent() {
           <div className="flex-1 flex items-center justify-center text-[var(--text-secondary)]">
             <div className="text-center">
               <p className="text-lg mb-1">Select a conversation</p>
-              <p className="text-xs">Or visit a profile to start a new one</p>
+              <p className="text-xs mb-4">Or visit a profile to start a new one</p>
+              <button onClick={() => router.back()} className="text-xs text-[var(--accent-green)] hover:underline">
+                ← Go back
+              </button>
             </div>
           </div>
         ) : (
