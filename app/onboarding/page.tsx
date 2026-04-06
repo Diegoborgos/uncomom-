@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
@@ -20,6 +21,8 @@ type ProfileFields = {
   interests: string[]
   cities_visited: string[]
   next_destinations: string[]
+  top_priorities: string[]
+  deal_breakers: string[]
   bio: string
   done: boolean
 }
@@ -28,7 +31,7 @@ const emptyProfile: ProfileFields = {
   family_name: "", home_country: "", country_code: "",
   kids_ages: [], parent_work_type: "", education_approach: "",
   travel_style: "", languages: [], interests: [],
-  cities_visited: [], next_destinations: [], bio: "", done: false,
+  cities_visited: [], next_destinations: [], top_priorities: [], deal_breakers: [], bio: "", done: false,
 }
 
 export default function OnboardingPage() {
@@ -43,8 +46,11 @@ export default function OnboardingPage() {
   const [showCityPicker, setShowCityPicker] = useState(false)
   const [selectedCities, setSelectedCities] = useState<string[]>([])
   const [cityPickerContinent, setCityPickerContinent] = useState<string | null>(null)
+  const [phase, setPhase] = useState<"welcome" | "chat" | "complete">("welcome")
+  const [welcomeStep, setWelcomeStep] = useState(0)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const touchStartX = useRef(0)
 
   useEffect(() => {
     if (!loading && !user) router.push("/login")
@@ -81,18 +87,23 @@ export default function OnboardingPage() {
           interests: family.interests || [],
           cities_visited: [],
           next_destinations: [],
+          top_priorities: family.top_priorities || [],
+          deal_breakers: family.deal_breakers || [],
           bio: family.bio || "",
           done: false,
         })
-      } else {
-        setMessages([{
-          role: "assistant",
-          content: "Hey! Tell me about your family — where are you from?"
-        }])
+        setPhase("chat")
       }
-      if (typeof window !== "undefined" && window.innerWidth >= 768) setTimeout(() => inputRef.current?.focus(), 300)
     }
   }, [user, loading, family]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Start chat for new users when they transition from welcome to chat
+  useEffect(() => {
+    if (phase === "chat" && messages.length === 0 && user && !family?.onboarding_complete) {
+      setMessages([{ role: "assistant", content: "Hey! Tell me about your family — where are you from?" }])
+      if (typeof window !== "undefined" && window.innerWidth >= 768) setTimeout(() => inputRef.current?.focus(), 300)
+    }
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const container = messagesContainerRef.current
@@ -215,6 +226,9 @@ export default function OnboardingPage() {
         languages: profile.languages.length > 0 ? profile.languages : family?.languages || [],
         interests: profile.interests.length > 0 ? profile.interests : family?.interests || [],
         bio: profile.bio || family?.bio || "",
+        top_priorities: profile.top_priorities?.length > 0 ? profile.top_priorities : family?.top_priorities || [],
+        deal_breakers: profile.deal_breakers?.length > 0 ? profile.deal_breakers : family?.deal_breakers || [],
+        next_destination_candidates: profile.next_destinations?.length > 0 ? profile.next_destinations : family?.next_destination_candidates || [],
         onboarding_complete: true,
         updated_at: new Date().toISOString(),
       }
@@ -281,7 +295,7 @@ export default function OnboardingPage() {
       }
 
       await refreshFamily()
-      router.push("/dashboard")
+      setPhase("complete")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save. Try again.")
     } finally {
@@ -350,6 +364,145 @@ export default function OnboardingPage() {
   ].filter(Boolean).length
   const progress = Math.min(100, (fieldsExtracted / 9) * 100)
 
+  // ── Welcome phase ──
+  if (phase === "welcome") {
+    const cards = [
+      {
+        title: "Welcome to Uncomun",
+        body: "The city guide built by and for traveling families. Let\u2019s set up your profile so we can personalize everything for you.",
+      },
+      {
+        title: "How it works",
+        body: "A quick chat to get to know your family:",
+        bullets: ["Tell us about your kids, travel style & education", "Pick the cities you\u2019ve been to", "We\u2019ll write your family bio"],
+      },
+      {
+        title: "Ready?",
+        body: "It takes about 2 minutes. You can always edit your profile later.",
+      },
+    ]
+
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+          onTouchEnd={(e) => {
+            const diff = touchStartX.current - e.changedTouches[0].clientX
+            if (diff > 50 && welcomeStep < 2) setWelcomeStep(welcomeStep + 1)
+            if (diff < -50 && welcomeStep > 0) setWelcomeStep(welcomeStep - 1)
+          }}
+          className="min-h-[260px] flex flex-col items-center justify-center"
+        >
+          <h1 className="font-serif text-3xl font-bold mb-4">{cards[welcomeStep].title}</h1>
+          <p className="text-[var(--text-secondary)] mb-4 max-w-sm">{cards[welcomeStep].body}</p>
+          {cards[welcomeStep].bullets && (
+            <ul className="text-sm text-[var(--text-secondary)] space-y-2 mb-4 text-left max-w-xs mx-auto">
+              {cards[welcomeStep].bullets!.map((b, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-[var(--accent-green)]">&#10003;</span>
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Dot indicators */}
+        <div className="flex justify-center gap-2 mb-8">
+          {cards.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setWelcomeStep(i)}
+              className={`w-2 h-2 rounded-full transition-colors ${i === welcomeStep ? "bg-[var(--accent-green)]" : "bg-[var(--border)]"}`}
+            />
+          ))}
+        </div>
+
+        {/* Actions */}
+        {welcomeStep < 2 ? (
+          <button
+            onClick={() => setWelcomeStep(welcomeStep + 1)}
+            className="w-full max-w-xs py-3 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            onClick={() => setPhase("chat")}
+            className="w-full max-w-xs py-3 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+          >
+            Let&apos;s go &rarr;
+          </button>
+        )}
+
+        <button
+          onClick={() => setPhase("chat")}
+          className="block mx-auto mt-4 text-sm text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors"
+        >
+          Skip intro &rarr;
+        </button>
+      </div>
+    )
+  }
+
+  // ── Complete phase ──
+  if (phase === "complete") {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-[rgb(var(--accent-green-rgb)/0.2)] text-[var(--accent-green)] flex items-center justify-center text-3xl mx-auto mb-8">
+          &#10003;
+        </div>
+
+        <h1 className="font-serif text-3xl font-bold mb-2">You&apos;re all set!</h1>
+        <p className="text-[var(--text-secondary)] mb-8">Your family profile is ready.</p>
+
+        {/* Profile summary */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-left space-y-2 text-sm mb-8">
+          {profile.family_name && <p><strong>Family:</strong> {profile.family_name}</p>}
+          {profile.home_country && <p><strong>From:</strong> {profile.home_country}</p>}
+          {profile.kids_ages.length > 0 && <p><strong>Kids:</strong> ages {profile.kids_ages.join(", ")}</p>}
+          {profile.parent_work_type && <p><strong>Work:</strong> {profile.parent_work_type}</p>}
+          {profile.education_approach && <p><strong>Education:</strong> {profile.education_approach}</p>}
+          {profile.travel_style && <p><strong>Travel:</strong> {profile.travel_style}</p>}
+          {profile.bio && <p className="italic text-[var(--text-secondary)] pt-2 border-t border-[var(--border)]">&ldquo;{profile.bio}&rdquo;</p>}
+        </div>
+
+        {/* What happens now */}
+        <div className="text-left mb-8">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-secondary)] mb-3">What happens now</p>
+          <ul className="text-sm text-[var(--text-secondary)] space-y-2">
+            <li>&#8226; City scores are now personalized to your family</li>
+            <li>&#8226; Other families can find and connect with you</li>
+            <li>&#8226; Your trip tracker is ready to use</li>
+          </ul>
+        </div>
+
+        {/* CTAs */}
+        <div className="space-y-3">
+          <Link
+            href="/"
+            className="block py-3 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+          >
+            Explore cities &rarr;
+          </Link>
+          <Link
+            href="/community"
+            className="block py-3 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors text-sm"
+          >
+            Find families &rarr;
+          </Link>
+          <Link
+            href="/dashboard"
+            className="block py-3 text-sm text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors"
+          >
+            Go to dashboard &rarr;
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Chat phase (existing UI) ──
   return (
     <div className="max-w-lg mx-auto">
       {/* Progress — compact inline */}
