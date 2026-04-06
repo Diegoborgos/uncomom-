@@ -312,6 +312,22 @@ export default function AdminPage() {
               setStatus(`Found ${data.families || 0} families: ${statusStr || 'none processed'}${errorDetails ? ' — ' + errorDetails.slice(0, 200) : ''}`)
             }}
           />
+          <AdminAction
+            label="Generate notifications"
+            onClick={async (setStatus) => {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session) throw new Error("Not logged in")
+              setStatus("Generating notifications...")
+              const res = await fetch("/api/notifications/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                body: JSON.stringify({}),
+              })
+              const data = await res.json()
+              if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+              setStatus(`Done: ${data.stats?.total || 0} notifications (${data.stats?.arrivals || 0} arrivals, ${data.stats?.follows || 0} follows, ${data.stats?.cityUpdates || 0} city updates)`)
+            }}
+          />
         </div>
       </div>
 
