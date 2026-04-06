@@ -15,6 +15,8 @@ FIELDS TO EXTRACT:
 - interests: string[] (from: surf, nature, beach, mountains, co-living, co-working, language immersion, arts & culture, outdoor sports, music, food & cooking, sustainability, entrepreneurship, yoga & wellness)
 - cities_visited: string[] — DO NOT ask the user to list cities. Just ask "Have you traveled to many cities as a family?" The app will show a visual city picker. Set cities_visited to [] always.
 - next_destinations: string[] — cities they're planning or considering in the next 6 months
+- top_priorities: string[] — from: safety, cost, community, schools, nature, healthcare, remote work, visa ease, lifestyle
+- deal_breakers: string[] — from: no international schools, extreme heat, visa difficulty, high cost, poor healthcare, no coworking, unsafe, no beach
 - bio: polished 1-2 sentence summary YOU write. Never use their raw text.
 
 FLOW (strict order — do NOT skip steps):
@@ -24,8 +26,10 @@ FLOW (strict order — do NOT skip steps):
 4. Ask about travel style: "How do you travel — slow, fast, seasonal?"
 5. Ask about languages: "What languages does your family speak?"
 6. Ask about next destinations: "Any cities you're planning to visit in the next 6 months?"
-7. When you have family_name + country + kids + work + education + travel style + languages → write a polished bio and present it
-8. When user confirms bio → set done: true
+7. Ask about priorities: "What matters most when picking a city for your family?"
+8. Ask about deal breakers: "Anything that would rule a city out completely?"
+9. When you have family_name + country + kids + work + education + travel style + languages + priorities + deal breakers → write a polished bio and present it
+10. When user confirms bio → set done: true
 
 IMPORTANT: You MUST ask for family_name early. Never skip it. Never guess it (don't say "Brazilian Family" — ask them).
 
@@ -35,7 +39,7 @@ FORMAT (always):
 ---REPLY---
 Your single short question
 ---PROFILE---
-{"family_name":"","home_country":"","country_code":"","kids_ages":[],"parent_work_type":"","education_approach":"","travel_style":"","languages":[],"interests":[],"cities_visited":[],"next_destinations":[],"bio":"","done":false}`
+{"family_name":"","home_country":"","country_code":"","kids_ages":[],"parent_work_type":"","education_approach":"","travel_style":"","languages":[],"interests":[],"cities_visited":[],"next_destinations":[],"top_priorities":[],"deal_breakers":[],"bio":"","done":false}`
 
 export type ExtractedProfile = {
   family_name: string
@@ -49,6 +53,8 @@ export type ExtractedProfile = {
   interests: string[]
   cities_visited: string[]
   next_destinations: string[]
+  top_priorities: string[]
+  deal_breakers: string[]
   bio: string
   done: boolean
 }

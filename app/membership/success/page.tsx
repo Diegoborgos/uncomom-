@@ -78,16 +78,16 @@ function SuccessContent() {
 
       <div className="space-y-3">
         <Link
-          href="/"
+          href="/onboarding"
           className="block py-3 rounded-xl bg-[var(--accent-green)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
         >
-          Explore cities &rarr;
+          Set up your family profile &rarr;
         </Link>
         <Link
-          href="/dashboard"
+          href="/"
           className="block py-3 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] transition-colors text-sm"
         >
-          Set up my family profile
+          Browse cities first
         </Link>
       </div>
 

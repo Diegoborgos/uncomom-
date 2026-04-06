@@ -56,7 +56,17 @@ export default function LoginPage() {
     } else {
       track("session_start", { method: "email", referrer: document.referrer })
       backfillSession()
-      router.push("/dashboard")
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (authUser) {
+        const { data: fam } = await supabase.from("families").select("onboarding_complete").eq("user_id", authUser.id).maybeSingle()
+        if (!fam || !fam.onboarding_complete) {
+          router.push("/onboarding")
+        } else {
+          router.push("/dashboard")
+        }
+      } else {
+        router.push("/dashboard")
+      }
     }
   }
 
