@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
-import { PaywallGate } from "@/components/Paywall"
 
 type Meetup = {
   id: string
@@ -25,7 +24,7 @@ type Meetup = {
 const selectClass = "w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)]"
 
 export default function MeetupsTab({ selectedCity }: { selectedCity: string | null }) {
-  const { family, isPaid, loading: authLoading } = useAuth()
+  const { family, loading: authLoading } = useAuth()
   const [meetups, setMeetups] = useState<Meetup[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -100,36 +99,6 @@ export default function MeetupsTab({ selectedCity }: { selectedCity: string | nu
 
   if (loading || authLoading) {
     return <p className="p-4 text-sm text-[var(--text-secondary)]">Loading meetups...</p>
-  }
-
-  if (!isPaid) {
-    return (
-      <div className="p-4 space-y-3">
-        <p className="text-xs text-[var(--text-secondary)]">{filtered.length} upcoming meetups</p>
-        {filtered.slice(0, 3).map((meetup) => (
-          <div key={meetup.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
-            <h3 className="font-medium text-sm mb-2">{meetup.title}</h3>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)] mb-2">
-              <span>{getCityName(meetup.city_slug)}</span>
-              <span>
-                {new Date(meetup.event_date).toLocaleDateString("en-US", {
-                  weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-                })}
-              </span>
-              {meetup.location && <span>📍 {meetup.location}</span>}
-              <span>👶 {meetup.age_groups}</span>
-            </div>
-            {meetup.description && (
-              <p className="text-xs text-[var(--text-secondary)] mb-1">{meetup.description}</p>
-            )}
-            <p className="text-[10px] text-[var(--text-secondary)]">
-              Hosted by {meetup.families?.family_name || "a family"}
-            </p>
-          </div>
-        ))}
-        <PaywallGate feature="Join meetups and create your own" />
-      </div>
-    )
   }
 
   return (

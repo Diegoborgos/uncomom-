@@ -1,11 +1,9 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { Family } from "@/lib/database.types"
 import { cities } from "@/data/cities"
-import { PaywallGate } from "@/components/Paywall"
 import FamilyCard from "./FamilyCard"
 
 const TRAVEL_STYLES = [
@@ -30,7 +28,6 @@ export default function PeopleTab({
   selectedCity: string | null
   onCitySelect: (slug: string | null) => void
 }) {
-  const { isPaid, loading: authLoading } = useAuth()
   const [families, setFamilies] = useState<Family[]>([])
   const [loading, setLoading] = useState(true)
   const [travelFilter, setTravelFilter] = useState("")
@@ -71,27 +68,8 @@ export default function PeopleTab({
     return result
   }, [families, selectedCity, travelFilter, educationFilter, ageMin, ageMax])
 
-  if (loading || authLoading) {
+  if (loading) {
     return <p className="p-4 text-sm text-[var(--text-secondary)]">Loading families...</p>
-  }
-
-  if (!isPaid) {
-    return (
-      <div className="p-4 space-y-3">
-        <p className="text-xs text-[var(--text-secondary)]">{filtered.length} families</p>
-        {filtered.slice(0, 3).map((fam) => (
-          <FamilyCard
-            key={fam.id}
-            family={{
-              family_name: fam.family_name,
-              country_code: fam.country_code || "",
-              kids_ages: fam.kids_ages || [],
-            }}
-          />
-        ))}
-        <PaywallGate feature="See all families and connect" />
-      </div>
-    )
   }
 
   return (

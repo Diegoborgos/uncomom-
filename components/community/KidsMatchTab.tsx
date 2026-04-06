@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
-import { PaywallGate } from "@/components/Paywall"
 import FamilyCard from "./FamilyCard"
 
 type FamilyWithTrip = {
@@ -22,7 +21,7 @@ type FamilyWithTrip = {
 const selectClass = "w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-green)]"
 
 export default function KidsMatchTab({ selectedCity }: { selectedCity: string | null }) {
-  const { isPaid, family: myFamily, loading: authLoading } = useAuth()
+  const { family: myFamily, loading: authLoading } = useAuth()
   const [families, setFamilies] = useState<FamilyWithTrip[]>([])
   const [loading, setLoading] = useState(true)
   const [cityFilter, setCityFilter] = useState(selectedCity || "")
@@ -77,25 +76,6 @@ export default function KidsMatchTab({ selectedCity }: { selectedCity: string | 
 
   if (loading || authLoading) {
     return <p className="p-4 text-sm text-[var(--text-secondary)]">Loading...</p>
-  }
-
-  if (!isPaid) {
-    return (
-      <div className="p-4 space-y-3">
-        <p className="text-xs text-[var(--text-secondary)]">{filtered.length} families with kids nearby</p>
-        {filtered.slice(0, 3).map((fam) => (
-          <FamilyCard
-            key={fam.id}
-            family={{
-              family_name: fam.family_name,
-              country_code: fam.country_code || "",
-              kids_ages: fam.kids_ages || [],
-            }}
-          />
-        ))}
-        <PaywallGate feature="See all kid matches and connect" />
-      </div>
-    )
   }
 
   return (

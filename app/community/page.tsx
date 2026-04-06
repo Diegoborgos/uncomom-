@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect, useMemo, Suspense } from "react"
+import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { openJoinOverlay } from "@/components/JoinOverlay"
 import dynamic from "next/dynamic"
 import PeopleTab from "@/components/community/PeopleTab"
 import NearbyTab from "@/components/community/NearbyTab"
@@ -22,39 +24,83 @@ type TabId = (typeof TABS)[number]["id"]
 
 function CommunityPageInner() {
   const searchParams = useSearchParams()
-  const { user } = useAuth()
-  const availableTabs = useMemo(
-    () => (user ? TABS : TABS.filter((t) => t.id === "nearby")),
-    [user]
-  )
+  const { user, isPaid } = useAuth()
   const initialTab = (searchParams.get("tab") as TabId) || "people"
   const [activeTab, setActiveTab] = useState<TabId>(initialTab)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<"list" | "map">("list")
 
-  // Force non-logged-in users to "nearby" if they land on a gated tab
-  useEffect(() => {
-    if (!user && !availableTabs.some((t) => t.id === activeTab)) {
-      setActiveTab("nearby")
-    }
-  }, [user, activeTab, availableTabs])
-
   const renderTab = () => {
+    // Nearby is always public
+    if (activeTab === "nearby") {
+      return <NearbyTab selectedCity={selectedCity} />
+    }
+
+    // All other tabs require paid membership
+    if (!isPaid) {
+      return (
+        <div className="relative">
+          {/* Blurred preview behind */}
+          <div className="blur-sm opacity-30 pointer-events-none select-none p-4 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--surface-elevated)]" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-32 rounded bg-[var(--surface-elevated)]" />
+                  <div className="h-2.5 w-48 rounded bg-[var(--surface-elevated)]" />
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Paywall overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg)]/80">
+            <div className="text-center px-6">
+              <p className="text-3xl mb-3">🔒</p>
+              <h3 className="font-serif text-lg font-bold mb-2">
+                {activeTab === "people" ? "Find families like yours" :
+                 activeTab === "kids" ? "Match your kids with playmates" :
+                 "Join family meetups"}
+              </h3>
+              <p className="text-sm text-[var(--text-secondary)] mb-4 max-w-xs mx-auto">
+                This is available to Uncomun members. One payment, lifetime access for your whole family.
+              </p>
+              {user ? (
+                <button
+                  onClick={() => openJoinOverlay()}
+                  className="px-6 py-3 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity"
+                >
+                  Become a member →
+                </button>
+              ) : (
+                <Link
+                  href="/signup"
+                  className="inline-block px-6 py-3 rounded-xl bg-[var(--accent-green)] text-black font-medium text-sm hover:opacity-90 transition-opacity"
+                >
+                  Join Uncomun →
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // Paid users get full access
     switch (activeTab) {
       case "people":
         return <PeopleTab selectedCity={selectedCity} onCitySelect={setSelectedCity} />
-      case "nearby":
-        return <NearbyTab selectedCity={selectedCity} />
       case "kids":
         return <KidsMatchTab selectedCity={selectedCity} />
       case "meetups":
         return <MeetupsTab selectedCity={selectedCity} />
+      default:
+        return null
     }
   }
 
   const tabBar = (
     <div className="flex border-b border-[var(--border)] overflow-x-auto scrollbar-hide shrink-0">
-      {availableTabs.map((tab) => (
+      {TABS.map((tab) => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
