@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { useCityOverviewContext } from "@/lib/use-city-overview"
 import { FISDimensionData } from "@/lib/city-overview-data"
 import SourceTooltip from "./ui/SourceTooltip"
@@ -45,14 +44,11 @@ export default function FISBreakdownV2() {
 
       {/* Trust line — only render when we have actual signals */}
       {dataHealth.totalSignals > 0 && (
-        <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)]">
+        <div className="text-[10px] text-[var(--text-secondary)]">
           <span>
             {`${dataHealth.totalSignals} signals from ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.fieldReportCount > 0 ? ` + ${dataHealth.fieldReportCount} family report${dataHealth.fieldReportCount !== 1 ? "s" : ""}` : ""}`}
             {dataHealth.lastUpdated && ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}`}
           </span>
-          <Link href="/methodology" className="text-[var(--accent-green)] hover:underline shrink-0 ml-3">
-            How this works &rarr;
-          </Link>
         </div>
       )}
     </div>
@@ -79,9 +75,12 @@ function DimensionRow({
   return (
     <SourceTooltip content={tooltipContent} showIcon={false}>
       <div className="flex items-center gap-3 w-full">
-        <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0 flex items-center gap-1">
-          {dim.label}
-          <span className="text-[9px] opacity-30 group-hover:opacity-70 transition-opacity">&#9432;</span>
+        <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0">
+          {dim.label.split(" ").slice(0, -1).join(" ")}{dim.label.includes(" ") ? " " : ""}
+          <span className="whitespace-nowrap inline">
+            {dim.label.split(" ").slice(-1)[0]}{" "}
+            <span className="text-[9px] opacity-30 group-hover:opacity-70 transition-opacity inline">&#9432;</span>
+          </span>
         </span>
         <div className="flex-1 h-2.5 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
           <div

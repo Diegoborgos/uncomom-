@@ -76,7 +76,12 @@ export default function CityPageTabs({
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
               <div className="flex items-baseline justify-between mb-4">
                 <h2 className="font-serif text-xl font-bold">Family Intelligence Score&trade;</h2>
-                {overview?.fis.isPersonalized && <PersonalBadge label="Personalized" />}
+                <div className="flex items-baseline gap-2">
+                  {overview?.fis.isPersonalized && <PersonalBadge label="Personalized" />}
+                  <Link href="/methodology" className="text-[10px] text-[var(--accent-green)] hover:underline shrink-0">
+                    How this works &rarr;
+                  </Link>
+                </div>
               </div>
               <FISBreakdownV2 />
             </section>
