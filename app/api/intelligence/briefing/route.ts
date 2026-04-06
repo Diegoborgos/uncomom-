@@ -174,7 +174,7 @@ Each item in the array: {"citySlug":"slug","type":"visa|education|cost|safety|ac
           if (firstBracket !== -1 && lastBracket > firstBracket) {
             try {
               items = JSON.parse(raw.slice(firstBracket, lastBracket + 1))
-            } catch (e) {
+            } catch {
               parseError = `All 3 parse attempts failed. Raw (first 300 chars): ${raw.slice(0, 300)}`
             }
           } else {

@@ -153,10 +153,11 @@ export default function CommunityMap({
     })
 
     mapInstanceRef.current = map
+    const markers = markersRef.current
     return () => {
       map.remove()
       mapInstanceRef.current = null
-      markersRef.current.clear()
+      markers.clear()
     }
   }, [familyLocations, handleCityClick])
 
