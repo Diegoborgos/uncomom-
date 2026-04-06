@@ -648,21 +648,6 @@ function EditableLanguagesRow({
   )
 }
 
-function TagRow({ label, tags }: { label: string; tags: string[] }) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider w-16 shrink-0 pt-1.5">{label}</span>
-      <div className="flex flex-wrap gap-1.5">
-        {tags.map((tag) => (
-          <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)]">
-            {tag.charAt(0).toUpperCase() + tag.slice(1)}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function StatCard({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
   return (
     <div className="rounded-xl bg-[var(--surface)] p-3 text-center">
