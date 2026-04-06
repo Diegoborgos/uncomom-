@@ -446,18 +446,18 @@ function EditableTagRow({
   return (
     <div className="flex items-start gap-3 group">
       <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider w-16 shrink-0 pt-1.5">{label}</span>
-      <div className="flex-1 flex flex-wrap gap-1.5">
+      <div className="flex-1 flex flex-wrap items-center gap-1.5">
         {tags.map(tag => (
           <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)]">
             {tag.charAt(0).toUpperCase() + tag.slice(1)}
           </span>
         ))}
+        <button onClick={() => { setSelected(tags); setEditingField(field) }}
+          className="p-1 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--surface)] transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+          title={`Edit ${label.toLowerCase()}`}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        </button>
       </div>
-      <button onClick={() => { setSelected(tags); setEditingField(field) }}
-        className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--surface)] transition-colors opacity-0 group-hover:opacity-100 shrink-0"
-        title={`Edit ${label.toLowerCase()}`}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-      </button>
     </div>
   )
 }
