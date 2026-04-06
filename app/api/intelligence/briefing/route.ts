@@ -155,38 +155,38 @@ Each item in the array: {"citySlug":"slug","type":"visa|education|cost|safety|ac
 
       // Parse response
       let items: BriefingItem[] = []
+      let parseError: string | null = null
+
+      const raw = briefingResponse.trim()
+
+      // Attempt 1: direct parse
       try {
-        const cleaned = briefingResponse.replace(/```json\s*|```/g, "").trim()
-        items = JSON.parse(cleaned)
+        items = JSON.parse(raw)
       } catch {
-        // Try to extract JSON array from the response
-        const arrayMatch = briefingResponse.match(/\[[\s\S]*\]/)
-        if (arrayMatch) {
-          try {
-            items = JSON.parse(arrayMatch[0])
-          } catch {
-            // Last resort: strip everything outside [ ... ]
-            const firstBracket = briefingResponse.indexOf('[')
-            const lastBracket = briefingResponse.lastIndexOf(']')
-            if (firstBracket !== -1 && lastBracket > firstBracket) {
-              try {
-                items = JSON.parse(briefingResponse.slice(firstBracket, lastBracket + 1))
-              } catch {
-                console.error(`[briefing][${family.id}] All parse attempts failed. Raw:`, briefingResponse.slice(0, 500))
-                results[family.id] = { status: "parse_error" }
-                continue
-              }
-            } else {
-              console.error(`[briefing][${family.id}] No JSON array found. Raw:`, briefingResponse.slice(0, 500))
-              results[family.id] = { status: "parse_error" }
-              continue
+        // Attempt 2: strip markdown fences
+        try {
+          const cleaned = raw.replace(/```json\s*|```/g, "").trim()
+          items = JSON.parse(cleaned)
+        } catch {
+          // Attempt 3: extract first [...] from response
+          const firstBracket = raw.indexOf('[')
+          const lastBracket = raw.lastIndexOf(']')
+          if (firstBracket !== -1 && lastBracket > firstBracket) {
+            try {
+              items = JSON.parse(raw.slice(firstBracket, lastBracket + 1))
+            } catch (e) {
+              parseError = `All 3 parse attempts failed. Raw (first 300 chars): ${raw.slice(0, 300)}`
             }
+          } else {
+            parseError = `No JSON array found in response. Raw (first 300 chars): ${raw.slice(0, 300)}`
           }
-        } else {
-          console.error(`[briefing][${family.id}] No JSON array found. Raw:`, briefingResponse.slice(0, 500))
-          results[family.id] = { status: "parse_error" }
-          continue
         }
+      }
+
+      if (parseError || items.length === 0) {
+        console.error(`[briefing][${family.id}] ${parseError || "Empty items array"}`)
+        results[family.id] = { status: "parse_error", error: parseError || "Empty result" }
+        continue
       }
 
       // Group by city
