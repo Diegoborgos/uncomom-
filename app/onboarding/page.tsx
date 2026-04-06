@@ -48,6 +48,7 @@ export default function OnboardingPage() {
   const [cityPickerContinent, setCityPickerContinent] = useState<string | null>(null)
   const [phase, setPhase] = useState<"welcome" | "chat" | "complete">("welcome")
   const [welcomeStep, setWelcomeStep] = useState(0)
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const touchStartX = useRef(0)
@@ -354,6 +355,62 @@ export default function OnboardingPage() {
     })
   }
 
+  // Quick-reply pill detection
+  const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant")?.content.toLowerCase() || ""
+  const pillOptions: { type: "single" | "multi"; items: string[] } | null = (() => {
+    if (sending || showCityPicker || profile.done) return null
+    if (/\b(work|do you do)\b/.test(lastAssistant))
+      return { type: "single", items: ["Remote employee", "Freelancer", "Business owner", "Content creator", "Not working currently"] }
+    if (/\b(learn|education|school)\b/.test(lastAssistant))
+      return { type: "single", items: ["Homeschool", "Worldschool", "International school", "Local school", "Unschool", "Mix of approaches"] }
+    if (/\b(travel|slow|fast)\b/.test(lastAssistant))
+      return { type: "single", items: ["Slow travel", "Medium pace", "Fast movers", "Base + trips", "Seasonal", "Just getting started"] }
+    if (/\b(interest|enjoy|into)\b/.test(lastAssistant))
+      return { type: "multi", items: ["Surf", "Beach", "Nature", "Mountains", "Yoga", "Food & cooking", "Arts & culture", "Co-working", "Entrepreneurship"] }
+    return null
+  })()
+
+  const sendQuickReply = (value: string) => {
+    setInput(value)
+    // Use a microtask so React processes the setInput, then send
+    setTimeout(() => {
+      const syntheticInput = value
+      setInput("")
+      setError("")
+      const newMessages: Message[] = [...messages, { role: "user", content: syntheticInput }]
+      setMessages(newMessages)
+      setSending(true)
+      fetch("/api/onboarding/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages }),
+      }).then((res) => res.json()).then((data) => {
+        if (data.error) {
+          setError(typeof data.error === "string" ? data.error : "Something went wrong.")
+          setSending(false)
+          return
+        }
+        if (data.profile) {
+          setProfile((prev) => {
+            const merged = { ...prev }
+            for (const [key, val] of Object.entries(data.profile)) {
+              if (val && (typeof val === "string" ? val.length > 0 : Array.isArray(val) ? (val as unknown[]).length > 0 : val === true)) {
+                (merged as Record<string, unknown>)[key] = val
+              }
+            }
+            return merged
+          })
+        }
+        setMessages([...newMessages, { role: "assistant", content: data.reply }])
+        setSending(false)
+        if (typeof window !== "undefined" && window.innerWidth >= 768) setTimeout(() => inputRef.current?.focus(), 100)
+      }).catch(() => {
+        setError("Connection error. Try again.")
+        setSending(false)
+      })
+    }, 0)
+  }
+
   if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
   if (!user) return null
 
@@ -550,6 +607,55 @@ export default function OnboardingPage() {
 
       {/* Error */}
       {error && <p className="text-xs text-center text-[var(--score-low)] mb-2">{error}</p>}
+
+      {/* Quick-reply pills */}
+      {pillOptions && (
+        <div className="px-4 pb-2">
+          <div className="flex flex-wrap gap-1.5">
+            {pillOptions.items.map((item) => {
+              if (pillOptions.type === "multi") {
+                const isSelected = selectedInterests.includes(item)
+                return (
+                  <button
+                    key={item}
+                    onClick={() => setSelectedInterests((prev) =>
+                      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+                    )}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      isSelected
+                        ? "border-[var(--accent-green)] bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)]"
+                        : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)]"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              }
+              return (
+                <button
+                  key={item}
+                  onClick={() => sendQuickReply(item)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] transition-colors"
+                >
+                  {item}
+                </button>
+              )
+            })}
+          </div>
+          {pillOptions.type === "multi" && selectedInterests.length > 0 && (
+            <button
+              onClick={() => {
+                const value = selectedInterests.join(", ")
+                setSelectedInterests([])
+                sendQuickReply(value)
+              }}
+              className="mt-2 w-full py-2 rounded-xl bg-[var(--accent-green)] text-black font-semibold text-xs hover:opacity-90 transition-opacity"
+            >
+              Continue with {selectedInterests.length} selected &rarr;
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Input — directly below messages, no gap */}
       <div className="pb-4 pt-2">
