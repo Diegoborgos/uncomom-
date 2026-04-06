@@ -137,20 +137,15 @@ export async function POST(req: NextRequest) {
         {
           role: "system",
           content: `You create personalized weekly city intelligence briefings for traveling families.
-
-Given a family's profile and intelligence data for their watched cities, create a briefing with items that are specifically relevant to THIS family.
-
+Given a family's profile and intelligence data for their watched cities, create briefing items specifically relevant to THIS family.
 Rules:
-- Only include items that matter to this specific family's situation (their passport, their kids' ages, their education approach, their interests, their budget)
-- For passport/visa items: consider their specific passport tier and how it affects their access
-- For education items: match to their education approach (homeschool families care about homeschool laws, not international school fees)
-- For activity items: match to their stated interests
-- For cost items: compare to their stated budget range
-- Write each item as if speaking directly to the family: "Your German passport gives you..." not "German passport holders get..."
+- Only include items that matter to this specific family (their passport, kids ages, education approach, interests, budget)
+- Write each item as if speaking directly to the family
 - Be concise and actionable
+- Generate 3-8 items total
 
-Respond with ONLY a JSON array of items. No markdown, no backticks.
-Each item: {"citySlug": "slug", "type": "visa|education|cost|safety|activity|legal|community|general", "headline": "short headline", "detail": "2-3 sentence explanation specific to this family", "dimension": "dimensionKey or null", "relevance": "high|medium|low", "reason": "why this matters to THIS family"}`,
+CRITICAL: Your entire response must be a valid JSON array and nothing else. No markdown, no backticks, no explanation, no preamble. Start with [ and end with ].
+Each item in the array: {"citySlug":"slug","type":"visa|education|cost|safety|activity|legal|community|general","headline":"short headline","detail":"2-3 sentence explanation","dimension":"dimensionKey or null","relevance":"high|medium|low","reason":"why this matters to this family"}`,
         },
         {
           role: "user",
@@ -170,12 +165,25 @@ Each item: {"citySlug": "slug", "type": "visa|education|cost|safety|activity|leg
           try {
             items = JSON.parse(arrayMatch[0])
           } catch {
-            console.error(`[briefing][${family.id}] Parse failed. Raw response:`, briefingResponse.slice(0, 500))
-            results[family.id] = { status: "parse_error" }
-            continue
+            // Last resort: strip everything outside [ ... ]
+            const firstBracket = briefingResponse.indexOf('[')
+            const lastBracket = briefingResponse.lastIndexOf(']')
+            if (firstBracket !== -1 && lastBracket > firstBracket) {
+              try {
+                items = JSON.parse(briefingResponse.slice(firstBracket, lastBracket + 1))
+              } catch {
+                console.error(`[briefing][${family.id}] All parse attempts failed. Raw:`, briefingResponse.slice(0, 500))
+                results[family.id] = { status: "parse_error" }
+                continue
+              }
+            } else {
+              console.error(`[briefing][${family.id}] No JSON array found. Raw:`, briefingResponse.slice(0, 500))
+              results[family.id] = { status: "parse_error" }
+              continue
+            }
           }
         } else {
-          console.error(`[briefing][${family.id}] No JSON array found. Raw response:`, briefingResponse.slice(0, 500))
+          console.error(`[briefing][${family.id}] No JSON array found. Raw:`, briefingResponse.slice(0, 500))
           results[family.id] = { status: "parse_error" }
           continue
         }
