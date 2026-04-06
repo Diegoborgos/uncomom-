@@ -31,12 +31,7 @@ function CommunityPageInner() {
   const [mobileView, setMobileView] = useState<"list" | "map">("list")
 
   const renderTab = () => {
-    // Nearby is always public
-    if (activeTab === "nearby") {
-      return <NearbyTab selectedCity={selectedCity} />
-    }
-
-    // All other tabs require paid membership
+    // All tabs require paid membership
     if (!isPaid) {
       return (
         <div className="relative">
@@ -58,6 +53,7 @@ function CommunityPageInner() {
               <p className="text-3xl mb-3">🔒</p>
               <h3 className="font-serif text-lg font-bold mb-2">
                 {activeTab === "people" ? "Find families like yours" :
+                 activeTab === "nearby" ? "See families near you" :
                  activeTab === "kids" ? "Match your kids with playmates" :
                  "Join family meetups"}
               </h3>
@@ -89,6 +85,8 @@ function CommunityPageInner() {
     switch (activeTab) {
       case "people":
         return <PeopleTab selectedCity={selectedCity} onCitySelect={setSelectedCity} />
+      case "nearby":
+        return <NearbyTab selectedCity={selectedCity} />
       case "kids":
         return <KidsMatchTab selectedCity={selectedCity} />
       case "meetups":
