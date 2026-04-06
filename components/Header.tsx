@@ -303,6 +303,9 @@ function MobileMenu({
                 Complete your profile
               </Link>
             )}
+            <Link href="/notifications" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--text-secondary)] py-1">
+              Notifications
+            </Link>
             <Link href="/messages" onClick={() => setMobileOpen(false)} className="block text-lg text-[var(--text-secondary)] py-1">
               Messages
             </Link>
