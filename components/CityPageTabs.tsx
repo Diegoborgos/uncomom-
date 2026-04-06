@@ -6,6 +6,7 @@ import { City } from "@/lib/types"
 import CityCard from "./CityCard"
 import { formatEuro } from "@/lib/scores"
 import FISBreakdownV2 from "./FISBreakdownV2"
+import { calculateDefaultFIS } from "@/lib/fis"
 import CityIntelligence from "./CityIntelligence"
 import PlacesGallery from "./PlacesGallery"
 import CityVisas from "./CityVisas"
@@ -17,6 +18,8 @@ import CostPanelGated from "./CostPanelGated"
 import MetaPanelGated from "./MetaPanelGated"
 import { useCityOverview, CityOverviewContext } from "@/lib/use-city-overview"
 import PersonalBadge from "./ui/PersonalBadge"
+import CityWhatsHappening from "./CityWhatsHappening"
+import CityAtAGlance from "./CityAtAGlance"
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -78,6 +81,9 @@ export default function CityPageTabs({
               <FISBreakdownV2 />
             </section>
 
+            {/* What's happening — from intelligence engine */}
+            <CityWhatsHappening citySlug={city.slug} />
+
             {/* About */}
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
               <h2 className="font-serif text-xl font-bold mb-3">About {city.name}</h2>
@@ -100,6 +106,9 @@ export default function CityPageTabs({
                 </div>
               )}
             </section>
+
+            {/* City facts + nearby POIs */}
+            <CityAtAGlance citySlug={city.slug} />
 
             {/* Cost + Meta — consistent card style */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -144,7 +153,7 @@ export default function CityPageTabs({
                           <p className="font-serif font-bold truncate">{c.name}</p>
                           <p className="text-xs text-[var(--text-secondary)]">{formatEuro(c.cost.familyMonthly)}/mo</p>
                         </div>
-                        <span className="text-xs font-mono font-bold text-[var(--accent-green)] shrink-0">{c.scores.family} FIS&trade;</span>
+                        <span className="text-xs font-mono font-bold text-[var(--accent-green)] shrink-0">{calculateDefaultFIS(c).score} FIS&trade;</span>
                       </Link>
                     )
                   })}

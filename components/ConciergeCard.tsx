@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
+import { calculateDefaultFIS } from "@/lib/fis"
 
 type Recommendation = {
   type: "city" | "action" | "match" | "prompt"
@@ -66,6 +67,7 @@ export default function ConciergeCard() {
 
 /** City recommendation — photo hero + scores + cost */
 function CityCard({ rec }: { rec: Recommendation }) {
+  const { family } = useAuth()
   // Extract slug from actionUrl like "/cities/lisbon"
   const slug = rec.actionUrl?.replace("/cities/", "") || ""
   const city = cities.find((c) => c.slug === slug)
@@ -77,6 +79,15 @@ function CityCard({ rec }: { rec: Recommendation }) {
 
   const flag = countryCodeToFlag(city.countryCode)
 
+  // Generate personalized match reasons
+  const matchReasons: string[] = []
+  if (family?.interests?.some((i: string) => city.tags.includes(i))) matchReasons.push("Matches your interests")
+  if (city.cost.familyMonthly <= (family?.real_budget_max || 5000)) matchReasons.push("Within budget")
+  if (city.meta.homeschoolLegal?.toLowerCase().includes("yes") && family?.education_approach?.toLowerCase().includes("homeschool")) matchReasons.push("Homeschool friendly")
+  if (city.scores.childSafety >= 70) matchReasons.push("Family safe")
+  if (city.tags.includes("beach") && family?.interests?.includes("surf")) matchReasons.push("Great surf")
+  const topReasons = matchReasons.slice(0, 3)
+
   return (
     <Link href={`/cities/${slug}`} className="block rounded-xl overflow-hidden border border-[var(--border)] hover:border-[var(--accent-green)] transition-colors">
       {/* Photo hero */}
@@ -87,30 +98,31 @@ function CityCard({ rec }: { rec: Recommendation }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         <div className="absolute bottom-3 left-4 right-4">
-          <p className="text-[10px] text-[var(--accent-green)] font-medium uppercase tracking-wider mb-1">AI Recommendation</p>
+          <p className="text-[10px] text-[var(--accent-green)] font-medium uppercase tracking-wider mb-1">Recommended for you</p>
           <p className="text-base font-serif font-bold text-white">{flag} {city.name}</p>
           <p className="text-[10px] text-white/60">{city.country}</p>
         </div>
       </div>
       {/* Data row + AI description */}
       <div className="bg-[var(--surface)] p-4">
-        {/* Score + cost pills */}
+        {/* Score + cost + match reason pills */}
         <div className="flex gap-2 mb-3 flex-wrap">
           <span className="text-[10px] px-2 py-1 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)] font-mono">
-            FIS {city.scores.family}
+            FIS {calculateDefaultFIS(city).score}
           </span>
           <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] font-mono">
-            ${city.cost.familyMonthly.toLocaleString()}/mo
+            &euro;{city.cost.familyMonthly.toLocaleString()}/mo
           </span>
-          <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] font-mono">
-            Safety {city.scores.childSafety}
-          </span>
-          <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] font-mono">
-            Schools {city.scores.schoolAccess}
-          </span>
+          {topReasons.map(reason => (
+            <span key={reason} className="text-[10px] px-2 py-1 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)]">
+              {reason}
+            </span>
+          ))}
         </div>
-        {/* AI personalized description */}
-        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{rec.description}</p>
+        {/* AI personalized description — truncated to 2 sentences */}
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+          {rec.description.split('. ').slice(0, 2).join('. ')}{rec.description.split('. ').length > 2 ? '.' : ''}
+        </p>
       </div>
     </Link>
   )
@@ -127,7 +139,9 @@ function ActionCard({ rec }: { rec: Recommendation }) {
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{rec.description}</p>
           {rec.actionUrl && (
             <Link href={rec.actionUrl} className="inline-block mt-3 px-4 py-1.5 rounded-lg bg-[var(--accent-green)] text-black text-xs font-medium hover:opacity-90 transition-opacity">
-              Do it →
+              {rec.title.toLowerCase().includes("log") || rec.title.toLowerCase().includes("experience") || rec.title.toLowerCase().includes("review")
+                ? "Share what you learned →"
+                : "Do it →"}
             </Link>
           )}
         </div>

@@ -13,8 +13,12 @@
       "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/city-news-update",
-      "schedule": "0 5 * * *"
+      "path": "/api/intelligence/engine",
+      "schedule": "0 6 * * 1"
+    },
+    {
+      "path": "/api/intelligence/briefing",
+      "schedule": "0 7 * * 1"
     }
   ]
 }

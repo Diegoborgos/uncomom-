@@ -5,6 +5,7 @@ import Link from "next/link"
 import CityHero from "@/components/CityHero"
 import BookmarkButton from "@/components/BookmarkButton"
 import { cityJsonLd } from "@/lib/structured-data"
+import { calculateDefaultFIS } from "@/lib/fis"
 import CityPageTracker from "@/components/CityPageTracker"
 import CityPageTabs from "@/components/CityPageTabs"
 import TrajectoryPanel from "@/components/TrajectoryPanel"
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const city = await getCityBySlug(params.slug)
   if (!city) return { title: "City not found" }
   const title = `${city.name}, ${city.country} — Family Travel Guide | Uncomun`
-  const description = `Family Score ${city.scores.family}/100. ${city.description} Estimated family cost: €${city.cost.familyMonthly}/month for a family of 4.`
+  const description = `FIS ${calculateDefaultFIS(city).score}/100. ${city.description} Estimated family cost: €${city.cost.familyMonthly}/month for a family of 4.`
   return {
     title,
     description,

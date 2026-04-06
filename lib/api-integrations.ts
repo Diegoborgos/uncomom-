@@ -410,7 +410,7 @@ export async function fetchTravelBuddy(
 }
 
 // ============================================================
-// H. OSM OVERPASS — Points of interest counting (no key, free)
+// I. OSM OVERPASS — POI counts (no key, free, rate-limited)
 // ============================================================
 
 export type OverpassResult = {
@@ -426,88 +426,69 @@ export type OverpassResult = {
   sportsCentres: number
 }
 
-export async function fetchOverpass(lat: number, lng: number, radiusMeters: number = 10000): Promise<OverpassResult> {
-  // Single query fetches ALL relevant POI types at once, then we count locally by tag.
-  // 1 API call per city regardless of how many POI types we track.
-  const overpassQL = `[out:json][timeout:30];(
-    node["leisure"="playground"](around:${radiusMeters},${lat},${lng});
-    way["leisure"="park"](around:${radiusMeters},${lat},${lng});
-    relation["leisure"="park"](around:${radiusMeters},${lat},${lng});
-    node["amenity"="school"](around:${radiusMeters},${lat},${lng});
-    way["amenity"="school"](around:${radiusMeters},${lat},${lng});
-    node["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
-    way["amenity"="hospital"](around:${radiusMeters},${lat},${lng});
-    node["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});
-    way["amenity"="coworking_space"](around:${radiusMeters},${lat},${lng});
-    node["office"="coworking"](around:${radiusMeters},${lat},${lng});
-    node["amenity"="library"](around:${radiusMeters},${lat},${lng});
-    way["amenity"="library"](around:${radiusMeters},${lat},${lng});
-    node["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});
-    way["leisure"="swimming_pool"](around:${radiusMeters},${lat},${lng});
-    node["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});
-    way["leisure"="sports_centre"](around:${radiusMeters},${lat},${lng});
-  );out tags;`
-
-  const result: OverpassResult = {
-    playgrounds: 0,
-    parks: 0,
-    schools: 0,
-    internationalSchools: 0,
-    hospitals: 0,
-    pediatricHospitals: 0,
-    coworkingSpaces: 0,
-    libraries: 0,
-    swimmingPools: 0,
-    sportsCentres: 0,
-  }
+export async function fetchOverpass(lat: number, lng: number, radiusKm = 10): Promise<OverpassResult | null> {
+  const r = radiusKm * 1000 // convert to meters
+  // Single batched query — fetch all POI types in one request
+  const query = `[out:json][timeout:15];
+(
+  nwr["leisure"="playground"](around:${r},${lat},${lng});
+  nwr["leisure"="park"](around:${r},${lat},${lng});
+  nwr["amenity"="school"](around:${r},${lat},${lng});
+  nwr["amenity"="hospital"](around:${r},${lat},${lng});
+  nwr["amenity"="coworking_space"](around:${r},${lat},${lng});
+  nwr["amenity"="library"](around:${r},${lat},${lng});
+  nwr["leisure"="swimming_pool"](around:${r},${lat},${lng});
+  nwr["leisure"="sports_centre"](around:${r},${lat},${lng});
+);
+out tags;`
 
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
-      body: `data=${encodeURIComponent(overpassQL)}`,
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: AbortSignal.timeout(20000),
     })
-
-    if (!res.ok) {
-      console.warn(`Overpass: HTTP ${res.status}`)
-      return result
-    }
-
+    if (!res.ok) return null
     const data = await res.json()
-    const elements: Array<{ tags?: Record<string, string> }> = data.elements || []
+
+    const elements = data.elements || []
+    let playgrounds = 0, parks = 0, schools = 0, internationalSchools = 0
+    let hospitals = 0, pediatricHospitals = 0, coworkingSpaces = 0
+    let libraries = 0, swimmingPools = 0, sportsCentres = 0
 
     for (const el of elements) {
       const tags = el.tags || {}
-      const leisure = tags.leisure
-      const amenity = tags.amenity
-      const office = tags.office
-      const name = tags.name || ""
-      const speciality = tags["healthcare:speciality"] || ""
+      const name = (tags.name || "").toLowerCase()
 
-      if (leisure === "playground") result.playgrounds++
-      else if (leisure === "park") result.parks++
-      else if (leisure === "swimming_pool") result.swimmingPools++
-      else if (leisure === "sports_centre") result.sportsCentres++
-      else if (amenity === "school") {
-        result.schools++
-        if (/international/i.test(name)) result.internationalSchools++
+      if (tags.leisure === "playground") playgrounds++
+      else if (tags.leisure === "park") parks++
+      else if (tags.amenity === "school") {
+        schools++
+        if (name.includes("international") || name.includes("intl") || name.includes("british") || name.includes("american")) {
+          internationalSchools++
+        }
       }
-      else if (amenity === "hospital") {
-        result.hospitals++
-        if (/pa?ediatrics/i.test(speciality)) result.pediatricHospitals++
+      else if (tags.amenity === "hospital") {
+        hospitals++
+        if (name.includes("pediatric") || name.includes("paediatric") || name.includes("children") || name.includes("kids")) {
+          pediatricHospitals++
+        }
       }
-      else if (amenity === "coworking_space" || office === "coworking") result.coworkingSpaces++
-      else if (amenity === "library") result.libraries++
+      else if (tags.amenity === "coworking_space") coworkingSpaces++
+      else if (tags.amenity === "library") libraries++
+      else if (tags.leisure === "swimming_pool") swimmingPools++
+      else if (tags.leisure === "sports_centre") sportsCentres++
     }
-  } catch (err) {
-    console.warn("Overpass failed:", err)
-  }
 
-  return result
+    return { playgrounds, parks, schools, internationalSchools, hospitals, pediatricHospitals, coworkingSpaces, libraries, swimmingPools, sportsCentres }
+  } catch {
+    return null
+  }
 }
 
 // ============================================================
-// I. GDELT — Global news monitoring (no key, free, real-time)
+// J. GDELT — News articles (no key, free)
 // ============================================================
 
 export type GdeltArticle = {
@@ -515,42 +496,161 @@ export type GdeltArticle = {
   url: string
   source: string
   publishDate: string
-  language: string
 }
 
 export type GdeltResult = {
   articles: GdeltArticle[]
-  totalResults: number
 }
 
-/**
- * Search GDELT for recent news about a city.
- * Uses the GDELT DOC 2.0 API — free, no key, no rate limit at our volume.
- * Returns up to 20 articles from the last 7 days.
- */
-export async function fetchGdelt(cityName: string, countryName: string): Promise<GdeltResult> {
-  const query = encodeURIComponent(`"${cityName}" "${countryName}"`)
-  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=ArtList&maxrecords=20&timespan=7d&format=json&sort=DateDesc`
+export async function fetchGdelt(cityName: string, country: string): Promise<GdeltResult> {
+  const query = encodeURIComponent(`"${cityName} ${country}"`)
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${query}&mode=ArtList&maxrecords=20&timespan=7d&format=json`
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return { articles: [] }
+    const data = await res.json()
+    return {
+      articles: (data.articles || []).map((a: Record<string, string>) => ({
+        title: a.title || "",
+        url: a.url || "",
+        source: a.domain || a.source || "",
+        publishDate: a.seendate || a.dateadded || "",
+      })),
+    }
+  } catch {
+    return { articles: [] }
+  }
+}
 
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`GDELT: ${res.status}`)
+// ============================================================
+// K. WIKIDATA — Structured city metadata (no key, free)
+// ============================================================
 
-  const data = await res.json()
+export type WikidataResult = {
+  population: number | null
+  elevation: number | null        // meters above sea level
+  area: number | null             // km²
+  hdi: number | null              // Human Development Index (country-level, 0-1)
+  climateClassification: string | null  // Köppen climate classification
+  demonym: string | null          // e.g. "Penangite", "Lisboner"
+  officialWebsite: string | null
+  wikidataId: string | null       // Q-id for reference
+}
 
-  if (!data.articles || !Array.isArray(data.articles)) {
-    return { articles: [], totalResults: 0 }
+export async function fetchWikidata(cityName: string, countryName: string): Promise<WikidataResult> {
+  const result: WikidataResult = {
+    population: null,
+    elevation: null,
+    area: null,
+    hdi: null,
+    climateClassification: null,
+    demonym: null,
+    officialWebsite: null,
+    wikidataId: null,
   }
 
-  const articles: GdeltArticle[] = data.articles.map((a: Record<string, string>) => ({
-    title: a.title || "",
-    url: a.url || "",
-    source: a.domain || a.source || "",
-    publishDate: a.seendate || "",
-    language: a.language || "English",
-  }))
+  try {
+    // Step 1: Find the city's Wikidata Q-id via search
+    const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(cityName + " " + countryName)}&language=en&limit=5&format=json&origin=*`
+    const searchRes = await fetch(searchUrl)
+    if (!searchRes.ok) return result
+    const searchData = await searchRes.json()
 
-  return {
-    articles,
-    totalResults: articles.length,
+    // Find the best match — prefer items with "city" or location-related descriptions
+    const candidates = searchData.search || []
+    const cityItem = candidates.find((c: { description?: string }) => {
+      const desc = (c.description || "").toLowerCase()
+      return desc.includes("city") || desc.includes("capital") || desc.includes("municipality") ||
+             desc.includes("district") || desc.includes("island") || desc.includes("state") ||
+             desc.includes("prefecture") || desc.includes("province")
+    }) || candidates[0]
+
+    if (!cityItem?.id) return result
+    result.wikidataId = cityItem.id
+
+    // Step 2: Fetch properties for the entity
+    const entityUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${cityItem.id}&props=claims&format=json&origin=*`
+    const entityRes = await fetch(entityUrl)
+    if (!entityRes.ok) return result
+    const entityData = await entityRes.json()
+
+    const claims = entityData.entities?.[cityItem.id]?.claims || {}
+
+    // Extract population (most recent value)
+    if (claims.P1082?.length) {
+      const popClaims = claims.P1082
+      const preferred = popClaims.find((c: Record<string, unknown>) => c.rank === "preferred") || popClaims[popClaims.length - 1]
+      const amount = preferred?.mainsnak?.datavalue?.value?.amount
+      if (amount) result.population = parseInt(amount.replace("+", ""))
+    }
+
+    // Extract elevation
+    if (claims.P2044?.length) {
+      const amount = claims.P2044[0]?.mainsnak?.datavalue?.value?.amount
+      if (amount) result.elevation = Math.round(parseFloat(amount.replace("+", "")))
+    }
+
+    // Extract area (km²)
+    if (claims.P2046?.length) {
+      const amount = claims.P2046[0]?.mainsnak?.datavalue?.value?.amount
+      if (amount) result.area = Math.round(parseFloat(amount.replace("+", "")))
+    }
+
+    // Extract Köppen climate
+    if (claims.P2564?.length) {
+      const value = claims.P2564[0]?.mainsnak?.datavalue?.value
+      if (typeof value === "string") {
+        result.climateClassification = value
+      } else if (value?.id) {
+        try {
+          const labelUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${value.id}&props=labels&languages=en&format=json&origin=*`
+          const labelRes = await fetch(labelUrl)
+          const labelData = await labelRes.json()
+          result.climateClassification = labelData.entities?.[value.id]?.labels?.en?.value || null
+        } catch { /* skip */ }
+      }
+    }
+
+    // Extract demonym
+    if (claims.P1549?.length) {
+      const value = claims.P1549[0]?.mainsnak?.datavalue?.value
+      if (value?.text) result.demonym = value.text
+    }
+
+    // Extract official website
+    if (claims.P856?.length) {
+      const value = claims.P856[0]?.mainsnak?.datavalue?.value
+      if (typeof value === "string") result.officialWebsite = value
+    }
+
+    // Step 3: Try to get HDI from the country entity
+    if (!result.hdi) {
+      try {
+        const countrySearchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(countryName)}&language=en&limit=3&format=json&origin=*`
+        const countrySearchRes = await fetch(countrySearchUrl)
+        const countrySearchData = await countrySearchRes.json()
+        const countryItem = (countrySearchData.search || []).find((c: { description?: string }) => {
+          const desc = (c.description || "").toLowerCase()
+          return desc.includes("country") || desc.includes("sovereign") || desc.includes("nation")
+        })
+
+        if (countryItem?.id) {
+          const countryEntityUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${countryItem.id}&props=claims&format=json&origin=*`
+          const countryEntityRes = await fetch(countryEntityUrl)
+          const countryEntityData = await countryEntityRes.json()
+          const countryClaims = countryEntityData.entities?.[countryItem.id]?.claims || {}
+
+          if (countryClaims.P6766?.length) {
+            const amount = countryClaims.P6766[0]?.mainsnak?.datavalue?.value?.amount
+            if (amount) result.hdi = parseFloat(amount.replace("+", ""))
+          }
+        }
+      } catch { /* HDI lookup failed, skip */ }
+    }
+
+  } catch (err) {
+    console.warn(`[Wikidata] Failed for ${cityName}:`, err)
   }
+
+  return result
 }

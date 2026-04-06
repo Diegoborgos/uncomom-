@@ -1,0 +1,132 @@
+"use client"
+
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
+import dynamic from "next/dynamic"
+import PeopleTab from "@/components/community/PeopleTab"
+import NearbyTab from "@/components/community/NearbyTab"
+import KidsMatchTab from "@/components/community/KidsMatchTab"
+import MeetupsTab from "@/components/community/MeetupsTab"
+
+const CommunityMap = dynamic(() => import("@/components/CommunityMap"), { ssr: false })
+
+const TABS = [
+  { id: "people", label: "People", icon: "👥" },
+  { id: "nearby", label: "Nearby", icon: "📍" },
+  { id: "kids", label: "Kids Match", icon: "🧒" },
+  { id: "meetups", label: "Meetups", icon: "🤝" },
+] as const
+
+type TabId = (typeof TABS)[number]["id"]
+
+function CommunityPageInner() {
+  const searchParams = useSearchParams()
+  const { user } = useAuth()
+  const initialTab = (searchParams.get("tab") as TabId) || "people"
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab)
+  const [selectedCity, setSelectedCity] = useState<string | null>(null)
+  const [mobileView, setMobileView] = useState<"list" | "map">("list")
+
+  const availableTabs = user ? TABS : TABS.filter(t => t.id === "nearby")
+
+  // Force logged-out users to "nearby" if they land on a gated tab
+  useEffect(() => {
+    if (!user && activeTab !== "nearby") {
+      setActiveTab("nearby")
+    }
+  }, [user, activeTab])
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case "people":
+        return <PeopleTab selectedCity={selectedCity} onCitySelect={setSelectedCity} />
+      case "nearby":
+        return <NearbyTab selectedCity={selectedCity} />
+      case "kids":
+        return <KidsMatchTab selectedCity={selectedCity} />
+      case "meetups":
+        return <MeetupsTab selectedCity={selectedCity} />
+    }
+  }
+
+  const tabBar = (
+    <div className="flex border-b border-[var(--border)] overflow-x-auto scrollbar-hide shrink-0">
+      {availableTabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id)}
+          className={`shrink-0 px-4 py-3 text-sm transition-colors border-b-2 ${
+            activeTab === tab.id
+              ? "border-[var(--accent-green)] text-[var(--accent-green)]"
+              : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          }`}
+        >
+          {tab.icon} {tab.label}
+        </button>
+      ))}
+    </div>
+  )
+
+  const floatingBtnClass = "fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-sm font-medium shadow-lg hover:border-[var(--accent-green)] transition-colors"
+
+  return (
+    <>
+      {/* Mobile: list/map toggle */}
+      <div className="lg:hidden flex flex-col h-[calc(100vh-64px)]">
+        {tabBar}
+        {mobileView === "list" ? (
+          <>
+            <div className="flex-1 overflow-y-auto">
+              {renderTab()}
+            </div>
+            <button onClick={() => setMobileView("map")} className={floatingBtnClass}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                <line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />
+              </svg>
+              Map
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex-1 relative">
+              <CommunityMap
+                onCitySelect={(slug) => { setSelectedCity(slug); setMobileView("list") }}
+                selectedCity={selectedCity}
+              />
+            </div>
+            <button onClick={() => setMobileView("list")} className={floatingBtnClass}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              List
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Desktop: sidebar + map */}
+      <div className="hidden lg:flex h-[calc(100vh-64px)]">
+        <div className="flex flex-col w-[380px] border-r border-[var(--border)] bg-[var(--bg)] shrink-0">
+          {tabBar}
+          <div className="flex-1 overflow-y-auto">
+            {renderTab()}
+          </div>
+        </div>
+        <div className="flex-1 relative">
+          <CommunityMap onCitySelect={setSelectedCity} selectedCity={selectedCity} />
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default function CommunityPage() {
+  return (
+    <Suspense fallback={<div className="flex h-[calc(100vh-64px)] bg-[var(--bg)]" />}>
+      <CommunityPageInner />
+    </Suspense>
+  )
+}

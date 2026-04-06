@@ -1,4 +1,5 @@
 import { City } from "./types"
+import { calculateDefaultFIS } from "./fis"
 
 /**
  * Generates JSON-LD structured data for LLM and search engine consumption.
@@ -42,7 +43,7 @@ export function cityJsonLd(city: City): object[] {
       ...(city.meta.familiesBeen > 0 ? {
         aggregateRating: {
           "@type": "AggregateRating",
-          ratingValue: (city.scores.family / 20).toFixed(1),
+          ratingValue: (calculateDefaultFIS(city).score / 20).toFixed(1),
           bestRating: "5",
           worstRating: "1",
           ratingCount: city.meta.familiesBeen,
@@ -86,8 +87,8 @@ export function cityJsonLd(city: City): object[] {
           `${city.name}, ${city.country} is rated "${city.meta.visaFriendly}" for visa friendliness on Uncomun. ${city.meta.visaFriendly === "Excellent" ? "Multiple visa options are available for families including digital nomad visas and residency permits." : city.meta.visaFriendly === "Good" ? "Good visa options exist for families. Research digital nomad visa or temporary residency options." : "Visa options may be limited — research carefully before planning a long stay."} Languages spoken: ${city.meta.language.join(", ")}.`
         ),
         faqItem(
-          `What is the Family Score for ${city.name}?`,
-          `${city.name} has a Family Score of ${city.scores.family}/100 on Uncomun, which rates cities specifically for traveling families. This score considers child safety (${city.scores.childSafety}/100), school access (${city.scores.schoolAccess}/100), nature (${city.scores.nature}/100), internet quality (${city.scores.internet}/100), and healthcare (${city.scores.healthcare}/100). ${city.description}`
+          `What is the Family Intelligence Score (FIS) for ${city.name}?`,
+          `${city.name} has a Family Intelligence Score (FIS) of ${calculateDefaultFIS(city).score}/100 on Uncomun, which rates cities specifically for traveling families. This score considers child safety, education access, family cost, healthcare, nature, community, remote work, visa, and lifestyle dimensions. ${city.description}`
         ),
       ],
     },
@@ -111,7 +112,7 @@ export function homepageJsonLd(): object[] {
       "@type": "WebSite",
       name: "Uncomun",
       url: "https://uncomom.vercel.app",
-      description: "City directory for entrepreneurial families who travel and live globally. Family Scores, costs, schools, visas, and community for 45+ cities.",
+      description: "City directory for entrepreneurial families who travel and live globally. FIS scores, costs, schools, visas, and community for 45+ cities.",
       potentialAction: {
         "@type": "SearchAction",
         target: "https://uncomom.vercel.app/?search={search_term_string}",
@@ -123,14 +124,14 @@ export function homepageJsonLd(): object[] {
       "@type": "Organization",
       name: "Uncomun",
       url: "https://uncomom.vercel.app",
-      description: "The city directory for families who live differently. Find your family's next home with Family Scores, cost data, school info, and visa guides.",
+      description: "The city directory for families who live differently. Find your family's next home with FIS scores, cost data, school info, and visa guides.",
       sameAs: [],
     },
     {
       "@context": "https://schema.org",
       "@type": "ItemList",
       name: "Best Cities for Families",
-      description: "Top-rated cities for traveling families ranked by Family Score",
+      description: "Top-rated cities for traveling families ranked by FIS",
       numberOfItems: 45,
       itemListOrder: "https://schema.org/ItemListOrderDescending",
       itemListElement: Array.from({ length: 10 }).map((_, i) => ({

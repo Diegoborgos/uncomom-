@@ -1,4 +1,5 @@
 import { cities } from "@/data/cities"
+import { calculateDefaultFIS } from "@/lib/fis"
 import { notFound } from "next/navigation"
 import { generateAllFilterPages, findFilterPage } from "@/lib/filter-pages"
 import CityCard from "@/components/CityCard"
@@ -29,7 +30,7 @@ export default function FilteredCitiesPage({ params }: { params: { filter: strin
 
   const filtered = cities
     .filter(page.filter)
-    .sort((a, b) => b.scores.family - a.scores.family)
+    .sort((a, b) => calculateDefaultFIS(b).score - calculateDefaultFIS(a).score)
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">

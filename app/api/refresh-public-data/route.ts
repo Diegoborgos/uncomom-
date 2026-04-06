@@ -10,18 +10,10 @@ import {
   fetchOpenWeather,
   fetchOverpass,
   fetchGdelt,
+  fetchWikidata,
 } from "@/lib/api-integrations"
-import { chatCompletion } from "@/lib/llm"
 
-const FAMILY_NEWS_TOPICS = [
-  "school", "education", "children", "family", "safety", "crime",
-  "healthcare", "hospital", "visa", "immigration", "expat",
-  "cost of living", "rent", "housing", "pollution", "air quality",
-  "playground", "park", "transport", "digital nomad", "coworking",
-  "homeschool", "international school", "childcare", "kindergarten",
-]
-
-export const maxDuration = 300 // 5 minutes — Vercel hobby plan max
+export const maxDuration = 300 // 5 minutes — processes cities in batches
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
 
@@ -305,124 +297,117 @@ export async function POST(req: NextRequest) {
       results.push({ source: "OpenWeatherMap", signal: "weather", value: null, error: String(err) })
     }
 
-    // H. OSM Overpass — POI counts (no key, free)
+    // OSM Overpass — POI counts (no key, free)
     try {
-      const osm = await fetchOverpass(city.lat, city.lng, 10000) // 10km radius
+      const osm = await fetchOverpass(city.lat, city.lng)
+      if (osm) {
+        const osmSignals: Record<string, number> = {
+          "nature.playgrounds": osm.playgrounds,
+          "nature.parks": osm.parks,
+          "educationAccess.schoolCount": osm.schools,
+          "educationAccess.internationalSchoolCountOSM": osm.internationalSchools,
+          "healthcare.hospitalCount": osm.hospitals,
+          "remoteWork.coworkingCount": osm.coworkingSpaces,
+          "community.libraryCount": osm.libraries,
+          "nature.swimmingPools": osm.swimmingPools,
+          "nature.sportsCentres": osm.sportsCentres,
+        }
 
-      signalUpdates["nature.playgrounds"] = osm.playgrounds
-      signalUpdates["nature.parks"] = osm.parks
-      signalUpdates["educationAccess.schoolCount"] = osm.schools
-      signalUpdates["educationAccess.internationalSchoolCountOSM"] = osm.internationalSchools
-      signalUpdates["healthcare.hospitalCount"] = osm.hospitals
-      signalUpdates["remoteWork.coworkingCount"] = osm.coworkingSpaces
-      signalUpdates["community.libraryCount"] = osm.libraries
-      signalUpdates["nature.swimmingPools"] = osm.swimmingPools
-      signalUpdates["nature.sportsCentres"] = osm.sportsCentres
+        for (const [signalKey, value] of Object.entries(osmSignals)) {
+          signalUpdates[signalKey] = value
+          results.push({ source: "OSM Overpass", signal: signalKey, value })
 
-      results.push(
-        { source: "OSM Overpass", signal: "nature.playgrounds", value: osm.playgrounds },
-        { source: "OSM Overpass", signal: "nature.parks", value: osm.parks },
-        { source: "OSM Overpass", signal: "educationAccess.schoolCount", value: osm.schools },
-        { source: "OSM Overpass", signal: "educationAccess.internationalSchoolCountOSM", value: osm.internationalSchools },
-        { source: "OSM Overpass", signal: "healthcare.hospitalCount", value: osm.hospitals },
-        { source: "OSM Overpass", signal: "remoteWork.coworkingCount", value: osm.coworkingSpaces },
-        { source: "OSM Overpass", signal: "community.libraryCount", value: osm.libraries },
-      )
-
-      // Upsert each signal to city_data_sources
-      for (const signal of [
-        "nature.playgrounds", "nature.parks", "educationAccess.schoolCount",
-        "educationAccess.internationalSchoolCountOSM", "healthcare.hospitalCount",
-        "remoteWork.coworkingCount", "community.libraryCount",
-        "nature.swimmingPools", "nature.sportsCentres",
-      ]) {
-        const value = signalUpdates[signal]
-        if (value !== undefined) {
           const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
             city_slug: city.slug,
-            signal_key: signal,
+            signal_key: signalKey,
             signal_value: String(value),
             source_name: "OSM Overpass",
-            source_url: `https://www.openstreetmap.org/#map=13/${city.lat}/${city.lng}`,
+            source_url: "https://overpass-api.de",
             source_type: "public_api",
             fetched_at: new Date().toISOString(),
-            valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-            confidence: 75, // OSM coverage varies by city
+            valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            confidence: 75,
           }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
-          if (upsertErr) console.error(`[${city.slug}] Upsert failed for ${signal}:`, upsertErr.message)
+          if (upsertErr) console.error(`[${city.slug}] Upsert failed for ${signalKey}:`, upsertErr.message)
         }
       }
     } catch (err) {
       console.error(`[refresh][${city.slug}] OSM Overpass FAILED:`, String(err))
-      results.push({ source: "OSM Overpass", signal: "poi-counts", value: null, error: String(err) })
+      results.push({ source: "OSM Overpass", signal: "pois", value: null, error: String(err) })
     }
 
-    // I. GDELT + Groq — News monitoring + LLM summary (no key for GDELT, Groq via lib/llm)
+    // GDELT — news articles
     try {
       const gdelt = await fetchGdelt(city.name, city.country)
+      const articleCount = gdelt.articles.length
 
-      if (gdelt.articles.length > 0) {
-        const relevant = gdelt.articles.filter(article => {
-          const titleLower = article.title.toLowerCase()
-          return FAMILY_NEWS_TOPICS.some(topic => titleLower.includes(topic))
-        })
+      results.push({ source: "GDELT", signal: "news.weeklyArticleCount", value: articleCount })
 
-        // Store article count
+      const { error: upsertErr } = await supabase.from("city_data_sources").upsert({
+        city_slug: city.slug,
+        signal_key: "news.weeklyArticleCount",
+        signal_value: String(articleCount),
+        source_name: "GDELT",
+        source_url: "https://api.gdeltproject.org",
+        source_type: "public_api",
+        fetched_at: new Date().toISOString(),
+        valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        confidence: 70,
+      }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+      if (upsertErr) console.error(`[${city.slug}] Upsert failed for news.weeklyArticleCount:`, upsertErr.message)
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] GDELT FAILED:`, String(err))
+      results.push({ source: "GDELT", signal: "news", value: null, error: String(err) })
+    }
+
+    // K. Wikidata — structured city metadata (no key, free)
+    try {
+      const wiki = await fetchWikidata(city.name, city.country)
+
+      if (wiki.population) {
+        results.push({ source: "Wikidata", signal: "meta.population", value: wiki.population })
+      }
+      if (wiki.elevation !== null) {
+        results.push({ source: "Wikidata", signal: "meta.elevation", value: wiki.elevation })
+      }
+      if (wiki.hdi !== null) {
+        results.push({ source: "Wikidata", signal: "meta.hdi", value: wiki.hdi })
+      }
+      if (wiki.climateClassification) {
+        results.push({ source: "Wikidata", signal: "meta.climate", value: wiki.climateClassification })
+      }
+      if (wiki.area) {
+        results.push({ source: "Wikidata", signal: "meta.area", value: wiki.area })
+      }
+
+      // Upsert to city_data_sources
+      const wikiSignals = [
+        { key: "meta.population", value: wiki.population },
+        { key: "meta.elevation", value: wiki.elevation },
+        { key: "meta.hdi", value: wiki.hdi },
+        { key: "meta.climate", value: wiki.climateClassification },
+        { key: "meta.area", value: wiki.area },
+        { key: "meta.demonym", value: wiki.demonym },
+        { key: "meta.officialWebsite", value: wiki.officialWebsite },
+        { key: "meta.wikidataId", value: wiki.wikidataId },
+      ].filter(s => s.value !== null && s.value !== undefined)
+
+      for (const signal of wikiSignals) {
         await supabase.from("city_data_sources").upsert({
           city_slug: city.slug,
-          signal_key: "news.weeklyArticleCount",
-          signal_value: String(gdelt.articles.length),
-          source_name: "GDELT",
-          source_url: "https://www.gdeltproject.org/",
+          signal_key: signal.key,
+          signal_value: String(signal.value),
+          source_name: "Wikidata",
+          source_url: wiki.wikidataId ? `https://www.wikidata.org/wiki/${wiki.wikidataId}` : "https://www.wikidata.org",
           source_type: "public_api",
           fetched_at: new Date().toISOString(),
-          valid_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          confidence: 70,
+          valid_until: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days
+          confidence: 90,
         }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
-
-        results.push({ source: "GDELT", signal: "news.weeklyArticleCount", value: gdelt.articles.length })
-
-        // If we have family-relevant articles, generate LLM summary
-        if (relevant.length > 0) {
-          const articleSummaries = relevant.slice(0, 10).map(a =>
-            `- "${a.title}" (${a.source}, ${a.publishDate})`
-          ).join("\n")
-
-          const summary = await chatCompletion([
-            {
-              role: "system",
-              content: `You are a city intelligence analyst for traveling families. Write a concise 2-3 sentence update about what's happening in ${city.name}, ${city.country} that would matter to a family considering living there. Focus on: safety changes, cost of living, education, healthcare, visa/immigration policy, environment, community. Be factual and specific. No fluff. If nothing is actionable for families, say so in one sentence.`,
-            },
-            {
-              role: "user",
-              content: `Here are this week's relevant news articles about ${city.name}:\n\n${articleSummaries}\n\nWrite the city update.`,
-            },
-          ])
-
-          await supabase.from("city_data_sources").upsert({
-            city_slug: city.slug,
-            signal_key: "news.weeklyUpdate",
-            signal_value: JSON.stringify({
-              summary,
-              articleCount: gdelt.articles.length,
-              relevantCount: relevant.length,
-              topArticles: relevant.slice(0, 5).map(a => ({ title: a.title, url: a.url, source: a.source })),
-              generatedAt: new Date().toISOString(),
-            }),
-            source_name: "GDELT + Groq",
-            source_url: "https://www.gdeltproject.org/",
-            source_type: "public_api",
-            fetched_at: new Date().toISOString(),
-            valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            confidence: 60,
-          }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
-
-          results.push({ source: "GDELT + Groq", signal: "news.weeklyUpdate", value: relevant.length })
-        }
       }
     } catch (err) {
-      console.error(`[refresh][${city.slug}] GDELT/News FAILED:`, String(err))
-      results.push({ source: "GDELT", signal: "news", value: null, error: String(err) })
+      console.error(`[refresh][${city.slug}] Wikidata FAILED:`, String(err))
+      results.push({ source: "Wikidata", signal: "metadata", value: null, error: String(err) })
     }
 
     // Update the city's signals JSONB with new values

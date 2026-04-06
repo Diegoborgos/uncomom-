@@ -299,7 +299,7 @@ function MemberQuote({ quote }: { quote: string }) {
   return (
     <div className="border-l-2 border-[rgb(var(--accent-warm-rgb)/0.4)] pl-3 py-1">
       <p className="text-xs text-[var(--text-secondary)] italic leading-relaxed">&ldquo;{quote}&rdquo;</p>
-      <p className="text-[9px] text-[var(--text-secondary)]/60 mt-1">Researched estimate</p>
+      <p className="text-[9px] text-[var(--text-secondary)] opacity-60 mt-1">Researched estimate</p>
     </div>
   )
 }

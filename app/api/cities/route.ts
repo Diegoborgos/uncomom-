@@ -1,5 +1,6 @@
 import { getAllCities } from "@/lib/cities-db"
 import { NextResponse } from "next/server"
+import { calculateDefaultFIS } from "@/lib/fis"
 
 /**
  * Public API endpoint serving structured city data.
@@ -16,7 +17,8 @@ export async function GET() {
     url: `https://uncomom.vercel.app/cities/${city.slug}`,
     coordinates: city.coords,
     scores: {
-      familyScore: city.scores.family,
+      fis: calculateDefaultFIS(city).score,
+      familyScore: city.scores.family, // legacy, kept for backwards compatibility
       childSafety: city.scores.childSafety,
       schoolAccess: city.scores.schoolAccess,
       nature: city.scores.nature,

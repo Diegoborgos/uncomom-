@@ -79,7 +79,7 @@ export async function extractionCompletion(messages: Message[]): Promise<string>
       model: GROQ_MODEL,
       messages,
       temperature: 0.1,
-      max_tokens: 800,
+      max_tokens: 2000,
     }),
   })
 

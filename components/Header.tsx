@@ -6,11 +6,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
+import NotificationBell from "./NotificationBell"
 
 const NAV_LINKS = [
   { href: "/", label: "Cities" },
   { href: "/map", label: "Map" },
-  { href: "/member-map", label: "Members" },
+  { href: "/community", label: "Community" },
   { href: "/schools", label: "Schools" },
   { href: "/visas", label: "Visa Guide" },
 ]
@@ -107,6 +108,8 @@ export default function Header() {
             ) : user ? (
               /* Logged in */
               <div className="flex items-center gap-3">
+                {/* Notification bell with unread badge */}
+                <NotificationBell />
                 {/* Message icon with unread badge */}
                 <MessageBadge />
                 <div className="relative" ref={dropdownRef}>
