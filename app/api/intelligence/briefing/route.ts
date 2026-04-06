@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { chatCompletion } from "@/lib/llm"
+import { extractionCompletion } from "@/lib/llm"
 import { BriefingItem, CityBriefing } from "@/lib/intelligence-types"
 
 export const maxDuration = 300
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
       }).join("\n\n")
 
       // LLM generates personalized briefing
-      const briefingResponse = await chatCompletion([
+      const briefingResponse = await extractionCompletion([
         {
           role: "system",
           content: `You create personalized weekly city intelligence briefings for traveling families.
