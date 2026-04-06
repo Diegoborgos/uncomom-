@@ -29,6 +29,8 @@ export default function CommunityMap({
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<Map<string, HTMLDivElement>>(new Map())
+  const avatarMarkersRef = useRef<HTMLDivElement[]>([])
+  const countDotsWithAvatarsRef = useRef<{ el: HTMLDivElement; hasAvatarAlternative: boolean }[]>([])
   const [familyLocations, setFamilyLocations] = useState<FamilyLocation[]>([])
   const [totalFamilies, setTotalFamilies] = useState(0)
   const [totalCities, setTotalCities] = useState(0)
@@ -113,10 +115,22 @@ export default function CommunityMap({
       byCitySlug[fl.city_slug].push(fl)
     })
 
+    const avatarOffsets = [
+      [0, 0],
+      [-0.02, 0.01],
+      [0.02, 0.01],
+      [-0.03, -0.01],
+      [0.03, -0.01],
+      [0, 0.02],
+    ]
+    const avatarEls: HTMLDivElement[] = []
+    const countDotsWithAvatars: { el: HTMLDivElement; hasAvatarAlternative: boolean }[] = []
+
     cities.forEach((city) => {
       const famsHere = byCitySlug[city.slug] || []
       const count = famsHere.length
       const hasMembers = count > 0
+      const showAvatars = count >= 1 && count <= 3
 
       const el = document.createElement("div")
       const size = hasMembers ? Math.min(20 + count * 6, 48) : 8
@@ -145,11 +159,96 @@ export default function CommunityMap({
         el.style.opacity = "0.5"
       }
 
+      if (showAvatars) {
+        countDotsWithAvatars.push({ el, hasAvatarAlternative: true })
+      }
+
       markersRef.current.set(city.slug, el)
 
       new mapboxgl.Marker({ element: el })
         .setLngLat([city.coords.lng, city.coords.lat])
         .addTo(map)
+
+      // Create avatar markers for cities with 1-3 families
+      if (showAvatars) {
+        famsHere.forEach((family, familyIndex) => {
+          const lngOffset = avatarOffsets[familyIndex]?.[0] || 0
+          const latOffset = avatarOffsets[familyIndex]?.[1] || 0
+
+          let markerEl: HTMLDivElement
+
+          if (family.avatar_url) {
+            const avatarEl = document.createElement("div")
+            avatarEl.style.width = "44px"
+            avatarEl.style.height = "44px"
+            avatarEl.style.borderRadius = "50%"
+            avatarEl.style.border = "2px solid #EBFF00"
+            avatarEl.style.boxShadow = "0 2px 8px rgba(0,0,0,0.5)"
+            avatarEl.style.cursor = "pointer"
+            avatarEl.style.overflow = "hidden"
+            avatarEl.style.transition = "transform 0.2s ease"
+
+            const img = document.createElement("img")
+            img.src = family.avatar_url
+            img.alt = family.family_name
+            img.style.width = "100%"
+            img.style.height = "100%"
+            img.style.objectFit = "cover"
+            avatarEl.appendChild(img)
+
+            avatarEl.addEventListener("mouseenter", () => { avatarEl.style.transform = "scale(1.15)" })
+            avatarEl.addEventListener("mouseleave", () => { avatarEl.style.transform = "scale(1)" })
+
+            markerEl = avatarEl
+          } else {
+            const initialsEl = document.createElement("div")
+            initialsEl.style.width = "44px"
+            initialsEl.style.height = "44px"
+            initialsEl.style.borderRadius = "50%"
+            initialsEl.style.border = "2px solid #EBFF00"
+            initialsEl.style.backgroundColor = "#EBFF00"
+            initialsEl.style.color = "#000"
+            initialsEl.style.display = "flex"
+            initialsEl.style.alignItems = "center"
+            initialsEl.style.justifyContent = "center"
+            initialsEl.style.fontSize = "14px"
+            initialsEl.style.fontWeight = "700"
+            initialsEl.style.cursor = "pointer"
+            initialsEl.style.transition = "transform 0.2s ease"
+            initialsEl.textContent = family.family_name.slice(0, 2).toUpperCase()
+
+            initialsEl.addEventListener("mouseenter", () => { initialsEl.style.transform = "scale(1.15)" })
+            initialsEl.addEventListener("mouseleave", () => { initialsEl.style.transform = "scale(1)" })
+
+            markerEl = initialsEl
+          }
+
+          // Initially hidden (default zoom < 6)
+          markerEl.style.display = "none"
+          markerEl.addEventListener("click", () => handleCityClick(city.slug))
+          avatarEls.push(markerEl)
+
+          new mapboxgl.Marker({ element: markerEl })
+            .setLngLat([city.coords.lng + lngOffset, city.coords.lat + latOffset])
+            .addTo(map)
+        })
+      }
+    })
+
+    avatarMarkersRef.current = avatarEls
+    countDotsWithAvatarsRef.current = countDotsWithAvatars
+
+    // Toggle avatar vs count dot based on zoom level
+    map.on("zoom", () => {
+      const zoom = map.getZoom()
+      avatarMarkersRef.current.forEach(el => {
+        el.style.display = zoom >= 6 ? "block" : "none"
+      })
+      countDotsWithAvatarsRef.current.forEach(({ el, hasAvatarAlternative }) => {
+        if (hasAvatarAlternative) {
+          el.style.display = zoom >= 6 ? "none" : "flex"
+        }
+      })
     })
 
     mapInstanceRef.current = map
@@ -158,6 +257,8 @@ export default function CommunityMap({
       map.remove()
       mapInstanceRef.current = null
       markers.clear()
+      avatarMarkersRef.current = []
+      countDotsWithAvatarsRef.current = []
     }
   }, [familyLocations, handleCityClick])
 
