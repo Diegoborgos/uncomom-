@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
-import { PaywallBlur, PaywallGate } from "@/components/Paywall"
+import { PaywallGate } from "@/components/Paywall"
 
 type Meetup = {
   id: string
@@ -104,21 +104,23 @@ export default function MeetupsTab({ selectedCity }: { selectedCity: string | nu
 
   if (!isPaid) {
     return (
-      <div className="p-4">
-        <PaywallBlur>
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 space-y-2">
-                <div className="h-4 w-40 bg-[var(--surface-elevated)] rounded" />
-                <div className="h-3 w-28 bg-[var(--surface-elevated)] rounded" />
-                <div className="h-3 w-52 bg-[var(--surface-elevated)] rounded" />
-              </div>
-            ))}
+      <div className="p-4 space-y-3">
+        <p className="text-xs text-[var(--text-secondary)]">{filtered.length} upcoming meetups</p>
+        {filtered.slice(0, 3).map((meetup) => (
+          <div key={meetup.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+            <h3 className="font-medium text-sm mb-1">{meetup.title}</h3>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
+              <span>{getCityName(meetup.city_slug)}</span>
+              <span>
+                {new Date(meetup.event_date).toLocaleDateString("en-US", {
+                  weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+                })}
+              </span>
+              <span>👶 {meetup.age_groups}</span>
+            </div>
           </div>
-        </PaywallBlur>
-        <div className="mt-4">
-          <PaywallGate feature="Meetups are for members" />
-        </div>
+        ))}
+        <PaywallGate feature="See all meetups and RSVP" />
       </div>
     )
   }

@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
-import { PaywallBlur, PaywallGate } from "@/components/Paywall"
+import { PaywallGate } from "@/components/Paywall"
 import FamilyCard from "./FamilyCard"
 
 type FamilyWithTrip = {
@@ -81,23 +81,25 @@ export default function KidsMatchTab({ selectedCity }: { selectedCity: string | 
 
   if (!isPaid) {
     return (
-      <div className="p-4">
-        <PaywallBlur>
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface)]">
-                <div className="w-10 h-10 rounded-full bg-[var(--surface-elevated)]" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3.5 w-28 bg-[var(--surface-elevated)] rounded" />
-                  <div className="h-3 w-40 bg-[var(--surface-elevated)] rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </PaywallBlur>
-        <div className="mt-4">
-          <PaywallGate feature="Kids Peer Finder is for members" />
-        </div>
+      <div className="p-4 space-y-3">
+        <p className="text-xs text-[var(--text-secondary)]">
+          {filtered.length} {filtered.length === 1 ? "family" : "families"} with kids
+        </p>
+        {filtered.slice(0, 3).map((fam, i) => {
+          const city = cities.find((c) => c.slug === fam.city_slug)
+          return (
+            <FamilyCard
+              key={fam.id || i}
+              family={{
+                family_name: fam.family_name,
+                country_code: fam.country_code,
+                kids_ages: fam.kids_ages,
+                cityName: city?.name,
+              }}
+            />
+          )
+        })}
+        <PaywallGate feature="See all kids matches and connect" />
       </div>
     )
   }

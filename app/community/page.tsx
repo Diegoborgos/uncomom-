@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import dynamic from "next/dynamic"
 import PeopleTab from "@/components/community/PeopleTab"
 import NearbyTab from "@/components/community/NearbyTab"
@@ -21,10 +22,20 @@ type TabId = (typeof TABS)[number]["id"]
 
 function CommunityPageInner() {
   const searchParams = useSearchParams()
+  const { user } = useAuth()
   const initialTab = (searchParams.get("tab") as TabId) || "people"
   const [activeTab, setActiveTab] = useState<TabId>(initialTab)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<"list" | "map">("list")
+
+  const availableTabs = user ? TABS : TABS.filter(t => t.id === "nearby")
+
+  // Force logged-out users to "nearby" if they land on a gated tab
+  useEffect(() => {
+    if (!user && activeTab !== "nearby") {
+      setActiveTab("nearby")
+    }
+  }, [user, activeTab])
 
   const renderTab = () => {
     switch (activeTab) {
@@ -41,7 +52,7 @@ function CommunityPageInner() {
 
   const tabBar = (
     <div className="flex border-b border-[var(--border)] overflow-x-auto scrollbar-hide shrink-0">
-      {TABS.map((tab) => (
+      {availableTabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
