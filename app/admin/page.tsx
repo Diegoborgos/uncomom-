@@ -308,7 +308,7 @@ export default function AdminPage() {
               const statuses = (Object.values(data.results || {}) as Record<string, string>[]).map(r => r.status)
               const statusCounts = statuses.reduce((acc: Record<string, number>, s: string) => { acc[s] = (acc[s] || 0) + 1; return acc }, {})
               const statusStr = Object.entries(statusCounts).map(([k, v]) => `${v} ${k}`).join(', ')
-              const errorDetails = Object.values(data.results || {}).filter((r: Record<string, string>) => r.error).map((r: Record<string, string>) => r.error).join(' | ')
+              const errorDetails = (Object.values(data.results || {}) as Record<string, string>[]).filter(r => r.error).map(r => r.error).join(' | ')
               setStatus(`Found ${data.families || 0} families: ${statusStr || 'none processed'}${errorDetails ? ' — ' + errorDetails.slice(0, 200) : ''}`)
             }}
           />
