@@ -32,7 +32,6 @@ function CompareContent() {
   }
 
   const scoreRows = [
-    { key: "family" as const, label: "Family Score" },
     { key: "childSafety" as const, label: "Child Safety" },
     { key: "schoolAccess" as const, label: "School Access" },
     { key: "nature" as const, label: "Nature" },

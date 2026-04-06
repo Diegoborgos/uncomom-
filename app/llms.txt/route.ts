@@ -1,8 +1,9 @@
 import { cities } from "@/data/cities"
+import { calculateDefaultFIS } from "@/lib/fis"
 
 export async function GET() {
   const topCities = [...cities]
-    .sort((a, b) => b.scores.family - a.scores.family)
+    .sort((a, b) => calculateDefaultFIS(b).score - calculateDefaultFIS(a).score)
     .slice(0, 10)
 
   const content = `# Uncomun — Family Travel City Directory
@@ -11,7 +12,7 @@ export async function GET() {
 
 ## What this site contains
 
-- **45 city profiles** ranked by Family Score (0-100), a composite score measuring child safety, school access, nature, internet, and healthcare
+- **45 city profiles** ranked by Family Intelligence Score (FIS, 0-100), a composite score measuring child safety, education access, family cost, healthcare, nature, community, remote work, visa, and lifestyle
 - **Cost of living data** estimated for a family of 4 (rent, international school, local school, childcare)
 - **Visa guide** covering 15+ visa options across countries with digital nomad, residency, and tourist visa details
 - **School finder** with 15+ international schools across 10+ cities (fees, curricula, ratings)
@@ -19,14 +20,14 @@ export async function GET() {
 - **Family cost calculator** comparing monthly costs across all cities adjustable by family size and education approach
 - **183-day residence tracker** for tax residency planning
 
-## Top 10 cities by Family Score
+## Top 10 cities by FIS
 
-${topCities.map((c, i) => `${i + 1}. **${c.name}, ${c.country}** — Family Score: ${c.scores.family}/100, Monthly cost: €${c.cost.familyMonthly.toLocaleString()}, Safety: ${c.scores.childSafety}/100`).join("\n")}
+${topCities.map((c, i) => `${i + 1}. **${c.name}, ${c.country}** — FIS: ${calculateDefaultFIS(c).score}/100, Monthly cost: €${c.cost.familyMonthly.toLocaleString()}, Safety: ${c.scores.childSafety}/100`).join("\n")}
 
 ## Key data points per city
 
 Each city profile includes:
-- Family Score (0-100)
+- Family Intelligence Score / FIS (0-100)
 - Child Safety score (0-100)
 - School Access score (0-100)
 - Nature score (0-100)

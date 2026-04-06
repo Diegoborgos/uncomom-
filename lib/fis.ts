@@ -230,13 +230,28 @@ function normaliseWeights(weights: FISWeights): FISWeights {
 // Calculate default FIS (for anonymous users)
 // ============================================================
 
-export function calculateDefaultFIS(city: City): FISResult {
+export function calculateDefaultFIS(
+  city: City,
+  modifiers?: Partial<Record<FISDimensionKey, number>> | null
+): FISResult {
   if (!city.signals) {
     // Fallback: use legacy scores to generate a basic FIS
     return calculateFISFromLegacy(city)
   }
 
-  const dimensionScores = calculateDimensionScores(city.signals)
+  const rawScores = calculateDimensionScores(city.signals)
+
+  // Apply intelligence engine modifiers (dynamic adjustments from news, data changes, family reports)
+  const dimensionScores = { ...rawScores }
+  if (modifiers) {
+    for (const [key, mod] of Object.entries(modifiers)) {
+      const dimKey = key as FISDimensionKey
+      if (dimensionScores[dimKey] !== undefined && typeof mod === "number") {
+        dimensionScores[dimKey] = Math.min(100, Math.max(0, dimensionScores[dimKey] + mod))
+      }
+    }
+  }
+
   const weights = DEFAULT_WEIGHTS
 
   const score = Math.round(
@@ -319,9 +334,10 @@ type FamilyIntelligence = {
 export function calculatePersonalFIS(
   city: City,
   family: Family,
-  intelligence?: FamilyIntelligence | null
+  intelligence?: FamilyIntelligence | null,
+  modifiers?: Partial<Record<FISDimensionKey, number>> | null
 ): PersonalFISResult {
-  const base = calculateDefaultFIS(city)
+  const base = calculateDefaultFIS(city, modifiers)
   const weights = { ...base.weights }
   const adjustedFor: string[] = []
 

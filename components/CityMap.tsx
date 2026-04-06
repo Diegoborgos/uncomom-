@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import mapboxgl from "mapbox-gl"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { City } from "@/lib/types"
+import { calculateDefaultFIS } from "@/lib/fis"
 import { getScoreColor, countryCodeToFlag, formatEuro } from "@/lib/scores"
 import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG, MAP_HIDE_BRANDING } from "@/lib/map-config"
 
@@ -32,7 +33,8 @@ export default function CityMap({ cities }: { cities: City[] }) {
     })
 
     cities.forEach((city) => {
-      const color = getScoreColor(city.scores.family)
+      const fisScore = calculateDefaultFIS(city).score
+      const color = getScoreColor(fisScore)
       const flag = countryCodeToFlag(city.countryCode)
 
       const el = document.createElement("div")
@@ -48,7 +50,7 @@ export default function CityMap({ cities }: { cities: City[] }) {
       el.style.fontWeight = "bold"
       el.style.fontFamily = "monospace"
       el.style.cursor = "pointer"
-      el.textContent = String(city.scores.family)
+      el.textContent = String(fisScore)
 
       const popup = new mapboxgl.Popup({ offset: 20, closeButton: true, maxWidth: "280px" })
         .setHTML(`
@@ -59,7 +61,7 @@ export default function CityMap({ cities }: { cities: City[] }) {
             <div style="font-size:12px;color:#A1A1AA;margin-bottom:10px;">${city.country} · ${city.continent}</div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
               <span style="background:#EBFF00;color:#000;padding:3px 10px;border-radius:20px;font-size:11px;font-family:monospace;font-weight:700;">
-                ${city.scores.family} FIS™
+                ${fisScore} FIS™
               </span>
               <span style="font-size:12px;color:#fff;font-family:monospace;">${formatEuro(city.cost.familyMonthly)}/mo</span>
             </div>

@@ -243,6 +243,74 @@ export default function AdminPage() {
               setStatus(`Done: ${data.processed} cities — ${data.succeeded} succeeded, ${data.failed} failed`)
             }}
           />
+          <AdminAction
+            label="Run intelligence engine"
+            onClick={async (setStatus) => {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session) throw new Error("Not logged in — refresh the page")
+
+              const { data: cityList, error: citiesErr } = await supabase
+                .from("cities")
+                .select("slug, name")
+                .order("name")
+              if (citiesErr || !cityList?.length) throw new Error("Could not load cities")
+
+              let succeeded = 0
+              let failed = 0
+              const errors: string[] = []
+
+              for (let i = 0; i < cityList.length; i++) {
+                const city = cityList[i]
+                setStatus(`Processing ${i + 1}/${cityList.length}: ${city.name}...`)
+                try {
+                  const res = await fetch("/api/intelligence/engine", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({ citySlug: city.slug }),
+                  })
+                  if (!res.ok) {
+                    failed++
+                    errors.push(city.name)
+                  } else {
+                    succeeded++
+                  }
+                } catch {
+                  failed++
+                  errors.push(city.name)
+                }
+              }
+
+              const errSuffix = errors.length > 0 ? ` | Failed: ${errors.slice(0, 5).join(", ")}` : ""
+              setStatus(`Done: ${succeeded} cities processed, ${failed} errors${errSuffix}`)
+            }}
+          />
+          <AdminAction
+            label="Generate family briefings"
+            onClick={async (setStatus) => {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session) throw new Error("Not logged in — refresh the page")
+
+              setStatus("Generating briefings for all families...")
+              const res = await fetch("/api/intelligence/briefing", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({}),
+              })
+              const data = await res.json()
+              if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+              console.log('[briefing] Full response:', JSON.stringify(data, null, 2))
+              const statuses = (Object.values(data.results || {}) as Record<string, string>[]).map(r => r.status)
+              const statusCounts = statuses.reduce((acc: Record<string, number>, s: string) => { acc[s] = (acc[s] || 0) + 1; return acc }, {})
+              const statusStr = Object.entries(statusCounts).map(([k, v]) => `${v} ${k}`).join(', ')
+              setStatus(`Found ${data.families || 0} families: ${statusStr || 'none processed'} — check browser console for details`)
+            }}
+          />
         </div>
       </div>
 

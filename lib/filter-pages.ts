@@ -52,9 +52,9 @@ export function generateAllFilterPages(): FilterPage[] {
     pages.push({
       segments: [slug],
       title: `Best Cities for Families in ${name}`,
-      description: `Family-friendly cities in ${name} ranked by Family Score. Costs, schools, safety, and visa info for traveling families.`,
+      description: `Family-friendly cities in ${name} ranked by FIS. Costs, schools, safety, and visa info for traveling families.`,
       heading: `Family Cities in ${name}`,
-      subheading: `${cities.filter((c) => c.continent === name).length} cities ranked by Family Score`,
+      subheading: `${cities.filter((c) => c.continent === name).length} cities ranked by FIS`,
       filter: (c) => c.continent === name,
     })
 
@@ -81,7 +81,7 @@ export function generateAllFilterPages(): FilterPage[] {
     pages.push({
       segments: [tagSlug],
       title: `Best ${tagName} Cities for Families`,
-      description: `${tagName} cities ranked for traveling families. Family Score, costs, schools, safety data.`,
+      description: `${tagName} cities ranked for traveling families. FIS score, costs, schools, safety data.`,
       heading: `${tagName} Cities for Families`,
       subheading: `${cities.filter((c) => c.tags.includes(tagValue)).length} cities`,
       filter: (c) => c.tags.includes(tagValue),
@@ -93,7 +93,7 @@ export function generateAllFilterPages(): FilterPage[] {
     pages.push({
       segments: [slug],
       title: `Family Cities ${label} — Affordable Living Abroad`,
-      description: `Cities where a family of 4 can live for ${label}. Ranked by Family Score with cost breakdowns.`,
+      description: `Cities where a family of 4 can live for ${label}. Ranked by FIS with cost breakdowns.`,
       heading: `Cities ${label}`,
       subheading: `${cities.filter((c) => c.cost.familyMonthly >= min && c.cost.familyMonthly < max).length} cities for families`,
       filter: (c) => c.cost.familyMonthly >= min && c.cost.familyMonthly < max,

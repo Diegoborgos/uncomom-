@@ -120,12 +120,13 @@ export async function buildCityOverviewData(
     report_count?: number
   }>,
   fieldReportCount: number,
+  dimensionModifiers?: Partial<Record<FISDimensionKey, number>> | null,
 ): Promise<CityOverviewData> {
 
   // --- FIS ---
-  const defaultFIS = calculateDefaultFIS(city)
+  const defaultFIS = calculateDefaultFIS(city, dimensionModifiers)
   const fis: FISResult | PersonalFISResult = family && isPaid
-    ? calculatePersonalFIS(city, family)
+    ? calculatePersonalFIS(city, family, null, dimensionModifiers)
     : defaultFIS
 
   const isPersonalFIS = "adjustedFor" in fis

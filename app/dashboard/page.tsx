@@ -11,6 +11,7 @@ import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
 import { openJoinOverlay } from "@/components/JoinOverlay"
 import ConciergeCard from "@/components/ConciergeCard"
+import DashboardBriefing from "@/components/DashboardBriefing"
 import FamilyMatches from "@/components/FamilyMatches"
 import FamilyMatch from "@/components/FamilyMatch"
 
@@ -187,6 +188,11 @@ export default function DashboardPage() {
               </Link>
             )}
           </div>
+        )}
+
+        {/* Intelligence Briefing */}
+        {isPaid && family && (
+          <DashboardBriefing familyId={family.id} />
         )}
 
         {/* AI Concierge — personalized recommendations */}
