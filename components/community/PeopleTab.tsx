@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 import { Family } from "@/lib/database.types"
 import { cities } from "@/data/cities"
-import { PaywallBlur, PaywallGate } from "@/components/Paywall"
+import { PaywallGate } from "@/components/Paywall"
 import FamilyCard from "./FamilyCard"
 
 const TRAVEL_STYLES = [
@@ -77,23 +77,19 @@ export default function PeopleTab({
 
   if (!isPaid) {
     return (
-      <div className="p-4">
-        <PaywallBlur>
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface)]">
-                <div className="w-10 h-10 rounded-full bg-[var(--surface-elevated)]" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3.5 w-28 bg-[var(--surface-elevated)] rounded" />
-                  <div className="h-3 w-40 bg-[var(--surface-elevated)] rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </PaywallBlur>
-        <div className="mt-4">
-          <PaywallGate feature="Family Finder is for members" />
-        </div>
+      <div className="p-4 space-y-3">
+        <p className="text-xs text-[var(--text-secondary)]">{filtered.length} families</p>
+        {filtered.slice(0, 3).map((fam) => (
+          <FamilyCard
+            key={fam.id}
+            family={{
+              family_name: fam.family_name,
+              country_code: fam.country_code || "",
+              kids_ages: fam.kids_ages || [],
+            }}
+          />
+        ))}
+        <PaywallGate feature="See all families and connect" />
       </div>
     )
   }
