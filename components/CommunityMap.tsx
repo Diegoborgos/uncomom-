@@ -29,8 +29,8 @@ export default function CommunityMap({
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<Map<string, HTMLDivElement>>(new Map())
-  const avatarMarkersRef = useRef<HTMLDivElement[]>([])
-  const countDotsWithAvatarsRef = useRef<{ el: HTMLDivElement; hasAvatarAlternative: boolean }[]>([])
+  const cityMarkersRef = useRef<Array<{ el: HTMLDivElement; families: FamilyLocation[]; slug: string }>>([])
+  const individualMarkersRef = useRef<Array<{ el: HTMLDivElement; marker: mapboxgl.Marker; familySlug: string }>>([])
   const [familyLocations, setFamilyLocations] = useState<FamilyLocation[]>([])
   const [totalFamilies, setTotalFamilies] = useState(0)
   const [totalCities, setTotalCities] = useState(0)
@@ -115,141 +115,235 @@ export default function CommunityMap({
       byCitySlug[fl.city_slug].push(fl)
     })
 
-    const avatarOffsets = [
-      [0, 0],
-      [-0.02, 0.01],
-      [0.02, 0.01],
-      [-0.03, -0.01],
-      [0.03, -0.01],
-      [0, 0.02],
-    ]
-    const avatarEls: HTMLDivElement[] = []
-    const countDotsWithAvatars: { el: HTMLDivElement; hasAvatarAlternative: boolean }[] = []
+    // Update a city marker's DOM based on current zoom tier
+    function updateMarkerForZoom(el: HTMLDivElement, families: FamilyLocation[], zoom: number) {
+      const count = families.length
+      el.innerHTML = ""
 
-    cities.forEach((city) => {
-      const famsHere = byCitySlug[city.slug] || []
-      const count = famsHere.length
-      const hasMembers = count > 0
-      const showAvatars = count >= 1 && count <= 3
-
-      const el = document.createElement("div")
-      const size = hasMembers ? Math.min(20 + count * 6, 48) : 8
-
-      el.style.width = `${size}px`
-      el.style.height = `${size}px`
-      el.style.borderRadius = "50%"
-      el.dataset.hasMembers = String(hasMembers)
-
-      if (hasMembers) {
+      if (zoom < 3) {
+        // COUNT DOT MODE
+        const size = Math.min(20 + count * 4, 44)
+        el.style.width = `${size}px`
+        el.style.height = `${size}px`
+        el.style.borderRadius = "50%"
         el.style.backgroundColor = "#EBFF00"
         el.style.display = "flex"
         el.style.alignItems = "center"
         el.style.justifyContent = "center"
         el.style.color = "#000"
-        el.style.fontSize = count > 9 ? "12px" : "13px"
+        el.style.fontSize = count > 9 ? "11px" : "12px"
         el.style.fontWeight = "700"
         el.style.fontFamily = "monospace"
-        el.style.boxShadow = "0 0 12px rgba(235,255,0,0.4)"
-        el.style.cursor = "pointer"
+        el.style.border = "none"
+        el.style.boxShadow = "0 0 8px rgba(235,255,0,0.3)"
+        el.style.overflow = ""
+        el.style.position = ""
         el.textContent = String(count)
-        el.style.transition = "box-shadow 0.3s ease"
+      } else if (zoom <= 5) {
+        // MIXED MODE — avatar for 1-3 families, count dot for 4+
+        if (count <= 3 && families[0]) {
+          // Show first family's avatar
+          el.style.width = "48px"
+          el.style.height = "48px"
+          el.style.borderRadius = "50%"
+          el.style.border = "2.5px solid #EBFF00"
+          el.style.overflow = "hidden"
+          el.style.backgroundColor = "#1A1A1A"
+          el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.5)"
+          el.style.position = "relative"
+          el.style.fontFamily = ""
+
+          if (families[0].avatar_url) {
+            el.style.display = "block"
+            const img = document.createElement("img")
+            img.src = families[0].avatar_url
+            img.style.width = "100%"
+            img.style.height = "100%"
+            img.style.objectFit = "cover"
+            el.appendChild(img)
+          } else {
+            el.style.display = "flex"
+            el.style.alignItems = "center"
+            el.style.justifyContent = "center"
+            el.style.color = "#000"
+            el.style.backgroundColor = "#EBFF00"
+            el.style.fontSize = "14px"
+            el.style.fontWeight = "700"
+            el.textContent = families[0].family_name.slice(0, 2).toUpperCase()
+          }
+
+          // Count badge for 2-3 families
+          if (count > 1) {
+            const badge = document.createElement("div")
+            badge.style.position = "absolute"
+            badge.style.bottom = "-2px"
+            badge.style.right = "-2px"
+            badge.style.width = "18px"
+            badge.style.height = "18px"
+            badge.style.borderRadius = "50%"
+            badge.style.backgroundColor = "#EBFF00"
+            badge.style.color = "#000"
+            badge.style.fontSize = "10px"
+            badge.style.fontWeight = "700"
+            badge.style.display = "flex"
+            badge.style.alignItems = "center"
+            badge.style.justifyContent = "center"
+            badge.style.border = "2px solid #000"
+            badge.textContent = String(count)
+            el.appendChild(badge)
+          }
+        } else {
+          // 4+ families: count dot
+          const size = Math.min(20 + count * 4, 44)
+          el.style.width = `${size}px`
+          el.style.height = `${size}px`
+          el.style.borderRadius = "50%"
+          el.style.backgroundColor = "#EBFF00"
+          el.style.display = "flex"
+          el.style.alignItems = "center"
+          el.style.justifyContent = "center"
+          el.style.color = "#000"
+          el.style.fontSize = count > 9 ? "11px" : "12px"
+          el.style.fontWeight = "700"
+          el.style.fontFamily = "monospace"
+          el.style.border = "none"
+          el.style.boxShadow = "0 0 8px rgba(235,255,0,0.3)"
+          el.style.overflow = ""
+          el.style.position = ""
+          el.textContent = String(count)
+        }
+      }
+    }
+
+    const cityMarkers: Array<{ el: HTMLDivElement; families: FamilyLocation[]; slug: string }> = []
+
+    // Create city-level markers
+    cities.forEach((city) => {
+      const famsHere = byCitySlug[city.slug] || []
+      const count = famsHere.length
+      const hasMembers = count > 0
+
+      const el = document.createElement("div")
+      el.style.borderRadius = "50%"
+      el.style.cursor = hasMembers ? "pointer" : "default"
+      el.style.transition = "box-shadow 0.3s ease"
+      el.dataset.hasMembers = String(hasMembers)
+
+      if (hasMembers) {
         el.addEventListener("click", () => handleCityClick(city.slug))
+        // Initial render at current zoom
+        updateMarkerForZoom(el, famsHere, map.getZoom())
       } else {
+        el.style.width = "8px"
+        el.style.height = "8px"
         el.style.backgroundColor = "#333"
         el.style.opacity = "0.5"
       }
 
-      if (showAvatars) {
-        countDotsWithAvatars.push({ el, hasAvatarAlternative: true })
-      }
-
       markersRef.current.set(city.slug, el)
+      if (hasMembers) {
+        cityMarkers.push({ el, families: famsHere, slug: city.slug })
+      }
 
       new mapboxgl.Marker({ element: el })
         .setLngLat([city.coords.lng, city.coords.lat])
         .addTo(map)
-
-      // Create avatar markers for cities with 1-3 families
-      if (showAvatars) {
-        famsHere.forEach((family, familyIndex) => {
-          const lngOffset = avatarOffsets[familyIndex]?.[0] || 0
-          const latOffset = avatarOffsets[familyIndex]?.[1] || 0
-
-          let markerEl: HTMLDivElement
-
-          if (family.avatar_url) {
-            const avatarEl = document.createElement("div")
-            avatarEl.style.width = "44px"
-            avatarEl.style.height = "44px"
-            avatarEl.style.borderRadius = "50%"
-            avatarEl.style.border = "2px solid #EBFF00"
-            avatarEl.style.boxShadow = "0 2px 8px rgba(0,0,0,0.5)"
-            avatarEl.style.cursor = "pointer"
-            avatarEl.style.overflow = "hidden"
-            avatarEl.style.transition = "transform 0.2s ease"
-
-            const img = document.createElement("img")
-            img.src = family.avatar_url
-            img.alt = family.family_name
-            img.style.width = "100%"
-            img.style.height = "100%"
-            img.style.objectFit = "cover"
-            avatarEl.appendChild(img)
-
-            avatarEl.addEventListener("mouseenter", () => { avatarEl.style.transform = "scale(1.15)" })
-            avatarEl.addEventListener("mouseleave", () => { avatarEl.style.transform = "scale(1)" })
-
-            markerEl = avatarEl
-          } else {
-            const initialsEl = document.createElement("div")
-            initialsEl.style.width = "44px"
-            initialsEl.style.height = "44px"
-            initialsEl.style.borderRadius = "50%"
-            initialsEl.style.border = "2px solid #EBFF00"
-            initialsEl.style.backgroundColor = "#EBFF00"
-            initialsEl.style.color = "#000"
-            initialsEl.style.display = "flex"
-            initialsEl.style.alignItems = "center"
-            initialsEl.style.justifyContent = "center"
-            initialsEl.style.fontSize = "14px"
-            initialsEl.style.fontWeight = "700"
-            initialsEl.style.cursor = "pointer"
-            initialsEl.style.transition = "transform 0.2s ease"
-            initialsEl.textContent = family.family_name.slice(0, 2).toUpperCase()
-
-            initialsEl.addEventListener("mouseenter", () => { initialsEl.style.transform = "scale(1.15)" })
-            initialsEl.addEventListener("mouseleave", () => { initialsEl.style.transform = "scale(1)" })
-
-            markerEl = initialsEl
-          }
-
-          // Initially hidden (default zoom < 6)
-          markerEl.style.display = "none"
-          markerEl.addEventListener("click", () => handleCityClick(city.slug))
-          avatarEls.push(markerEl)
-
-          new mapboxgl.Marker({ element: markerEl })
-            .setLngLat([city.coords.lng + lngOffset, city.coords.lat + latOffset])
-            .addTo(map)
-        })
-      }
     })
 
-    avatarMarkersRef.current = avatarEls
-    countDotsWithAvatarsRef.current = countDotsWithAvatars
+    cityMarkersRef.current = cityMarkers
 
-    // Toggle avatar vs count dot based on zoom level
-    map.on("zoom", () => {
+    // Create individual family markers for zoomed-in view (zoom > 5)
+    const individualOffsets = [
+      [0, 0], [-0.03, 0.015], [0.03, 0.015],
+      [-0.03, -0.015], [0.03, -0.015], [0, 0.03],
+    ]
+
+    familyLocations.forEach((fam) => {
+      const city = cities.find((c) => c.slug === fam.city_slug)
+      if (!city) return
+
+      const sameCity = familyLocations.filter((f) => f.city_slug === fam.city_slug)
+      const cityIndex = sameCity.indexOf(fam)
+      const offset = individualOffsets[cityIndex] || [
+        Math.random() * 0.04 - 0.02,
+        Math.random() * 0.04 - 0.02,
+      ]
+
+      const el = document.createElement("div")
+      el.style.width = "56px"
+      el.style.height = "56px"
+      el.style.borderRadius = "50%"
+      el.style.border = "3px solid #EBFF00"
+      el.style.overflow = "hidden"
+      el.style.backgroundColor = "#1A1A1A"
+      el.style.boxShadow = "0 2px 10px rgba(0,0,0,0.5)"
+      el.style.cursor = "pointer"
+      el.style.display = "none"
+      el.style.transition = "transform 0.2s ease"
+
+      if (fam.avatar_url) {
+        const img = document.createElement("img")
+        img.src = fam.avatar_url
+        img.alt = fam.family_name
+        img.style.width = "100%"
+        img.style.height = "100%"
+        img.style.objectFit = "cover"
+        el.appendChild(img)
+      } else {
+        el.style.alignItems = "center"
+        el.style.justifyContent = "center"
+        el.style.color = "#000"
+        el.style.backgroundColor = "#EBFF00"
+        el.style.fontSize = "16px"
+        el.style.fontWeight = "700"
+        el.dataset.initials = fam.family_name.slice(0, 2).toUpperCase()
+      }
+
+      el.addEventListener("mouseenter", () => { el.style.transform = "scale(1.1)" })
+      el.addEventListener("mouseleave", () => { el.style.transform = "scale(1)" })
+      el.addEventListener("click", () => handleCityClick(fam.city_slug))
+
+      const marker = new mapboxgl.Marker({ element: el })
+        .setLngLat([city.coords.lng + offset[0], city.coords.lat + offset[1]])
+        .addTo(map)
+
+      individualMarkersRef.current.push({ el, marker, familySlug: fam.city_slug })
+    })
+
+    // Zoom handler — toggle between 3 tiers
+    const handleZoom = () => {
       const zoom = map.getZoom()
-      avatarMarkersRef.current.forEach(el => {
-        el.style.display = zoom >= 6 ? "block" : "none"
-      })
-      countDotsWithAvatarsRef.current.forEach(({ el, hasAvatarAlternative }) => {
-        if (hasAvatarAlternative) {
-          el.style.display = zoom >= 6 ? "none" : "flex"
+
+      // Update city-level markers
+      cityMarkersRef.current.forEach(({ el, families }) => {
+        if (zoom > 5) {
+          el.style.display = "none"
+        } else {
+          el.style.display = "flex"
+          updateMarkerForZoom(el, families, zoom)
         }
       })
-    })
+
+      // Toggle individual markers
+      individualMarkersRef.current.forEach(({ el }) => {
+        if (zoom > 5) {
+          if (el.dataset.initials) {
+            el.style.display = "flex"
+            if (!el.textContent) {
+              el.textContent = el.dataset.initials
+            }
+          } else {
+            el.style.display = "block"
+          }
+        } else {
+          el.style.display = "none"
+        }
+      })
+    }
+
+    map.on("zoom", handleZoom)
+    // Set initial state
+    handleZoom()
 
     mapInstanceRef.current = map
     const markers = markersRef.current
@@ -257,8 +351,9 @@ export default function CommunityMap({
       map.remove()
       mapInstanceRef.current = null
       markers.clear()
-      avatarMarkersRef.current = []
-      countDotsWithAvatarsRef.current = []
+      cityMarkersRef.current = []
+      individualMarkersRef.current.forEach(({ marker }) => marker.remove())
+      individualMarkersRef.current = []
     }
   }, [familyLocations, handleCityClick])
 
