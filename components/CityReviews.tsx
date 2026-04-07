@@ -67,6 +67,18 @@ export default function CityReviews({ citySlug }: { citySlug: string }) {
         city_slug: citySlug,
         ...payload,
       })
+
+      // Award review points (non-blocking)
+      try {
+        const { data: { session: awardSession } } = await supabase.auth.getSession()
+        if (awardSession?.access_token) {
+          await fetch("/api/gamification/award", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${awardSession.access_token}` },
+            body: JSON.stringify({ action: "city_review", description: `Reviewed ${citySlug}` }),
+          })
+        }
+      } catch { /* non-blocking */ }
     }
 
     setText("")

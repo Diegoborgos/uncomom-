@@ -296,6 +296,19 @@ export default function OnboardingPage() {
       }
 
       await refreshFamily()
+
+      // Award onboarding points (non-blocking)
+      try {
+        const { data: { session: pointsSession } } = await supabase.auth.getSession()
+        if (pointsSession?.access_token) {
+          await fetch("/api/gamification/award", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${pointsSession.access_token}` },
+            body: JSON.stringify({ action: "complete_onboarding", description: "Completed family profile" }),
+          })
+        }
+      } catch { /* non-blocking */ }
+
       setPhase("complete")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save. Try again.")
