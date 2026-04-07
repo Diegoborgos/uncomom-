@@ -38,6 +38,8 @@ export type Database = {
           companion_last_checkin: string | null
           companion_next_question: string | null
           open_to_introductions: boolean
+          total_points: number | null
+          level: number | null
           created_at: string
           updated_at: string
         }
@@ -77,6 +79,8 @@ export type Database = {
           companion_last_checkin?: string | null
           companion_next_question?: string | null
           open_to_introductions?: boolean
+          total_points?: number | null
+          level?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -114,6 +118,8 @@ export type Database = {
           companion_last_checkin?: string | null
           companion_next_question?: string | null
           open_to_introductions?: boolean
+          total_points?: number | null
+          level?: number | null
           updated_at?: string
         }
       }
