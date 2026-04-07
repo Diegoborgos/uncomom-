@@ -182,7 +182,7 @@ function LockIcon({ color }: { color: string }) {
   )
 }
 
-export default function Badge({ badgeKey, earned, size = "md", showLabel = false, earnedAt }: BadgeProps) {
+export default function Badge({ badgeKey, earned, size = "md", showLabel = false }: BadgeProps) {
   const badge = BADGES[badgeKey]
   if (!badge) return null
 
