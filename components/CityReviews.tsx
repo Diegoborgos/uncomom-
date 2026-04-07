@@ -72,11 +72,17 @@ export default function CityReviews({ citySlug }: { citySlug: string }) {
       try {
         const { data: { session: awardSession } } = await supabase.auth.getSession()
         if (awardSession?.access_token) {
-          await fetch("/api/gamification/award", {
+          const awardRes = await fetch("/api/gamification/award", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${awardSession.access_token}` },
             body: JSON.stringify({ action: "city_review", description: `Reviewed ${citySlug}` }),
           })
+          if (awardRes.ok) {
+            const awardData = await awardRes.json()
+            if (awardData.points) {
+              window.dispatchEvent(new CustomEvent("gamification-award", { detail: awardData }))
+            }
+          }
         }
       } catch { /* non-blocking */ }
     }

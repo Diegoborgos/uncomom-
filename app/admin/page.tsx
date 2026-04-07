@@ -328,6 +328,29 @@ export default function AdminPage() {
               setStatus(`Done: ${data.stats?.total || 0} notifications (${data.stats?.arrivals || 0} arrivals, ${data.stats?.follows || 0} follows, ${data.stats?.cityUpdates || 0} city updates)`)
             }}
           />
+          <AdminAction
+            label="Sync all gamification"
+            onClick={async (setStatus) => {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session) throw new Error("Not logged in")
+              setStatus("Loading families...")
+              const { data: allFams } = await supabase.from("families").select("id")
+              if (!allFams?.length) throw new Error("No families found")
+              let synced = 0
+              for (let i = 0; i < allFams.length; i++) {
+                setStatus(`Syncing ${i + 1}/${allFams.length}...`)
+                try {
+                  const res = await fetch("/api/gamification/sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                    body: JSON.stringify({ familyId: allFams[i].id }),
+                  })
+                  if (res.ok) synced++
+                } catch { /* continue */ }
+              }
+              setStatus(`Done: ${synced}/${allFams.length} families synced`)
+            }}
+          />
         </div>
       </div>
 

@@ -12,8 +12,9 @@ import { countryCodeToFlag } from "@/lib/scores"
 import { openJoinOverlay } from "@/components/JoinOverlay"
 import ConciergeCard from "@/components/ConciergeCard"
 import DashboardBriefing from "@/components/DashboardBriefing"
-import { getLevelForPoints } from "@/lib/gamification"
+import { getLevelForPoints, POINT_VALUES } from "@/lib/gamification"
 import BadgeGrid from "@/components/gamification/BadgeGrid"
+import { CelebrationToast } from "@/components/gamification/CelebrationToast"
 
 const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
   ssr: false,
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [savingField, setSavingField] = useState(false)
   const [streak, setStreak] = useState(0)
+  const [celebration, setCelebration] = useState<{ points: number; action: string; newBadges?: Array<{ key: string; name: string; tier: string }>; leveledUp?: boolean; level?: { level: number; title: string } } | null>(null)
 
   useEffect(() => {
     if (!loading && !user) router.push("/login")
@@ -52,8 +54,33 @@ export default function DashboardPage() {
         .then(({ data }) => setReviews(data || []))
       supabase.from("family_streaks").select("current_streak").eq("family_id", family.id).maybeSingle()
         .then(({ data }) => setStreak(data?.current_streak || 0))
+
+      // One-time gamification sync for existing activity
+      const syncKey = `uncomun_gamification_synced_${family.id}`
+      if (!localStorage.getItem(syncKey)) {
+        supabase.auth.getSession().then(({ data: { session: syncSession } }) => {
+          if (syncSession?.access_token) {
+            fetch("/api/gamification/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${syncSession.access_token}` },
+            }).then((res) => {
+              if (res.ok) {
+                localStorage.setItem(syncKey, "true")
+                refreshFamily()
+              }
+            }).catch(() => { /* non-blocking */ })
+          }
+        })
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [family])
+
+  useEffect(() => {
+    const handler = (e: Event) => setCelebration((e as CustomEvent).detail)
+    window.addEventListener("gamification-award", handler)
+    return () => window.removeEventListener("gamification-award", handler)
+  }, [])
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-[var(--text-secondary)]">Loading...</div>
   if (!user) return null
@@ -249,9 +276,65 @@ export default function DashboardPage() {
         )}
 
         {family && (
-          <div className="mb-8">
-            <BadgeGrid familyId={family.id} />
-          </div>
+          <section className="mb-8">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+              {/* Header with level */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-serif text-lg font-bold">Your Journey</h3>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Contribute to earn UP and unlock badges
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-mono font-bold text-[var(--accent-green)]">
+                    {family.total_points || 0} UP
+                  </p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">
+                    Lv.{family.level || 1} {getLevelForPoints(family.total_points || 0).current.title}
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress bar to next level */}
+              {(() => {
+                const levelInfo = getLevelForPoints(family.total_points || 0)
+                return levelInfo.next ? (
+                  <div className="mb-5">
+                    <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)] mb-1">
+                      <span>Lv.{levelInfo.current.level} {levelInfo.current.title}</span>
+                      <span>Lv.{levelInfo.next.level} {levelInfo.next.title}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-700"
+                        style={{ width: `${Math.max(2, levelInfo.progress * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+                      {levelInfo.next.threshold - (family.total_points || 0)} UP to next level
+                    </p>
+                  </div>
+                ) : null
+              })()}
+
+              {/* How to earn UP — only show if low points */}
+              {(family.total_points || 0) < 200 && (
+                <div className="rounded-lg bg-[rgb(var(--accent-green-rgb)/0.05)] border border-[rgb(var(--accent-green-rgb)/0.15)] p-3 mb-5">
+                  <p className="text-xs font-medium text-[var(--accent-green)] mb-2">How to earn UP</p>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-[var(--text-secondary)]">
+                    <span>Field report → {POINT_VALUES.field_report} UP</span>
+                    <span>City review → {POINT_VALUES.city_review} UP</span>
+                    <span>Log a trip → {POINT_VALUES.log_trip} UP</span>
+                    <span>Save a city → {POINT_VALUES.save_city} UP</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Badge grid */}
+              <BadgeGrid familyId={family.id} showAll={false} />
+            </div>
+          </section>
         )}
 
         {/* Intelligence Briefing */}
@@ -412,6 +495,10 @@ export default function DashboardPage() {
           </section>
         )}
       </div>
+
+      {celebration && (
+        <CelebrationToast data={celebration} onDismiss={() => setCelebration(null)} />
+      )}
     </div>
   )
 }
