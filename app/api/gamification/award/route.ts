@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
   const { data: family } = await db.from("families").select("id, total_points, level").eq("user_id", user.id).single()
   if (!family) return NextResponse.json({ error: "No family" }, { status: 404 })
 
+  const familyId = family.id
   const { action, description } = await req.json()
   const pointValue = POINT_VALUES[action]
   if (pointValue === undefined) {
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
 
   // 1. Insert point record
   await db.from("family_points").insert({
-    family_id: family.id,
+    family_id: familyId,
     amount: pointValue,
     action,
     description: description || null,
@@ -78,14 +79,14 @@ export async function POST(req: NextRequest) {
   await db.from("families").update({
     total_points: newTotal,
     level: levelResult.current.level,
-  }).eq("id", family.id)
+  }).eq("id", familyId)
 
   // 4. Check badge eligibility
   const newBadges: BadgeDef[] = []
   const { data: existingBadges } = await db
     .from("family_badges")
     .select("badge_key")
-    .eq("family_id", family.id)
+    .eq("family_id", familyId)
   const earned = new Set((existingBadges || []).map((b: { badge_key: string }) => b.badge_key))
 
   async function tryAward(key: string) {
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
     const badge = BADGES[key]
     if (!badge) return
     const { error } = await db.from("family_badges").insert({
-      family_id: family.id,
+      family_id: familyId,
       badge_key: key,
     })
     if (!error) newBadges.push(badge)
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
     const { count } = await db
       .from("city_field_reports")
       .select("id", { count: "exact", head: true })
-      .eq("family_id", family.id)
+      .eq("family_id", familyId)
     if ((count || 0) >= 5) await tryAward("scout")
     if ((count || 0) >= 10) await tryAward("intel_officer")
   }
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
     const { count } = await db
       .from("reviews")
       .select("id", { count: "exact", head: true })
-      .eq("family_id", family.id)
+      .eq("family_id", familyId)
     if ((count || 0) >= 5) await tryAward("reviewer")
   }
 
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest) {
     const { count } = await db
       .from("trips")
       .select("id", { count: "exact", head: true })
-      .eq("family_id", family.id)
+      .eq("family_id", familyId)
     if ((count || 0) >= 3) await tryAward("globe_trotter")
     if ((count || 0) >= 10) await tryAward("world_citizen")
   }
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
   const { data: streak } = await db
     .from("family_streaks")
     .select("*")
-    .eq("family_id", family.id)
+    .eq("family_id", familyId)
     .maybeSingle()
 
   let currentStreak = 1
@@ -172,7 +173,7 @@ export async function POST(req: NextRequest) {
           longest_streak: Math.max(currentStreak, streak.longest_streak),
           last_activity_week: currentWeek,
           streak_freezes_remaining: streak.streak_freezes_remaining - 1,
-        }).eq("family_id", family.id)
+        }).eq("family_id", familyId)
       } else {
         // Streak broken
         currentStreak = 1
@@ -183,13 +184,13 @@ export async function POST(req: NextRequest) {
           current_streak: currentStreak,
           longest_streak: Math.max(currentStreak, streak.longest_streak),
           last_activity_week: currentWeek,
-        }).eq("family_id", family.id)
+        }).eq("family_id", familyId)
       }
     }
   } else {
     // First activity — create streak record
     await db.from("family_streaks").insert({
-      family_id: family.id,
+      family_id: familyId,
       current_streak: 1,
       longest_streak: 1,
       last_activity_week: currentWeek,
