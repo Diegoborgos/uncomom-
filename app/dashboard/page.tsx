@@ -12,6 +12,8 @@ import { countryCodeToFlag } from "@/lib/scores"
 import { openJoinOverlay } from "@/components/JoinOverlay"
 import ConciergeCard from "@/components/ConciergeCard"
 import DashboardBriefing from "@/components/DashboardBriefing"
+import { getLevelForPoints } from "@/lib/gamification"
+import BadgeGrid from "@/components/gamification/BadgeGrid"
 
 const ProfileMap = dynamic(() => import("@/components/ProfileMap"), {
   ssr: false,
@@ -34,6 +36,7 @@ export default function DashboardPage() {
   const [savingBio, setSavingBio] = useState(false)
   const [editingField, setEditingField] = useState<string | null>(null)
   const [savingField, setSavingField] = useState(false)
+  const [streak, setStreak] = useState(0)
 
   useEffect(() => {
     if (!loading && !user) router.push("/login")
@@ -47,6 +50,8 @@ export default function DashboardPage() {
       supabase.from("reviews").select("*").eq("family_id", family.id)
         .order("created_at", { ascending: false })
         .then(({ data }) => setReviews(data || []))
+      supabase.from("family_streaks").select("current_streak").eq("family_id", family.id).maybeSingle()
+        .then(({ data }) => setStreak(data?.current_streak || 0))
     }
   }, [family])
 
@@ -149,6 +154,11 @@ export default function DashboardPage() {
               Unlock full access →
             </button>
           )}
+          {family?.total_points !== undefined && family.total_points > 0 && (
+            <span className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono text-[var(--text-secondary)] bg-[var(--surface)]">
+              Lv.{family.level || 1} {getLevelForPoints(family.total_points || 0).current.title} · {family.total_points || 0} UP
+            </span>
+          )}
           {/* Member stats */}
           <div className="flex justify-center gap-6 mt-3 text-xs text-[var(--text-secondary)]">
             {memberSince && <span>Joined {memberSince}</span>}
@@ -238,9 +248,25 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {family && (
+          <div className="mb-8">
+            <BadgeGrid familyId={family.id} />
+          </div>
+        )}
+
         {/* Intelligence Briefing */}
         {isPaid && family && (
           <DashboardBriefing familyId={family.id} />
+        )}
+
+        {streak > 0 && (
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 mb-6 flex items-center gap-4">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="text-sm font-medium">{streak}-week streak</p>
+              <p className="text-xs text-[var(--text-secondary)]">You&apos;ve contributed every week. Keep it going!</p>
+            </div>
+          </div>
         )}
 
         {/* AI Concierge — personalized recommendations */}
