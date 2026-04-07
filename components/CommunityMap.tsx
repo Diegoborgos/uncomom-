@@ -231,7 +231,14 @@ export default function CommunityMap({
       el.dataset.hasMembers = String(hasMembers)
 
       if (hasMembers) {
-        el.addEventListener("click", () => handleCityClick(city.slug))
+        el.addEventListener("click", (e) => {
+          e.stopPropagation()
+          handleCityClick(city.slug)
+        })
+        el.addEventListener("dblclick", (e) => {
+          e.stopPropagation()
+          e.preventDefault()
+        })
         // Initial render at current zoom
         updateMarkerForZoom(el, famsHere, map.getZoom())
       } else {
@@ -302,6 +309,10 @@ export default function CommunityMap({
       el.addEventListener("click", (e) => {
         e.stopPropagation()
         window.location.href = `/profile/${fam.id}`
+      })
+      el.addEventListener("dblclick", (e) => {
+        e.stopPropagation()
+        e.preventDefault()
       })
 
       const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
