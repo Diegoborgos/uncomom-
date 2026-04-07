@@ -245,7 +245,7 @@ export default function CommunityMap({
         cityMarkers.push({ el, families: famsHere, slug: city.slug })
       }
 
-      new mapboxgl.Marker({ element: el })
+      new mapboxgl.Marker({ element: el, anchor: "center" })
         .setLngLat([city.coords.lng, city.coords.lat])
         .addTo(map)
     })
@@ -279,7 +279,6 @@ export default function CommunityMap({
       el.style.boxShadow = "0 2px 10px rgba(0,0,0,0.5)"
       el.style.cursor = "pointer"
       el.style.display = "none"
-      el.style.transition = "transform 0.2s ease"
 
       if (fam.avatar_url) {
         const img = document.createElement("img")
@@ -299,11 +298,9 @@ export default function CommunityMap({
         el.dataset.initials = fam.family_name.slice(0, 2).toUpperCase()
       }
 
-      el.addEventListener("mouseenter", () => { el.style.transform = "scale(1.1)" })
-      el.addEventListener("mouseleave", () => { el.style.transform = "scale(1)" })
       el.addEventListener("click", () => handleCityClick(fam.city_slug))
 
-      const marker = new mapboxgl.Marker({ element: el })
+      const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
         .setLngLat([city.coords.lng + offset[0], city.coords.lat + offset[1]])
         .addTo(map)
 
