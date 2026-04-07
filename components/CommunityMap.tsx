@@ -101,6 +101,7 @@ export default function CommunityMap({
       zoom: MAP_ZOOM,
       projection: GLOBE_CONFIG.projection,
       attributionControl: false,
+      doubleClickZoom: false,
     })
 
     map.addControl(new mapboxgl.NavigationControl(), "top-right")
