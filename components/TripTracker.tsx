@@ -54,6 +54,19 @@ export default function TripTracker({ citySlug }: { citySlug: string }) {
       .single()
 
     if (data) setTrips([data, ...trips])
+
+    // Award trip points (non-blocking)
+    try {
+      const { data: { session: awardSession } } = await supabase.auth.getSession()
+      if (awardSession?.access_token) {
+        await fetch("/api/gamification/award", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${awardSession.access_token}` },
+          body: JSON.stringify({ action: "log_trip", description: `Logged trip to ${citySlug}` }),
+        })
+      }
+    } catch { /* non-blocking */ }
+
     setShowForm(false)
     setArrivedAt("")
     setLeftAt("")

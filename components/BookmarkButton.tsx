@@ -57,6 +57,18 @@ export default function BookmarkButton({ citySlug }: { citySlug: string }) {
         await supabase
           .from("saved_cities")
           .upsert({ family_id: familyId, city_slug: citySlug }, { onConflict: "family_id,city_slug" })
+
+        // Award save points (non-blocking)
+        try {
+          const { data: { session: awardSession } } = await supabase.auth.getSession()
+          if (awardSession?.access_token) {
+            await fetch("/api/gamification/award", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${awardSession.access_token}` },
+              body: JSON.stringify({ action: "save_city", description: `Saved ${citySlug}` }),
+            })
+          }
+        } catch { /* non-blocking */ }
       }
     } else {
       const bookmarks: string[] = JSON.parse(localStorage.getItem("uncomun_bookmarks") || "[]")
