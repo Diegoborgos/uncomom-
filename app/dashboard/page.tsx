@@ -154,7 +154,7 @@ export default function DashboardPage() {
               Unlock full access →
             </button>
           )}
-          {family?.total_points !== undefined && family.total_points > 0 && (
+          {family?.total_points != null && family.total_points > 0 && (
             <span className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono text-[var(--text-secondary)] bg-[var(--surface)]">
               Lv.{family.level || 1} {getLevelForPoints(family.total_points || 0).current.title} · {family.total_points || 0} UP
             </span>
