@@ -10,6 +10,7 @@ import { MAPBOX_STYLE, MAP_CENTER, MAP_ZOOM, GLOBE_CONFIG, MAP_HIDE_BRANDING } f
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 
 type FamilyLocation = {
+  id: string
   family_name: string
   country_code: string
   kids_ages: number[]
@@ -39,7 +40,7 @@ export default function CommunityMap({
   useEffect(() => {
     supabase
       .from("trips")
-      .select("city_slug, families(family_name, country_code, kids_ages, travel_style, education_approach, avatar_url)")
+      .select("city_slug, families(id, family_name, country_code, kids_ages, travel_style, education_approach, avatar_url)")
       .eq("status", "here_now")
       .then(({ data }) => {
         if (data) {
@@ -298,7 +299,10 @@ export default function CommunityMap({
         el.dataset.initials = fam.family_name.slice(0, 2).toUpperCase()
       }
 
-      el.addEventListener("click", () => handleCityClick(fam.city_slug))
+      el.addEventListener("click", (e) => {
+        e.stopPropagation()
+        window.location.href = `/profile/${fam.id}`
+      })
 
       const marker = new mapboxgl.Marker({ element: el, anchor: "center" })
         .setLngLat([city.coords.lng + offset[0], city.coords.lat + offset[1]])
