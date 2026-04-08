@@ -7,7 +7,6 @@ import Badge from "./Badge"
 
 type BadgeGridProps = {
   familyId: string
-  showAll?: boolean
 }
 
 type EarnedBadge = {
@@ -53,9 +52,10 @@ function BadgeTooltip({
   )
 }
 
-export default function BadgeGrid({ familyId, showAll = false }: BadgeGridProps) {
+export default function BadgeGrid({ familyId }: BadgeGridProps) {
   const [earnedMap, setEarnedMap] = useState<Record<string, string>>({})
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     async function fetchBadges() {
@@ -114,14 +114,24 @@ export default function BadgeGrid({ familyId, showAll = false }: BadgeGridProps)
           )
         })}
 
-        {!showAll && remaining > 0 && (
-          <div className="flex items-center justify-center">
-            <span className="text-[10px] text-[var(--text-secondary)]">
-              +{remaining} more
-            </span>
-          </div>
-        )}
       </div>
+
+      {!showAll && remaining > 0 && (
+        <button
+          onClick={() => setShowAll(true)}
+          className="text-xs text-[var(--accent-green)] hover:underline mt-2"
+        >
+          +{remaining} more
+        </button>
+      )}
+      {showAll && allKeys.length > 10 && (
+        <button
+          onClick={() => setShowAll(false)}
+          className="text-xs text-[var(--text-secondary)] hover:underline mt-2"
+        >
+          Show less
+        </button>
+      )}
     </div>
   )
 }

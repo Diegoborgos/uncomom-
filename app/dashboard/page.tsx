@@ -332,7 +332,7 @@ export default function DashboardPage() {
               )}
 
               {/* Badge grid */}
-              <BadgeGrid familyId={family.id} showAll={false} />
+              <BadgeGrid familyId={family.id} />
             </div>
           </section>
         )}
