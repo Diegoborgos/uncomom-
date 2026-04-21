@@ -1,24 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/intelligence/update",
-      "schedule": "0 2 * * *"
+      "path": "/api/cron/refresh",
+      "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/refresh-public-data",
-      "schedule": "0 3 * * 0"
-    },
-    {
-      "path": "/api/aggregate-signals",
-      "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/intelligence/engine",
-      "schedule": "0 6 * * 1"
-    },
-    {
-      "path": "/api/intelligence/briefing",
-      "schedule": "0 7 * * 1"
+      "path": "/api/cron/intelligence",
+      "schedule": "0 5 * * *"
     }
   ]
 }
