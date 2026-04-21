@@ -30,6 +30,19 @@ const EDITABLE_FIELDS = [
 
 type CityRow = Record<string, unknown>
 
+type CronRunRow = {
+  id: string
+  route: string
+  started_at: string
+  finished_at: string | null
+  duration_ms: number | null
+  ok: boolean | null
+  cities_processed: number | null
+  signals_ok: number | null
+  signals_err: number | null
+  note: string | null
+}
+
 export default function AdminCitiesPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -43,6 +56,7 @@ export default function AdminCitiesPage() {
   const [changelog, setChangelog] = useState<CityRow[]>([])
   const [citySearch, setCitySearch] = useState("")
   const [activeTab, setActiveTab] = useState<"editor" | "pipeline" | "changelog">("editor")
+  const [cronRuns, setCronRuns] = useState<CronRunRow[]>([])
 
   useEffect(() => {
     if (!loading && (!user || !ADMIN_EMAILS.includes(user.email || ""))) {
@@ -54,6 +68,20 @@ export default function AdminCitiesPage() {
     supabase.from("cities").select("slug, name, country, data_confidence, pending_review, last_manual_update, signals_stale, field_report_count")
       .order("name")
       .then(({ data }) => setCities(data || []))
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const load = () => {
+      supabase.from("cron_run_log")
+        .select("id, route, started_at, finished_at, duration_ms, ok, cities_processed, signals_ok, signals_err, note")
+        .order("started_at", { ascending: false })
+        .limit(10)
+        .then(({ data }) => { if (!cancelled) setCronRuns((data as CronRunRow[]) || []) })
+    }
+    load()
+    const interval = setInterval(load, 30_000)
+    return () => { cancelled = true; clearInterval(interval) }
   }, [])
 
   useEffect(() => {
@@ -110,12 +138,14 @@ export default function AdminCitiesPage() {
 
   const runPipeline = async (endpoint: string, body?: Record<string, unknown>) => {
     const { data: { session } } = await supabase.auth.getSession()
+    // Admin is authenticated via Supabase session — every cron route accepts
+    // an admin Bearer token as a fallback to the CRON_SECRET header, so we
+    // don't need (and shouldn't expose) a client-side cron secret.
     const res = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${session?.access_token || ""}`,
-        "x-cron-secret": process.env.NEXT_PUBLIC_CRON_SECRET || "",
       },
       body: body ? JSON.stringify(body) : undefined,
     })
@@ -137,6 +167,8 @@ export default function AdminCitiesPage() {
         </div>
         <Link href="/" className="text-xs text-[var(--accent-green)] hover:underline">&larr; Back to site</Link>
       </div>
+
+      <CronRunsPanel runs={cronRuns} />
 
       <div className="flex gap-6">
         {/* Sidebar — city list */}
@@ -518,5 +550,65 @@ function PipelineButton({ label, description, color, onClick }: {
       <p className="text-sm font-medium" style={{ color: accent }}>{label}</p>
       <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">{description}</p>
     </button>
+  )
+}
+
+function timeAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime()
+  const s = Math.floor(ms / 1000)
+  if (s < 60) return `${s}s ago`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  return `${d}d ago`
+}
+
+function CronRunsPanel({ runs }: { runs: {
+  id: string; route: string; started_at: string; finished_at: string | null;
+  duration_ms: number | null; ok: boolean | null; cities_processed: number | null;
+  signals_ok: number | null; signals_err: number | null; note: string | null;
+}[] }) {
+  if (runs.length === 0) {
+    return (
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 mb-6">
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-2">Last cron runs</p>
+        <p className="text-xs text-[var(--text-secondary)]">No runs yet — check back after the next scheduled invocation, or trigger one from the Pipeline tab.</p>
+      </div>
+    )
+  }
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 mb-6">
+      <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-2">Last cron runs</p>
+      <div className="space-y-1">
+        {runs.slice(0, 5).map((r) => {
+          const inFlight = r.finished_at === null
+          const failed = r.ok === false
+          const statusColor = failed
+            ? "var(--score-low)"
+            : inFlight
+              ? "var(--accent-warm)"
+              : "var(--accent-green)"
+          const statusText = failed ? "err" : inFlight ? "running" : "ok"
+          const dur = r.duration_ms !== null ? `${Math.round(r.duration_ms / 100) / 10}s` : "—"
+          return (
+            <div key={r.id} className="flex items-center gap-3 text-xs font-mono">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
+              <span className="w-32 truncate text-[var(--text-primary)]">{r.route}</span>
+              <span className="w-16 text-[var(--text-secondary)]">{timeAgo(r.started_at)}</span>
+              <span className="w-14 text-[var(--text-secondary)]">{dur}</span>
+              <span className="w-12" style={{ color: statusColor }}>{statusText}</span>
+              <span className="flex-1 text-[var(--text-secondary)] truncate">
+                {r.cities_processed !== null && `${r.cities_processed} cities`}
+                {r.signals_ok !== null && ` · ${r.signals_ok} signals`}
+                {r.signals_err ? ` · ${r.signals_err} err` : ""}
+                {r.note && !r.cities_processed ? r.note : ""}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
