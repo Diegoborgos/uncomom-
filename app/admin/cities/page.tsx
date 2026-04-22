@@ -328,6 +328,31 @@ export default function AdminCitiesPage() {
               {/* Pipeline tab */}
               {activeTab === "pipeline" && (
                 <div className="space-y-6">
+                  {/* Scheduled cron wrappers — write to cron_run_log */}
+                  <div>
+                    <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">Scheduled Crons (manual trigger)</p>
+                    <div className="space-y-3">
+                      <PipelineButton
+                        label="Run /api/cron/refresh now"
+                        description="One chunked batch (up to 3 cities, ~45s) + aggregate. Writes a row to the Last cron runs panel at the top."
+                        color="green"
+                        onClick={async () => {
+                          const result = await runPipeline("/api/cron/refresh")
+                          alert(result.error || `Done! ${result.cities || 0} cities, ${result.signals || 0} signals, ${result.errors || 0} errors. Batch offset: ${result.batchOffset ?? "(wrapped)"}.`)
+                        }}
+                      />
+                      <PipelineButton
+                        label="Run /api/cron/intelligence now"
+                        description="Processes family events → updates family_intelligence. On Mondays also triggers engine + briefing. Writes a row to the panel."
+                        color="green"
+                        onClick={async () => {
+                          const result = await runPipeline("/api/cron/intelligence")
+                          alert(result.error || `Done! ${result.processed || 0}/${result.total || 0} families processed. Monday extras triggered: ${result.isMonday ? "yes" : "no"}.`)
+                        }}
+                      />
+                    </div>
+                  </div>
+
                   {/* Monthly free refresh — all cities at once */}
                   <div>
                     <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">Monthly Refresh — Free APIs (all cities)</p>
