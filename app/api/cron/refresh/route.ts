@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { runRefreshPublicData } from "@/lib/refresh-public-data"
+import { finishCronRun, startCronRun } from "@/lib/cron-log"
 
-// Vercel Hobby caps function duration at 60s. runRefreshPublicData enforces a
-// soft deadline of 45s internally so the process always exits cleanly with
-// cursor state persisted.
 export const maxDuration = 60
 
 const ADMIN_EMAILS = ["hello@uncomun.com", "diego@diegoborgo.com"]
+const ROUTE = "cron/refresh"
 
-export async function GET(req: NextRequest) {
-  return POST(req)
-}
+export async function GET(req: NextRequest) { return POST(req) }
 
 export async function POST(req: NextRequest) {
   const cronSecret = req.headers.get("x-cron-secret")
@@ -32,16 +29,34 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await userClient.auth.getUser()
     if (user?.email && ADMIN_EMAILS.includes(user.email)) authorized = true
   }
-
   if (!authorized) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json().catch(() => ({}))
-  const summary = await runRefreshPublicData(supabase, {
-    citySlug: body.citySlug,
-    batchSize: body.batchSize,
-    softDeadlineMs: body.softDeadlineMs,
-    runAggregate: body.runAggregate !== false,
-  })
+  const startedAt = Date.now()
+  const runId = await startCronRun(supabase, ROUTE)
 
-  return NextResponse.json(summary)
+  try {
+    const summary = await runRefreshPublicData(supabase, { runAggregate: true })
+    await finishCronRun(supabase, runId, startedAt, {
+      ok: true,
+      batch_offset: summary.batchOffset,
+      cities_processed: summary.cities,
+      signals_ok: summary.signals,
+      signals_err: summary.errors,
+      errors_by_city: Object.keys(summary.errorsByCity).length > 0 ? summary.errorsByCity : null,
+    })
+    return NextResponse.json({
+      ok: true,
+      cities: summary.cities,
+      signals: summary.signals,
+      errors: summary.errors,
+      batchOffset: summary.batchOffset,
+      processed: summary.processedSlugs,
+      errorsByCity: summary.errorsByCity,
+    })
+  } catch (err) {
+    const note = String(err)
+    console.error(`[${ROUTE}] FAILED:`, note)
+    await finishCronRun(supabase, runId, startedAt, { ok: false, note })
+    return NextResponse.json({ ok: false, error: note }, { status: 500 })
+  }
 }
