@@ -9,11 +9,28 @@ import { cities } from "@/data/cities"
 
 type Message = { role: "user" | "assistant"; content: string }
 
+type AdultField = {
+  display_name: string
+  role: "parent" | "guardian" | "partner"
+  occupation: string
+  work_type: string
+  interests: string[]
+  hobbies: string[]
+}
+
+type PetField = {
+  kind: string
+  name: string
+}
+
 type ProfileFields = {
   family_name: string
   home_country: string
   country_code: string
   kids_ages: number[]
+  kids_interests: string[]
+  adults: AdultField[]
+  pets: PetField[]
   parent_work_type: string
   education_approach: string
   travel_style: string
@@ -29,7 +46,8 @@ type ProfileFields = {
 
 const emptyProfile: ProfileFields = {
   family_name: "", home_country: "", country_code: "",
-  kids_ages: [], parent_work_type: "", education_approach: "",
+  kids_ages: [], kids_interests: [], adults: [], pets: [],
+  parent_work_type: "", education_approach: "",
   travel_style: "", languages: [], interests: [],
   cities_visited: [], next_destinations: [], top_priorities: [], deal_breakers: [], bio: "", done: false,
 }
@@ -75,24 +93,43 @@ export default function OnboardingPage() {
           role: "assistant",
           content: `Here's your current profile:\n\n${parts.join("\n")}\n\nWhat would you like to update?`
         }])
-        // Pre-fill profile state with existing data
-        setProfile({
-          family_name: family.family_name || "",
-          home_country: family.home_country || "",
-          country_code: family.country_code || "",
-          kids_ages: family.kids_ages || [],
-          parent_work_type: family.parent_work_type || "",
-          education_approach: family.education_approach || "",
-          travel_style: family.travel_style || "",
-          languages: family.languages || [],
-          interests: family.interests || [],
-          cities_visited: [],
-          next_destinations: [],
-          top_priorities: family.top_priorities || [],
-          deal_breakers: family.deal_breakers || [],
-          bio: family.bio || "",
-          done: false,
-        })
+        // Pre-fill profile state with existing data — including adults/pets/kids_interests
+        ;(async () => {
+          const [adultsRes, petsRes] = await Promise.all([
+            supabase.from("family_adults").select("display_name, role, occupation, work_type, interests, hobbies, sort_order").eq("family_id", family.id).order("sort_order", { ascending: true }),
+            supabase.from("family_pets").select("kind, name").eq("family_id", family.id).order("sort_order", { ascending: true }),
+          ])
+          const adults: AdultField[] = (adultsRes.data || []).map((a) => ({
+            display_name: a.display_name || "",
+            role: (a.role as "parent" | "guardian" | "partner") || "parent",
+            occupation: a.occupation || "",
+            work_type: a.work_type || "",
+            interests: a.interests || [],
+            hobbies: a.hobbies || [],
+          }))
+          const pets: PetField[] = (petsRes.data || []).map((p) => ({ kind: p.kind, name: p.name || "" }))
+
+          setProfile({
+            family_name: family.family_name || "",
+            home_country: family.home_country || "",
+            country_code: family.country_code || "",
+            kids_ages: family.kids_ages || [],
+            kids_interests: (family as unknown as { kids_interests?: string[] }).kids_interests || [],
+            adults,
+            pets,
+            parent_work_type: family.parent_work_type || "",
+            education_approach: family.education_approach || "",
+            travel_style: family.travel_style || "",
+            languages: family.languages || [],
+            interests: family.interests || [],
+            cities_visited: [],
+            next_destinations: [],
+            top_priorities: family.top_priorities || [],
+            deal_breakers: family.deal_breakers || [],
+            bio: family.bio || "",
+            done: false,
+          })
+        })()
         setPhase("chat")
       }
     }
@@ -143,6 +180,9 @@ export default function OnboardingPage() {
             family_name: family.family_name,
             home_country: family.home_country,
             kids_ages: family.kids_ages,
+            kids_interests: profile.kids_interests,
+            adults: profile.adults,
+            pets: profile.pets,
             parent_work_type: family.parent_work_type,
             education_approach: family.education_approach,
             travel_style: family.travel_style,
@@ -216,16 +256,31 @@ export default function OnboardingPage() {
     setError("")
 
     try {
+      // Legacy aggregates: first adult's work_type, union of all adults' + kids' interests
+      // Keep writing these so every existing consumer (matchmaking, concierge, briefing)
+      // still sees a populated family-level field during the migration window.
+      const firstAdult = profile.adults[0]
+      const legacyWorkType = firstAdult?.work_type || profile.parent_work_type || family?.parent_work_type || ""
+      const unionInterests = Array.from(new Set([
+        ...profile.adults.flatMap(a => a.interests || []),
+        ...(profile.kids_interests || []),
+        ...(profile.interests || []),
+      ])).filter(Boolean)
+      const legacyInterests = unionInterests.length > 0 ? unionInterests : (family?.interests || [])
+
       const payload = {
         family_name: profile.family_name || family?.family_name || "My Family",
         home_country: profile.home_country || family?.home_country || "",
         country_code: (profile.country_code || family?.country_code || "").toUpperCase(),
         kids_ages: profile.kids_ages.length > 0 ? profile.kids_ages : family?.kids_ages || [],
-        parent_work_type: profile.parent_work_type || family?.parent_work_type || "",
+        kids_interests: profile.kids_interests.length > 0
+          ? profile.kids_interests
+          : (family as unknown as { kids_interests?: string[] })?.kids_interests || [],
+        parent_work_type: legacyWorkType,
         travel_style: profile.travel_style || family?.travel_style || "",
         education_approach: profile.education_approach || family?.education_approach || "",
         languages: profile.languages.length > 0 ? profile.languages : family?.languages || [],
-        interests: profile.interests.length > 0 ? profile.interests : family?.interests || [],
+        interests: legacyInterests,
         bio: profile.bio || family?.bio || "",
         top_priorities: profile.top_priorities?.length > 0 ? profile.top_priorities : family?.top_priorities || [],
         deal_breakers: profile.deal_breakers?.length > 0 ? profile.deal_breakers : family?.deal_breakers || [],
@@ -258,6 +313,43 @@ export default function OnboardingPage() {
       if (!familyId) {
         const { data: newFam } = await supabase.from("families").select("id").eq("user_id", user.id).single()
         familyId = newFam?.id
+      }
+
+      // Persist per-adult rows: replace the full set when the user supplied adults in this session.
+      // Otherwise leave whatever's there (e.g. the backfilled "Parent 1" row) untouched.
+      if (familyId && profile.adults.length > 0) {
+        await supabase.from("family_adults").delete().eq("family_id", familyId)
+        const adultRows = profile.adults.map((a, idx) => ({
+          family_id: familyId!,
+          display_name: a.display_name,
+          role: a.role,
+          occupation: a.occupation,
+          work_type: a.work_type,
+          interests: a.interests,
+          hobbies: a.hobbies,
+          sort_order: idx,
+        }))
+        if (adultRows.length > 0) {
+          const { error: adultErr } = await supabase.from("family_adults").insert(adultRows)
+          if (adultErr) throw new Error(adultErr.message)
+        }
+      }
+
+      // Persist pets: same replace-the-full-set strategy, only when the user mentioned pets.
+      if (familyId && profile.pets.length > 0) {
+        await supabase.from("family_pets").delete().eq("family_id", familyId)
+        const petRows = profile.pets
+          .filter((p) => p.kind.trim())
+          .map((p, idx) => ({
+            family_id: familyId!,
+            kind: p.kind.trim(),
+            name: p.name || "",
+            sort_order: idx,
+          }))
+        if (petRows.length > 0) {
+          const { error: petErr } = await supabase.from("family_pets").insert(petRows)
+          if (petErr) throw new Error(petErr.message)
+        }
       }
       if (profile.cities_visited.length > 0 && familyId) {
         for (const cityName of profile.cities_visited) {

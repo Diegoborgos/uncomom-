@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { Family } from "@/lib/database.types"
 
+type AdultLite = { interests?: string[] | null; hobbies?: string[] | null; work_type?: string | null }
+type FamilyWithAdults = Family & { family_adults?: AdultLite[]; kids_interests?: string[] }
+
 export type FamilyMatch = {
   family: Pick<Family, "id" | "family_name" | "country_code" | "kids_ages" | "travel_style" | "education_approach" | "interests" | "bio">
   score: number
@@ -9,7 +12,36 @@ export type FamilyMatch = {
   currentCity: string | null
 }
 
-function scoreMatch(me: Family, other: Family, myTrips: string[], otherTrips: string[]): { score: number; reasons: string[] } {
+// Flatten every interest/hobby signal a family exposes — per-adult + kids + legacy.
+function collectInterests(f: FamilyWithAdults): Set<string> {
+  const bag = new Set<string>()
+  for (const i of f.kids_interests || []) bag.add(i.toLowerCase())
+  for (const a of f.family_adults || []) {
+    for (const i of a.interests || []) bag.add(i.toLowerCase())
+    for (const h of a.hobbies || []) bag.add(h.toLowerCase())
+  }
+  for (const i of f.interests || []) bag.add(i.toLowerCase())
+  return bag
+}
+
+// True when any adult on one side shares at least one hobby with any adult on the other.
+function adultHobbyOverlap(me: FamilyWithAdults, other: FamilyWithAdults): boolean {
+  const myAdults = me.family_adults || []
+  const otherAdults = other.family_adults || []
+  if (myAdults.length === 0 || otherAdults.length === 0) return false
+  for (const mine of myAdults) {
+    const mineBag = new Set((mine.hobbies || []).map(h => h.toLowerCase()))
+    if (mineBag.size === 0) continue
+    for (const theirs of otherAdults) {
+      for (const h of theirs.hobbies || []) {
+        if (mineBag.has(h.toLowerCase())) return true
+      }
+    }
+  }
+  return false
+}
+
+function scoreMatch(me: FamilyWithAdults, other: FamilyWithAdults, myTrips: string[], otherTrips: string[]): { score: number; reasons: string[] } {
   let score = 0
   const reasons: string[] = []
 
@@ -39,12 +71,18 @@ function scoreMatch(me: Family, other: Family, myTrips: string[], otherTrips: st
     reasons.push(`Same travel pace`)
   }
 
-  // Shared interests
-  const myInterests = new Set(me.interests || [])
-  const sharedInterests = (other.interests || []).filter((i) => myInterests.has(i))
-  if (sharedInterests.length >= 2) {
-    score += sharedInterests.length * 5
-    reasons.push(`${sharedInterests.length} shared interests`)
+  // Shared interests — unions per-adult + kids + legacy
+  const mine = collectInterests(me)
+  const shared = Array.from(collectInterests(other)).filter((i) => mine.has(i))
+  if (shared.length >= 2) {
+    score += shared.length * 5
+    reasons.push(`${shared.length} shared interests`)
+  }
+
+  // Adult-to-adult hobby overlap (e.g. Mom and Mom both climb)
+  if (adultHobbyOverlap(me, other)) {
+    score += 5
+    reasons.push(`Same hobbies between partners`)
   }
 
   // Same city overlap (trips)
@@ -82,8 +120,12 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } })
 
-  // Get my family
-  const { data: myFamily } = await supabase.from("families").select("*").eq("user_id", user.id).single()
+  // Get my family (with adults + kids_interests for per-person matching)
+  const { data: myFamily } = await supabase
+    .from("families")
+    .select("*, kids_interests, family_adults(interests, hobbies, work_type)")
+    .eq("user_id", user.id)
+    .single()
   if (!myFamily) return NextResponse.json({ error: "No family profile" }, { status: 404 })
 
   // Get my trips
@@ -93,7 +135,7 @@ export async function POST(req: NextRequest) {
   // Get all other families (with onboarding complete)
   const { data: allFamilies } = await supabase
     .from("families")
-    .select("id, username, family_name, country_code, kids_ages, travel_style, education_approach, interests, languages, bio, avatar_url")
+    .select("id, username, family_name, country_code, kids_ages, kids_interests, travel_style, education_approach, interests, languages, bio, avatar_url, family_adults(interests, hobbies, work_type)")
     .eq("onboarding_complete", true)
     .neq("id", myFamily.id)
     .limit(100)
@@ -120,7 +162,7 @@ export async function POST(req: NextRequest) {
   const matches: FamilyMatch[] = allFamilies
     .map((other) => {
       const otherTrips = tripsByFamily[other.id]?.slugs || []
-      const { score, reasons } = scoreMatch(myFamily as Family, other as Family, myTripSlugs, otherTrips)
+      const { score, reasons } = scoreMatch(myFamily as FamilyWithAdults, other as FamilyWithAdults, myTripSlugs, otherTrips)
       return {
         family: other,
         score,

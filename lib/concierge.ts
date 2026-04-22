@@ -16,16 +16,33 @@ export type Recommendation = {
   priority: number // 1-10, higher = more important
 }
 
+export type ConciergeAdult = {
+  name: string
+  role: string
+  occupation: string
+  workType: string
+  interests: string[]
+  hobbies: string[]
+}
+
+export type ConciergePet = {
+  kind: string
+  name: string
+}
+
 export type ConciergeInput = {
   family: {
     name: string
     country: string
     kidsAges: number[]
+    kidsInterests: string[]
     education: string
     travelStyle: string
     interests: string[]
     languages: string[]
     bio: string
+    adults: ConciergeAdult[]
+    pets: ConciergePet[]
   }
   intelligence: {
     topCandidateCities: string[]
@@ -46,12 +63,14 @@ You have access to this family's complete profile, behavioral intelligence, and 
 
 RULES:
 1. Be specific — reference their actual kids' ages, education approach, and travel style
-2. Every recommendation must have a clear next action
-3. Never be creepy — frame insights as helpful, not surveillance
-4. Prioritize: safety concerns > immediate opportunities > long-term suggestions
-5. If they have no trips, encourage logging their travel history
-6. If they're viewing specific cities, give comparative advice
-7. Match families only if there's genuine overlap (same city + similar kids)
+2. A "family" often has multiple adults. When adults have distinct occupations, interests, or hobbies, treat them as individuals — e.g. a recommendation can serve one parent's hobby (surf for Dad) while still working for the whole family. Do NOT average their profiles into one generic interest list.
+3. If the family has pets, factor pet-friendly housing / neighbourhoods into relevant recs.
+4. Every recommendation must have a clear next action
+5. Never be creepy — frame insights as helpful, not surveillance
+6. Prioritize: safety concerns > immediate opportunities > long-term suggestions
+7. If they have no trips, encourage logging their travel history
+8. If they're viewing specific cities, give comparative advice
+9. Match families only if there's genuine overlap (same city + similar kids)
 
 AVAILABLE CITIES (ONLY recommend from this list — no others exist):
 ${CITY_NAMES}
@@ -83,14 +102,33 @@ OUTPUT FORMAT (strict JSON):
 Return ONLY the JSON array. No markdown, no explanation.`
 
 export async function getRecommendations(input: ConciergeInput): Promise<Recommendation[]> {
+  const adultsBlock = input.family.adults.length > 0
+    ? input.family.adults.map((a) => {
+        const label = a.name || a.role || "Adult"
+        const job = [a.occupation, a.workType].filter(Boolean).join(", ") || "work not specified"
+        const tags = [...(a.interests || []), ...(a.hobbies || [])]
+        return `  - ${label} (${job}): ${tags.join(", ") || "no interests listed"}`
+      }).join("\n")
+    : "  (no adults listed — using family-level interests only)"
+
+  const kidsBlock = input.family.kidsAges.length > 0
+    ? `ages ${input.family.kidsAges.join(", ")}${input.family.kidsInterests.length > 0 ? ` — kids enjoy: ${input.family.kidsInterests.join(", ")}` : ""}`
+    : "no kids info"
+
+  const petsBlock = input.family.pets.length > 0
+    ? input.family.pets.map(p => p.name ? `${p.kind} (${p.name})` : p.kind).join(", ")
+    : "none"
+
   const context = `
 FAMILY PROFILE:
 - Name: ${input.family.name}
 - From: ${input.family.country}
-- Kids: ${input.family.kidsAges.length > 0 ? `ages ${input.family.kidsAges.join(", ")}` : "no kids info"}
+- Adults:
+${adultsBlock}
+- Kids: ${kidsBlock}
+- Pets: ${petsBlock}
 - Education: ${input.family.education || "unknown"}
 - Travel style: ${input.family.travelStyle || "unknown"}
-- Interests: ${input.family.interests.join(", ") || "unknown"}
 - Languages: ${input.family.languages.join(", ") || "unknown"}
 - Bio: ${input.family.bio || "none"}
 

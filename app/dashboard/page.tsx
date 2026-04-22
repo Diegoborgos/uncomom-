@@ -6,7 +6,7 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
-import { Trip, Review } from "@/lib/database.types"
+import { Trip, Review, FamilyAdult, FamilyPet } from "@/lib/database.types"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
 import { openJoinOverlay } from "@/components/JoinOverlay"
@@ -26,12 +26,16 @@ const EDUCATION_OPTIONS = ["Homeschool", "Worldschool", "International school", 
 const TRAVEL_OPTIONS = ["Slow travel (months per city)", "Medium pace (1-3 months)", "Fast movers (weeks per city)", "Base + trips", "Seasonal (summer/winter bases)", "Just getting started"]
 const INTEREST_OPTIONS = ["surf", "nature", "beach", "mountains", "co-living", "co-working", "language immersion", "arts & culture", "outdoor sports", "music", "food & cooking", "sustainability", "entrepreneurship", "yoga & wellness"]
 const LANGUAGE_OPTIONS = ["English", "Spanish", "Portuguese", "French", "German", "Italian", "Dutch", "Mandarin", "Japanese", "Arabic"]
+const ADULT_ROLE_OPTIONS: Array<"parent" | "guardian" | "partner"> = ["parent", "guardian", "partner"]
+const PET_KIND_OPTIONS = ["dog", "cat", "other"]
 
 export default function DashboardPage() {
   const { user, family, loading, isPaid, refreshFamily } = useAuth()
   const router = useRouter()
   const [trips, setTrips] = useState<Trip[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
+  const [adults, setAdults] = useState<FamilyAdult[]>([])
+  const [pets, setPets] = useState<FamilyPet[]>([])
   const [editingBio, setEditingBio] = useState(false)
   const [bioText, setBioText] = useState("")
   const [savingBio, setSavingBio] = useState(false)
@@ -39,6 +43,17 @@ export default function DashboardPage() {
   const [savingField, setSavingField] = useState(false)
   const [streak, setStreak] = useState(0)
   const [celebration, setCelebration] = useState<{ points: number; action: string; newBadges?: Array<{ key: string; name: string; tier: string }>; leveledUp?: boolean; level?: { level: number; title: string } } | null>(null)
+
+  const reloadAdults = async () => {
+    if (!family) return
+    const { data } = await supabase.from("family_adults").select("*").eq("family_id", family.id).order("sort_order", { ascending: true })
+    setAdults((data as FamilyAdult[]) || [])
+  }
+  const reloadPets = async () => {
+    if (!family) return
+    const { data } = await supabase.from("family_pets").select("*").eq("family_id", family.id).order("sort_order", { ascending: true })
+    setPets((data as FamilyPet[]) || [])
+  }
 
   useEffect(() => {
     if (!loading && !user) router.push("/login")
@@ -54,6 +69,12 @@ export default function DashboardPage() {
         .then(({ data }) => setReviews(data || []))
       supabase.from("family_streaks").select("current_streak").eq("family_id", family.id).maybeSingle()
         .then(({ data }) => setStreak(data?.current_streak || 0))
+      supabase.from("family_adults").select("*").eq("family_id", family.id)
+        .order("sort_order", { ascending: true })
+        .then(({ data }) => setAdults((data as FamilyAdult[]) || []))
+      supabase.from("family_pets").select("*").eq("family_id", family.id)
+        .order("sort_order", { ascending: true })
+        .then(({ data }) => setPets((data as FamilyPet[]) || []))
 
       // One-time gamification sync for existing activity
       const syncKey = `uncomun_gamification_synced_${family.id}`
@@ -251,29 +272,151 @@ export default function DashboardPage() {
         )}
 
         {/* Tags — organized by category */}
-        {family && (
-          <div className="mb-8">
-            <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3 block">Profile details</span>
-            <div className="space-y-3">
-              {family.parent_work_type && <EditableTagRow label="Work" tags={[family.parent_work_type]} field="parent_work_type" options={WORK_OPTIONS} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
-              {family.education_approach && <EditableTagRow label="Education" tags={[family.education_approach]} field="education_approach" options={EDUCATION_OPTIONS} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
-              {family.travel_style && <EditableTagRow label="Travel" tags={[family.travel_style]} field="travel_style" options={TRAVEL_OPTIONS} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
-              {family.kids_ages && family.kids_ages.length > 0 && <EditableKidsRow label="Kids" ages={family.kids_ages} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
-              {family.languages && family.languages.length > 0 && <EditableLanguagesRow label="Languages" languages={family.languages} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
-              {family.interests && family.interests.length > 0 && <EditableTagRow label="Interests" tags={family.interests} field="interests" options={INTEREST_OPTIONS} multiSelect editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
-            </div>
+        {family && (() => {
+          const kidsInterests: string[] = (family as unknown as { kids_interests?: string[] }).kids_interests || []
+          const hasAdultWorkType = adults.some(a => !!a.work_type)
+          const hasAdultOccupation = adults.some(a => !!a.occupation)
+          const hasAdultInterests = adults.some(a => (a.interests?.length || 0) > 0 || (a.hobbies?.length || 0) > 0)
+          const kidsInterestsOk = (family.kids_ages?.length || 0) === 0 || kidsInterests.length > 0
+          const completionChecks = [
+            (family.kids_ages?.length || 0) > 0,
+            hasAdultWorkType,
+            hasAdultOccupation,
+            hasAdultInterests,
+            kidsInterestsOk,
+            !!family.education_approach,
+            !!family.travel_style,
+            (family.languages?.length || 0) > 0,
+            !!family.bio,
+          ]
+          const completionPct = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100)
+          const needsPartnerReview = adults.length === 1 && adults[0].display_name === "Parent 1"
 
-            {/* Data collection prompts — ask for missing fields */}
-            {(!family.parent_work_type || !family.education_approach || !family.travel_style || !family.languages?.length || !family.interests?.length) && (
-              <Link href="/onboarding" className="block mt-4 rounded-xl border border-dashed border-[var(--border)] p-4 text-center hover:border-[var(--accent-green)] transition-colors">
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Your profile is {Math.round(([family.parent_work_type, family.education_approach, family.travel_style, family.languages?.length, family.interests?.length, family.bio, family.kids_ages?.length].filter(Boolean).length / 7) * 100)}% complete —{" "}
-                  <span className="text-[var(--accent-green)]">add more to get better matches</span>
-                </p>
-              </Link>
-            )}
-          </div>
-        )}
+          return (
+            <div className="mb-8">
+              <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3 block">Profile details</span>
+
+              {/* Household-level rows */}
+              <div className="space-y-3">
+                {family.education_approach && <EditableTagRow label="Education" tags={[family.education_approach]} field="education_approach" options={EDUCATION_OPTIONS} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
+                {family.travel_style && <EditableTagRow label="Travel" tags={[family.travel_style]} field="travel_style" options={TRAVEL_OPTIONS} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
+                {family.kids_ages && family.kids_ages.length > 0 && <EditableKidsRow label="Kids" ages={family.kids_ages} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
+                {family.kids_ages && family.kids_ages.length > 0 && (
+                  <EditableArrayRow
+                    label="Kids love"
+                    tags={kidsInterests}
+                    fieldKey="kids_interests"
+                    options={INTEREST_OPTIONS}
+                    multiSelect
+                    editingField={editingField}
+                    setEditingField={setEditingField}
+                    savingField={savingField}
+                    setSavingField={setSavingField}
+                    onSave={async (next) => {
+                      await supabase.from("families").update({ kids_interests: next, updated_at: new Date().toISOString() }).eq("id", family.id)
+                      await refreshFamily()
+                    }}
+                  />
+                )}
+                {family.languages && family.languages.length > 0 && <EditableLanguagesRow label="Languages" languages={family.languages} editingField={editingField} setEditingField={setEditingField} family={family} refreshFamily={refreshFamily} savingField={savingField} setSavingField={setSavingField} />}
+              </div>
+
+              {/* Adults — one card per person */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">Adults</span>
+                  <button
+                    onClick={async () => {
+                      const { data } = await supabase.from("family_adults").insert({
+                        family_id: family.id,
+                        display_name: "",
+                        role: "parent",
+                        sort_order: adults.length,
+                      }).select().single()
+                      if (data) setAdults((prev) => [...prev, data as FamilyAdult])
+                    }}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)]"
+                  >
+                    + Add adult
+                  </button>
+                </div>
+                {needsPartnerReview && (
+                  <div className="rounded-xl border border-dashed border-[rgb(var(--accent-green-rgb)/0.3)] bg-[rgb(var(--accent-green-rgb)/0.05)] p-3 mb-2 text-xs text-[var(--text-secondary)]">
+                    We split your profile into per-adult cards — name this one, and add your partner if there is one.
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {adults.map((adult) => (
+                    <AdultEditorCard
+                      key={adult.id}
+                      adult={adult}
+                      onUpdate={async (patch) => {
+                        await supabase.from("family_adults").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", adult.id)
+                        await reloadAdults()
+                      }}
+                      onRemove={async () => {
+                        await supabase.from("family_adults").delete().eq("id", adult.id)
+                        await reloadAdults()
+                      }}
+                    />
+                  ))}
+                  {adults.length === 0 && (
+                    <p className="text-xs text-[var(--text-secondary)] italic">No adults yet. Tap &ldquo;Add adult&rdquo; to introduce the people behind this family.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Pets */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">Pets</span>
+                  <button
+                    onClick={async () => {
+                      const { data } = await supabase.from("family_pets").insert({
+                        family_id: family.id,
+                        kind: "dog",
+                        sort_order: pets.length,
+                      }).select().single()
+                      if (data) setPets((prev) => [...prev, data as FamilyPet])
+                    }}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)]"
+                  >
+                    + Add pet
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {pets.map((pet) => (
+                    <PetEditorPill
+                      key={pet.id}
+                      pet={pet}
+                      onUpdate={async (patch) => {
+                        await supabase.from("family_pets").update(patch).eq("id", pet.id)
+                        await reloadPets()
+                      }}
+                      onRemove={async () => {
+                        await supabase.from("family_pets").delete().eq("id", pet.id)
+                        await reloadPets()
+                      }}
+                    />
+                  ))}
+                  {pets.length === 0 && (
+                    <p className="text-xs text-[var(--text-secondary)] italic">No pets listed.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Completion % nudge */}
+              {completionPct < 100 && (
+                <Link href="/onboarding" className="block mt-6 rounded-xl border border-dashed border-[var(--border)] p-4 text-center hover:border-[var(--accent-green)] transition-colors">
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Your profile is {completionPct}% complete —{" "}
+                    <span className="text-[var(--accent-green)]">add more to get better matches</span>
+                  </p>
+                </Link>
+              )}
+            </div>
+          )
+        })()}
 
         {family && (
           <section className="mb-8">
@@ -757,6 +900,232 @@ function EditableLanguagesRow({
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
         </button>
       </div>
+    </div>
+  )
+}
+
+function EditableArrayRow({
+  label, tags, fieldKey, options, multiSelect = false,
+  editingField, setEditingField, savingField, setSavingField, onSave,
+}: {
+  label: string; tags: string[]; fieldKey: string; options: string[]; multiSelect?: boolean;
+  editingField: string | null; setEditingField: (f: string | null) => void;
+  savingField: boolean; setSavingField: (b: boolean) => void;
+  onSave: (next: string[]) => Promise<void>;
+}) {
+  const [selected, setSelected] = useState<string[]>(tags)
+  const isEditing = editingField === fieldKey
+
+  const handleSave = async () => {
+    setSavingField(true)
+    const next = multiSelect ? selected : (selected[0] ? [selected[0]] : [])
+    await onSave(next)
+    setEditingField(null)
+    setSavingField(false)
+  }
+
+  if (isEditing) {
+    return (
+      <div className="space-y-2 py-2">
+        <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">{label}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {options.map(opt => (
+            <button key={opt} onClick={() => {
+              if (multiSelect) {
+                setSelected(prev => prev.includes(opt) ? prev.filter(s => s !== opt) : [...prev, opt])
+              } else {
+                setSelected([opt])
+              }
+            }} className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              selected.includes(opt)
+                ? "bg-[var(--accent-green)] text-black border-[var(--accent-green)]"
+                : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)]"
+            }`}>
+              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={handleSave} disabled={savingField} className="px-3 py-1 rounded-lg bg-[var(--accent-green)] text-black text-[10px] font-medium disabled:opacity-50">
+            {savingField ? "..." : "Save"}
+          </button>
+          <button onClick={() => setEditingField(null)} className="px-3 py-1 rounded-lg border border-[var(--border)] text-[10px] text-[var(--text-secondary)]">
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-start gap-3 group">
+      <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider w-16 shrink-0 pt-1.5">{label}</span>
+      <div className="flex-1 flex flex-wrap items-center gap-1.5">
+        {tags.length > 0 ? tags.map(tag => (
+          <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)]">
+            {tag.charAt(0).toUpperCase() + tag.slice(1)}
+          </span>
+        )) : (
+          <span className="text-xs text-[var(--text-secondary)] italic">Not set</span>
+        )}
+        <button onClick={() => { setSelected(tags); setEditingField(fieldKey) }}
+          className="p-1 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--surface)] transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+          title={`Edit ${label.toLowerCase()}`}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function AdultEditorCard({ adult, onUpdate, onRemove }: {
+  adult: FamilyAdult
+  onUpdate: (patch: Partial<FamilyAdult>) => Promise<void>
+  onRemove: () => Promise<void>
+}) {
+  const [name, setName] = useState(adult.display_name || "")
+  const [role, setRole] = useState<"parent" | "guardian" | "partner">(adult.role || "parent")
+  const [occupation, setOccupation] = useState(adult.occupation || "")
+  const [workType, setWorkType] = useState(adult.work_type || "")
+  const [interests, setInterests] = useState<string[]>(adult.interests || [])
+  const [hobbies, setHobbies] = useState<string[]>(adult.hobbies || [])
+  const [hobbyInput, setHobbyInput] = useState("")
+
+  const saveField = async (patch: Partial<FamilyAdult>) => {
+    await onUpdate(patch)
+  }
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => { if (name !== adult.display_name) saveField({ display_name: name }) }}
+          placeholder="Name (Mom, Dad, first name)"
+          className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-sm outline-none focus:border-[var(--accent-green)]"
+        />
+        <select
+          value={role}
+          onChange={(e) => { const v = e.target.value as "parent" | "guardian" | "partner"; setRole(v); saveField({ role: v }) }}
+          className="px-2 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-xs outline-none focus:border-[var(--accent-green)]"
+        >
+          {ADULT_ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <button onClick={onRemove}
+          className="px-2 py-1.5 rounded-lg text-[10px] text-[var(--score-low)] hover:bg-[var(--bg)]"
+          title="Remove this adult">
+          Remove
+        </button>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-2">
+        <input
+          type="text"
+          value={occupation}
+          onChange={(e) => setOccupation(e.target.value)}
+          onBlur={() => { if (occupation !== adult.occupation) saveField({ occupation }) }}
+          placeholder="Occupation (e.g. designer)"
+          className="px-3 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-sm outline-none focus:border-[var(--accent-green)]"
+        />
+        <select
+          value={workType}
+          onChange={(e) => { setWorkType(e.target.value); saveField({ work_type: e.target.value }) }}
+          className="px-3 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-sm outline-none focus:border-[var(--accent-green)]"
+        >
+          <option value="">Work type…</option>
+          {WORK_OPTIONS.map((w) => <option key={w} value={w}>{w}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Interests</p>
+        <div className="flex flex-wrap gap-1.5">
+          {INTEREST_OPTIONS.map((opt) => {
+            const selected = interests.includes(opt)
+            return (
+              <button
+                key={opt}
+                onClick={() => {
+                  const next = selected ? interests.filter((i) => i !== opt) : [...interests, opt]
+                  setInterests(next)
+                  saveField({ interests: next })
+                }}
+                className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+                  selected
+                    ? "bg-[var(--accent-green)] text-black border-[var(--accent-green)]"
+                    : "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-green)]"
+                }`}
+              >
+                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">Hobbies</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {hobbies.map((h) => (
+            <button
+              key={h}
+              onClick={() => { const next = hobbies.filter(x => x !== h); setHobbies(next); saveField({ hobbies: next }) }}
+              className="text-[11px] px-2.5 py-1 rounded-full bg-[var(--accent-green)] text-black border border-[var(--accent-green)] hover:opacity-70"
+            >
+              {h} ×
+            </button>
+          ))}
+          <input
+            type="text"
+            value={hobbyInput}
+            onChange={(e) => setHobbyInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const v = hobbyInput.trim()
+                if (v && !hobbies.includes(v)) {
+                  const next = [...hobbies, v]
+                  setHobbies(next)
+                  saveField({ hobbies: next })
+                }
+                setHobbyInput("")
+              }
+            }}
+            placeholder="Add hobby…"
+            className="px-3 py-1 rounded-full border border-[var(--border)] bg-[var(--bg)] text-[11px] outline-none focus:border-[var(--accent-green)] w-32"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PetEditorPill({ pet, onUpdate, onRemove }: {
+  pet: FamilyPet
+  onUpdate: (patch: Partial<FamilyPet>) => Promise<void>
+  onRemove: () => Promise<void>
+}) {
+  const [kind, setKind] = useState(pet.kind)
+  const [name, setName] = useState(pet.name || "")
+  return (
+    <div className="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] pl-2 pr-1 py-1">
+      <select
+        value={PET_KIND_OPTIONS.includes(kind) ? kind : "other"}
+        onChange={(e) => { setKind(e.target.value); onUpdate({ kind: e.target.value }) }}
+        className="bg-transparent text-xs outline-none"
+      >
+        {PET_KIND_OPTIONS.map((k) => <option key={k} value={k}>{k}</option>)}
+      </select>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={() => { if (name !== pet.name) onUpdate({ name }) }}
+        placeholder="name"
+        className="w-20 bg-transparent text-xs outline-none placeholder:text-[var(--text-secondary)]"
+      />
+      <button onClick={onRemove} className="px-1.5 rounded-full text-[10px] text-[var(--text-secondary)] hover:text-[var(--score-low)]" title="Remove pet">×</button>
     </div>
   )
 }
