@@ -33,6 +33,92 @@ create table if not exists public.families (
 -- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS current_city text default '';
 -- ALTER TABLE public.families ADD COLUMN IF NOT EXISTS onboarding_complete boolean default false;
 
+-- Aggregated kids interests at family level (no per-child rows, no names)
+alter table public.families add column if not exists kids_interests text[] default '{}';
+
+-- Per-adult profile data (interests, hobbies, occupation, work_type)
+-- Kids are NOT represented here — they remain aggregated on families.kids_ages / kids_interests.
+create table if not exists public.family_adults (
+  id uuid default gen_random_uuid() primary key,
+  family_id uuid references public.families(id) on delete cascade not null,
+  display_name text default '',
+  role text default 'parent' check (role in ('parent','guardian','partner')),
+  occupation text default '',
+  work_type text default '',
+  interests text[] default '{}',
+  hobbies text[] default '{}',
+  sort_order int default 0,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+create index if not exists idx_family_adults_family_id on public.family_adults(family_id);
+
+-- Pets traveling with the family
+create table if not exists public.family_pets (
+  id uuid default gen_random_uuid() primary key,
+  family_id uuid references public.families(id) on delete cascade not null,
+  kind text not null,
+  name text default '',
+  notes text default '',
+  sort_order int default 0,
+  created_at timestamptz default now() not null
+);
+create index if not exists idx_family_pets_family_id on public.family_pets(family_id);
+
+-- RLS for family_adults: mirror families ownership
+alter table public.family_adults enable row level security;
+
+create policy "Adults are viewable by everyone"
+  on public.family_adults for select using (true);
+
+create policy "Owners can insert adults"
+  on public.family_adults for insert with check (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+create policy "Owners can update adults"
+  on public.family_adults for update using (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+create policy "Owners can delete adults"
+  on public.family_adults for delete using (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+-- RLS for family_pets: mirror families ownership
+alter table public.family_pets enable row level security;
+
+create policy "Pets are viewable by everyone"
+  on public.family_pets for select using (true);
+
+create policy "Owners can insert pets"
+  on public.family_pets for insert with check (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+create policy "Owners can update pets"
+  on public.family_pets for update using (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+create policy "Owners can delete pets"
+  on public.family_pets for delete using (
+    family_id in (select id from public.families where user_id = auth.uid())
+  );
+
+-- One-time backfill: seed a default adult row from legacy family-level fields.
+-- Re-running is safe (skipped when the family already has an adult row).
+insert into public.family_adults (family_id, display_name, role, work_type, interests, sort_order)
+select f.id, 'Parent 1', 'parent',
+       coalesce(f.parent_work_type, ''),
+       coalesce(f.interests, '{}'),
+       0
+from public.families f
+where not exists (
+  select 1 from public.family_adults a where a.family_id = f.id
+);
+
 -- Trips table (family visits to cities)
 create table if not exists public.trips (
   id uuid default gen_random_uuid() primary key,

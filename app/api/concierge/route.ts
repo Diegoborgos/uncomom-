@@ -20,8 +20,12 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } })
 
-  // Get family
-  const { data: family } = await supabase.from("families").select("*").eq("user_id", user.id).single()
+  // Get family (with adults + pets so we can describe each person, not just a flat blob)
+  const { data: family } = await supabase
+    .from("families")
+    .select("*, family_adults(*), family_pets(kind, name)")
+    .eq("user_id", user.id)
+    .single()
   if (!family) return NextResponse.json({ error: "No family profile" }, { status: 404 })
 
   // Get intelligence
@@ -39,17 +43,32 @@ export async function POST(req: NextRequest) {
 
   const currentTrip = trips?.find((t) => t.status === "here_now")
 
+  type AdultRow = { display_name?: string | null; role?: string | null; occupation?: string | null; work_type?: string | null; interests?: string[] | null; hobbies?: string[] | null; sort_order?: number | null }
+  type PetRow = { kind: string; name?: string | null }
+  const rawAdults = ((family.family_adults as AdultRow[] | null) || []).slice().sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+  const rawPets = (family.family_pets as PetRow[] | null) || []
+
   // Build input
   const input: ConciergeInput = {
     family: {
       name: family.family_name || "",
       country: family.home_country || "",
       kidsAges: family.kids_ages || [],
+      kidsInterests: family.kids_interests || [],
       education: family.education_approach || "",
       travelStyle: family.travel_style || "",
       interests: family.interests || [],
       languages: family.languages || [],
       bio: family.bio || "",
+      adults: rawAdults.map((a) => ({
+        name: a.display_name || "",
+        role: a.role || "parent",
+        occupation: a.occupation || "",
+        workType: a.work_type || "",
+        interests: a.interests || [],
+        hobbies: a.hobbies || [],
+      })),
+      pets: rawPets.map((p) => ({ kind: p.kind, name: p.name || "" })),
     },
     intelligence: intelligence ? {
       topCandidateCities: (intelligence.top_candidate_cities as string[]) || [],
