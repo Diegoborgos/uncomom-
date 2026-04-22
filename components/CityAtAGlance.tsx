@@ -26,14 +26,15 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
   const [signals, setSignals] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [latestFetch, setLatestFetch] = useState<string | null>(null)
-  const [totalItems, setTotalItems] = useState(0)
-  const [uniqueSources, setUniqueSources] = useState<string[]>([])
+  const [liveCount, setLiveCount] = useState(0)
+  const [estimatedCount, setEstimatedCount] = useState(0)
+  const [uniqueLiveSources, setUniqueLiveSources] = useState<string[]>([])
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from("city_data_sources")
-        .select("signal_key, signal_value, fetched_at, source_name")
+        .select("signal_key, signal_value, fetched_at, source_name, source_type")
         .eq("city_slug", citySlug)
         .in("signal_key", SIGNAL_KEYS)
         .order("fetched_at", { ascending: false })
@@ -49,8 +50,12 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
       }
       setSignals(map)
       setLatestFetch(latest)
-      setTotalItems(rows.length)
-      setUniqueSources(Array.from(new Set(rows.map((r: Record<string, string>) => r.source_name))))
+      const liveTypes = new Set(["public_api", "field_report", "admin_manual", "manual"])
+      const liveRows = rows.filter((r: Record<string, string>) => liveTypes.has(r.source_type))
+      const estRows = rows.filter((r: Record<string, string>) => !liveTypes.has(r.source_type))
+      setLiveCount(liveRows.length)
+      setEstimatedCount(estRows.length)
+      setUniqueLiveSources(Array.from(new Set(liveRows.map((r: Record<string, string>) => r.source_name))))
       setLoading(false)
     }
     load()
@@ -119,7 +124,15 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
       {latestFetch && (
         <div className="flex items-center justify-between text-[10px] text-[var(--text-secondary)] mt-4">
           <span>
-            {totalItems} signals from {uniqueSources.length} sources &middot; Updated {getTimeAgo(new Date(latestFetch))}
+            <span className="text-[var(--accent-green)]">{liveCount} live</span>
+            {liveCount > 0 && ` from ${uniqueLiveSources.length} source${uniqueLiveSources.length !== 1 ? "s" : ""}`}
+            {estimatedCount > 0 && (
+              <>
+                {" "}&middot;{" "}
+                <span className="text-[var(--accent-warm)]">{estimatedCount} estimated</span>
+              </>
+            )}
+            {" "}&middot; Updated {getTimeAgo(new Date(latestFetch))}
           </span>
         </div>
       )}

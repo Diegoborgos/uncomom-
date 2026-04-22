@@ -45,10 +45,28 @@ export default function FISBreakdownV2() {
       {/* Trust line — only render when we have actual signals */}
       {dataHealth.totalSignals > 0 && (
         <div className="text-[10px] text-[var(--text-secondary)]">
-          <span>
-            {`${dataHealth.totalSignals} signals from ${dataHealth.totalSources} source${dataHealth.totalSources !== 1 ? "s" : ""}${dataHealth.fieldReportCount > 0 ? ` + ${dataHealth.fieldReportCount} family report${dataHealth.fieldReportCount !== 1 ? "s" : ""}` : ""}`}
-            {dataHealth.lastUpdated && ` \u00b7 Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}`}
-          </span>
+          {(() => {
+            const live = (dataHealth.coverageByType?.public_api ?? 0)
+              + (dataHealth.coverageByType?.field_report ?? 0)
+              + (dataHealth.coverageByType?.admin_manual ?? 0)
+            const estimated = (dataHealth.coverageByType?.seed_estimate ?? 0)
+              + (dataHealth.coverageByType?.paid_api_ready ?? 0)
+            return (
+              <span>
+                <span className="text-[var(--accent-green)]">{live} live</span>
+                {estimated > 0 && (
+                  <>
+                    <span> · </span>
+                    <span className="text-[var(--accent-warm)]">{estimated} estimated</span>
+                  </>
+                )}
+                {dataHealth.fieldReportCount > 0 && (
+                  <span> · {dataHealth.fieldReportCount} family report{dataHealth.fieldReportCount !== 1 ? "s" : ""}</span>
+                )}
+                {dataHealth.lastUpdated && ` · Updated ${getTimeAgo(new Date(dataHealth.lastUpdated))}`}
+              </span>
+            )
+          })()}
         </div>
       )}
     </div>
