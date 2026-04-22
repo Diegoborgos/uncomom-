@@ -2,34 +2,35 @@
 
 import { City } from "@/lib/types"
 import { formatEuro } from "@/lib/scores"
-import SignalBadge from "@/components/ui/SignalBadge"
+import SignalCitation from "@/components/ui/SignalCitation"
 
 export default function FamilyCostPanel({ city }: { city: City }) {
-  const rows = [
-    { label: "Furnished 2BR Rent", value: city.cost.rent2br },
-    { label: "International School (per child)", value: city.cost.internationalSchool },
-    { label: "Local School (per child)", value: city.cost.localSchool },
-    { label: "Childcare", value: city.cost.childcare },
+  const rows: Array<{ label: string; value: number; signalKey: string }> = [
+    { label: "Furnished 2BR Rent", value: city.cost.rent2br, signalKey: "familyCost.rent2br" },
+    { label: "International School (per child)", value: city.cost.internationalSchool, signalKey: "familyCost.internationalSchoolFee" },
+    { label: "Local School (per child)", value: city.cost.localSchool, signalKey: "familyCost.localSchoolFee" },
+    { label: "Childcare", value: city.cost.childcare, signalKey: "familyCost.childcareMonthly" },
   ]
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-serif text-lg font-bold">Family of 4 — Monthly Cost</h3>
-        <SignalBadge sourceType="paid_api_ready" compact />
-      </div>
+      <h3 className="font-serif text-lg font-bold mb-4">Family of 4 — Monthly Cost</h3>
       <div className="space-y-3">
         {rows.map((row) => (
-          <div key={row.label} className="flex justify-between text-sm">
+          <div key={row.label} className="flex justify-between items-center text-sm gap-3">
             <span className="text-[var(--text-secondary)]">{row.label}</span>
-            <span className="font-mono">{formatEuro(row.value)}</span>
+            <SignalCitation signalKey={row.signalKey}>
+              <span className="font-mono">{formatEuro(row.value)}</span>
+            </SignalCitation>
           </div>
         ))}
-        <div className="border-t border-[var(--border)] pt-3 flex justify-between font-bold">
+        <div className="border-t border-[var(--border)] pt-3 flex justify-between items-center font-bold gap-3">
           <span>Total Estimated</span>
-          <span className="font-mono text-[var(--accent-warm)]">
-            {formatEuro(city.cost.familyMonthly)}
-          </span>
+          <SignalCitation signalKey="familyCost.familyMonthlyEstimate">
+            <span className="font-mono text-[var(--accent-warm)]">
+              {formatEuro(city.cost.familyMonthly)}
+            </span>
+          </SignalCitation>
         </div>
       </div>
     </div>

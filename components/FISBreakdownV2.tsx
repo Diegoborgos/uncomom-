@@ -92,7 +92,12 @@ function DimensionRow({
     : "Estimated data"
 
   return (
-    <SourceTooltip content={tooltipContent} showIcon={false}>
+    <SourceTooltip
+      title={`${dim.label} · sources`}
+      content={tooltipContent}
+      sources={dim.sources}
+      showIcon={false}
+    >
       <div className="flex items-center gap-3 w-full">
         <span className="text-xs text-[var(--text-secondary)] w-28 shrink-0">
           {dim.label.split(" ").slice(0, -1).join(" ")}{dim.label.includes(" ") ? " " : ""}

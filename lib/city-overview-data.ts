@@ -44,6 +44,8 @@ export type FISDimensionData = {
   signalCount: number         // signals matching this dimension prefix
   sourceCount: number         // unique sources for this dimension
   lastUpdated: string | null  // most recent fetch for this dimension
+  /** Top sources contributing to this dimension, with citation URLs. */
+  sources: Array<{ name: string; url: string | null; type: string }>
 }
 
 export type CityOverviewData = {
@@ -109,6 +111,14 @@ export type CityOverviewData = {
       paid_api_ready: number
     }
   }
+  /** Per-signal provenance lookup: signal_key → source citation. */
+  signalSources: Record<string, {
+    source_name: string
+    source_url: string | null
+    source_type: string
+    confidence: number
+    fetched_at: string
+  }>
 }
 
 // ============================================================
@@ -161,6 +171,15 @@ export async function buildCityOverviewData(
       ? dimSources.reduce((latest, s) => s.fetched_at > latest ? s.fetched_at : latest, dimSources[0].fetched_at)
       : null
 
+    // Top sources for this dimension with citation URLs (deduped by name).
+    const seenNames = new Set<string>()
+    const sourcesForDim: Array<{ name: string; url: string | null; type: string }> = []
+    for (const s of dimSources) {
+      if (seenNames.has(s.source_name)) continue
+      seenNames.add(s.source_name)
+      sourcesForDim.push({ name: s.source_name, url: s.source_url ?? null, type: s.source_type })
+    }
+
     return {
       key,
       label: DIMENSION_LABELS[key],
@@ -172,8 +191,24 @@ export async function buildCityOverviewData(
       signalCount: dimSources.length,
       sourceCount: uniqueSourceNames.size,
       lastUpdated: dimLastUpdated,
+      sources: sourcesForDim,
     }
   })
+
+  // Build per-signal source lookup (signal_key → most-recent provenance row)
+  const signalSources: CityOverviewData["signalSources"] = {}
+  for (const s of dataSources) {
+    const existing = signalSources[s.signal_key]
+    if (!existing || s.fetched_at > existing.fetched_at) {
+      signalSources[s.signal_key] = {
+        source_name: s.source_name,
+        source_url: s.source_url ?? null,
+        source_type: s.source_type,
+        confidence: s.confidence,
+        fetched_at: s.fetched_at,
+      }
+    }
+  }
 
   // --- Costs ---
   const cost = personalizedCost(city, isPaid ? family : null)
@@ -270,6 +305,7 @@ export async function buildCityOverviewData(
         : sourceList,
       coverageByType: countByType(dataSources),
     },
+    signalSources,
   }
 }
 
