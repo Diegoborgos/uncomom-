@@ -50,7 +50,7 @@ export default function CityAtAGlance({ citySlug }: { citySlug: string }) {
       }
       setSignals(map)
       setLatestFetch(latest)
-      const liveTypes = new Set(["public_api", "field_report", "admin_manual", "manual"])
+      const liveTypes = new Set(["public_api", "field_report", "admin_manual", "manual", "researched"])
       const liveRows = rows.filter((r: Record<string, string>) => liveTypes.has(r.source_type))
       const estRows = rows.filter((r: Record<string, string>) => !liveTypes.has(r.source_type))
       setLiveCount(liveRows.length)

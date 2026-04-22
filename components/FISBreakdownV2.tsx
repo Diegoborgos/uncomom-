@@ -49,6 +49,7 @@ export default function FISBreakdownV2() {
             const live = (dataHealth.coverageByType?.public_api ?? 0)
               + (dataHealth.coverageByType?.field_report ?? 0)
               + (dataHealth.coverageByType?.admin_manual ?? 0)
+              + (dataHealth.coverageByType?.researched ?? 0)
             const estimated = (dataHealth.coverageByType?.seed_estimate ?? 0)
               + (dataHealth.coverageByType?.paid_api_ready ?? 0)
             return (

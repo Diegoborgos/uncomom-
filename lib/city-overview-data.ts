@@ -104,6 +104,7 @@ export type CityOverviewData = {
       public_api: number
       field_report: number
       admin_manual: number
+      researched: number
       seed_estimate: number
       paid_api_ready: number
     }
@@ -274,11 +275,12 @@ export async function buildCityOverviewData(
 
 function countByType(
   rows: Array<{ source_type: string }>,
-): { public_api: number; field_report: number; admin_manual: number; seed_estimate: number; paid_api_ready: number } {
+): { public_api: number; field_report: number; admin_manual: number; researched: number; seed_estimate: number; paid_api_ready: number } {
   const counts = {
     public_api: 0,
     field_report: 0,
     admin_manual: 0,
+    researched: 0,
     seed_estimate: 0,
     paid_api_ready: 0,
   }

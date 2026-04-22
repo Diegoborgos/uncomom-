@@ -12,6 +12,7 @@ type SourceTypeCounts = {
   public_api: number
   field_report: number
   admin_manual: number
+  researched: number
   seed_estimate: number
   paid_api_ready: number
 }
@@ -43,7 +44,7 @@ export default function DataHealthPage() {
       const rows = sources || []
 
       const aggregated: SourceTypeCounts = {
-        public_api: 0, field_report: 0, admin_manual: 0, seed_estimate: 0, paid_api_ready: 0,
+        public_api: 0, field_report: 0, admin_manual: 0, researched: 0, seed_estimate: 0, paid_api_ready: 0,
       }
       for (const r of rows) {
         const key = (r.source_type === "manual" ? "admin_manual"
@@ -58,7 +59,7 @@ export default function DataHealthPage() {
       const dimensionKeys = ["childSafety", "educationAccess", "familyCost", "healthcare", "nature", "community", "remoteWork", "visa", "lifestyle"]
       const byDim = dimensionKeys.map((key) => {
         const dimRows = rows.filter((r) => r.signal_key.startsWith(key + "."))
-        const live = dimRows.filter((r) => ["public_api", "field_report", "admin_manual", "manual"].includes(r.source_type)).length
+        const live = dimRows.filter((r) => ["public_api", "field_report", "admin_manual", "manual", "researched"].includes(r.source_type)).length
         const estimated = dimRows.filter((r) => ["seed_estimate", "paid_api_ready", "estimated"].includes(r.source_type)).length
         return { dimension: key, total: dimRows.length, live, estimated }
       })
@@ -106,8 +107,8 @@ export default function DataHealthPage() {
   if (loading || !counts) return <div className="p-8 text-[var(--text-secondary)]">Loading...</div>
   if (!user || !ADMIN_EMAILS.includes(user.email || "")) return null
 
-  const total = counts.public_api + counts.field_report + counts.admin_manual + counts.seed_estimate + counts.paid_api_ready
-  const livePct = total === 0 ? 0 : Math.round(((counts.public_api + counts.field_report + counts.admin_manual) / total) * 100)
+  const total = counts.public_api + counts.field_report + counts.admin_manual + counts.researched + counts.seed_estimate + counts.paid_api_ready
+  const livePct = total === 0 ? 0 : Math.round(((counts.public_api + counts.field_report + counts.admin_manual + counts.researched) / total) * 100)
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
@@ -120,10 +121,11 @@ export default function DataHealthPage() {
       </div>
 
       {/* Big numbers */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <MetricTile label="Live APIs" value={counts.public_api} tone="green" />
         <MetricTile label="Family reports" value={counts.field_report} tone="green" />
         <MetricTile label="Verified" value={counts.admin_manual} tone="green" />
+        <MetricTile label="Researched" value={counts.researched} tone="green" />
         <MetricTile label="Estimated" value={counts.seed_estimate} tone="warm" />
         <MetricTile label="Paid API ready" value={counts.paid_api_ready} tone="warm" />
       </div>

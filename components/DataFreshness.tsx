@@ -11,7 +11,7 @@ type SourceSummary = {
   avg_confidence: number
 }
 
-const LIVE_TYPES = new Set(["public_api", "field_report", "admin_manual", "manual"])
+const LIVE_TYPES = new Set(["public_api", "field_report", "admin_manual", "manual", "researched"])
 
 function isLive(sourceType: string): boolean {
   return LIVE_TYPES.has(sourceType)

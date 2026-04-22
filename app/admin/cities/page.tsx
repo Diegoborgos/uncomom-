@@ -225,9 +225,14 @@ export default function AdminCitiesPage() {
                     {cityData?.field_report_count ? ` · ${cityData.field_report_count} reports` : ""}
                   </p>
                 </div>
-                <Link href={`/cities/${selectedCity}`} target="_blank" className="text-xs text-[var(--accent-green)] hover:underline">
-                  View page &rarr;
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link href={`/admin/research/${selectedCity}`} className="text-xs text-[var(--accent-green)] hover:underline">
+                    Research this city →
+                  </Link>
+                  <Link href={`/cities/${selectedCity}`} target="_blank" className="text-xs text-[var(--accent-green)] hover:underline">
+                    View page &rarr;
+                  </Link>
+                </div>
               </div>
 
               {/* Tabs */}
@@ -659,6 +664,7 @@ function CoveragePanel({ rows }: { rows: Array<{
     public_api: 0,
     field_report: 0,
     admin_manual: 0,
+    researched: 0,
     seed_estimate: 0,
     paid_api_ready: 0,
   }
@@ -695,6 +701,7 @@ function CoveragePanel({ rows }: { rows: Array<{
           {bar(counts.public_api, "green", "Live APIs")}
           {bar(counts.field_report, "green", "Family reports")}
           {bar(counts.admin_manual, "green", "Admin verified")}
+          {bar(counts.researched, "green", "Researched")}
           {bar(counts.seed_estimate, "warm", "Estimated")}
           {bar(counts.paid_api_ready, "warm", "Waiting on paid API")}
         </div>
@@ -727,7 +734,7 @@ function CoveragePanel({ rows }: { rows: Array<{
               <span className="w-12 text-right font-mono text-[var(--text-secondary)]">{r.confidence}%</span>
               <span className="flex-1 text-right text-[var(--text-secondary)]">{timeAgo(r.fetched_at)}</span>
               <span className={`w-24 text-right font-medium ${
-                r.source_type === "public_api" || r.source_type === "field_report" || r.source_type === "admin_manual" || r.source_type === "manual"
+                ["public_api", "field_report", "admin_manual", "manual", "researched"].includes(r.source_type)
                   ? "text-[var(--accent-green)]"
                   : "text-[var(--accent-warm)]"
               }`}>
@@ -747,6 +754,7 @@ function labelForType(t: string): string {
     case "field_report": return "Family reports"
     case "admin_manual":
     case "manual": return "Verified"
+    case "researched": return "Researched"
     case "paid_api_ready": return "Paid API ready"
     case "seed_estimate":
     case "estimated":

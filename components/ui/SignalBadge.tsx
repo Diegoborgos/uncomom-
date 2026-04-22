@@ -22,6 +22,7 @@ export type SignalSourceType =
   | "admin_manual"
   | "seed_estimate"
   | "paid_api_ready"
+  | "researched"
   | "manual"      // legacy, treated as admin_manual
   | "estimated"   // legacy, treated as seed_estimate
   | null
@@ -44,9 +45,12 @@ export default function SignalBadge({
   className = "",
 }: Props) {
   const { label, tone } = resolve(sourceType, fetchedAt, reportCount, compact)
-  const toneClasses = tone === "green"
-    ? "bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)]"
-    : "bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)]"
+  const toneClasses =
+    tone === "green"
+      ? "bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)]"
+      : tone === "neutral"
+        ? "bg-[var(--surface-elevated)] text-[var(--text-secondary)] border border-[var(--border)]"
+        : "bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)]"
   return (
     <span
       className={`text-[9px] px-2 py-0.5 rounded-full whitespace-nowrap ${toneClasses} ${className}`}
@@ -62,7 +66,7 @@ function resolve(
   fetchedAt?: string | null,
   reportCount?: number,
   compact?: boolean,
-): { label: string; tone: "green" | "warm" } {
+): { label: string; tone: "green" | "warm" | "neutral" } {
   switch (sourceType) {
     case "public_api": {
       const suffix = compact || !fetchedAt ? "" : ` · ${timeAgo(fetchedAt)}`
@@ -78,6 +82,8 @@ function resolve(
     case "admin_manual":
     case "manual":
       return { label: "Verified", tone: "green" }
+    case "researched":
+      return { label: "Researched", tone: "neutral" }
     case "paid_api_ready":
     case "seed_estimate":
     case "estimated":
@@ -105,6 +111,10 @@ function tooltip(
     case "admin_manual":
     case "manual":
       return "Manually verified by the Uncomun team."
+    case "researched":
+      return fetchedAt
+        ? `Researched from public sources on ${timeAgo(fetchedAt)}. Tap to see citation.`
+        : "Researched from public sources. Tap to see citation."
     case "paid_api_ready":
       return "Estimated. Will upgrade to live data once the matching paid API is activated."
     case "seed_estimate":

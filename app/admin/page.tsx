@@ -425,8 +425,8 @@ export default function AdminPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <QuickAction href="/admin/cities" label="City Editor" description="Edit scores, costs, meta" />
           <QuickAction href="/admin/data-health" label="Data Health" description="Provenance coverage + GTM readiness" />
+          <QuickAction href="/admin/research" label="Research" description="Claude research → ingest per city" />
           <QuickAction href="/schools" label="Schools" description={`${stats.totalSchools} schools loaded`} />
-          <QuickAction href="/visas" label="Visas" description="Visa guide data" />
         </div>
       </div>
     </div>
