@@ -1,4 +1,5 @@
-import { getAllCities, getCityBySlug } from "@/lib/cities-db"
+import { getAllCities, getCityBySlug, getCityBySlugWithMeta } from "@/lib/cities-db"
+import CachedDataBanner from "@/components/ui/CachedDataBanner"
 import { cities as staticCities } from "@/data/cities"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function CityPage({ params }: { params: { slug: string } }) {
-  const city = await getCityBySlug(params.slug)
+  const { data: city, fromFallback } = await getCityBySlugWithMeta(params.slug)
   if (!city) notFound()
 
   const allCities = await getAllCities()
@@ -57,6 +58,7 @@ export default async function CityPage({ params }: { params: { slug: string } })
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
+      <CachedDataBanner fromFallback={fromFallback} dataset="city data" />
       <CityPageTracker citySlug={city.slug} cityName={city.name} />
       <CityHero city={city} />
 

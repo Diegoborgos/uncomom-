@@ -7,6 +7,7 @@ import { visas as staticVisas } from "@/data/visas"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag, formatEuro } from "@/lib/scores"
 import { VisaInfo, VisaType } from "@/lib/visa-types"
+import SignalBadge from "@/components/ui/SignalBadge"
 
 const VISA_TYPES: VisaType[] = ["Tourist", "Digital Nomad", "Freelancer", "Residency", "Business", "Student"]
 
@@ -72,6 +73,10 @@ export default function VisasPage() {
         <h1 className="font-serif text-4xl font-bold mb-2">Visa Guide</h1>
         <p className="text-[var(--text-secondary)]">
           Visa options for traveling families. Sorted by what matters: duration, cost, and whether your kids are covered.
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] mt-2 flex items-center gap-2">
+          <SignalBadge sourceType="seed_estimate" compact />
+          <span>Costs, processing times, and requirements are manually curated by Uncomun. Always confirm with the consulate before applying.</span>
         </p>
       </div>
 

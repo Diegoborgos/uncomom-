@@ -5,6 +5,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag, formatEuro } from "@/lib/scores"
+import SignalBadge from "@/components/ui/SignalBadge"
 
 type SchoolRow = {
   id: string
@@ -93,6 +94,10 @@ export default function SchoolsPage() {
         <h1 className="font-serif text-4xl font-bold mb-2">School Finder</h1>
         <p className="text-[var(--text-secondary)]">
           International schools across our city directory. Fees, curricula, and reviews from traveling families.
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] mt-2 flex items-center gap-2">
+          <SignalBadge sourceType="paid_api_ready" compact />
+          <span>Fees are currently estimated — will upgrade to live data when Google Places is activated.</span>
         </p>
       </div>
 
@@ -208,8 +213,9 @@ export default function SchoolsPage() {
                 {/* Cost + Tags row */}
                 <div className="flex flex-wrap items-center gap-3 mb-3">
                   {school.monthly_fee && school.monthly_fee > 0 && (
-                    <span className="text-xs px-3 py-1 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)] font-medium">
+                    <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[rgb(var(--accent-warm-rgb)/0.15)] text-[var(--accent-warm)] font-medium">
                       {formatEuro(school.monthly_fee)}/mo
+                      <SignalBadge sourceType="paid_api_ready" compact />
                     </span>
                   )}
                   {school.school_type && (

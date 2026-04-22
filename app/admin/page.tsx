@@ -424,9 +424,9 @@ export default function AdminPage() {
         <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">Quick Actions</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <QuickAction href="/admin/cities" label="City Editor" description="Edit scores, costs, meta" />
+          <QuickAction href="/admin/data-health" label="Data Health" description="Provenance coverage + GTM readiness" />
           <QuickAction href="/schools" label="Schools" description={`${stats.totalSchools} schools loaded`} />
           <QuickAction href="/visas" label="Visas" description="Visa guide data" />
-          <QuickAction href="/homeschool-laws" label="Homeschool Laws" description="Legal status by country" />
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import { getAllHomeschoolLaws } from "@/lib/homeschool-db"
 import { getAllCities } from "@/lib/cities-db"
 import Link from "next/link"
+import SignalBadge from "@/components/ui/SignalBadge"
 
 export const metadata: Metadata = {
   title: "Homeschooling Laws by Country — Legal Status for Traveling Families | Uncomun",
@@ -41,6 +42,10 @@ export default async function HomeschoolLawsPage() {
           The legal landscape for homeschooling varies enormously. This guide covers {homeschoolLaws.length} countries
           popular with traveling families — {legalCount} where homeschooling is legal, and {greyCount} where
           it operates in a grey area.
+        </p>
+        <p className="text-xs text-[var(--text-secondary)] mt-3 flex items-center gap-2 max-w-2xl">
+          <SignalBadge sourceType="seed_estimate" compact />
+          <span>Legal interpretations are manually curated for family-friendly guidance. Always consult a local lawyer before relocating.</span>
         </p>
       </div>
 

@@ -99,6 +99,14 @@ export type CityOverviewData = {
     fieldReportCount: number
     lastUpdated: string | null
     sources: DataSource[]
+    /** Per-source_type signal counts. Drives the admin Data Coverage view. */
+    coverageByType: {
+      public_api: number
+      field_report: number
+      admin_manual: number
+      seed_estimate: number
+      paid_api_ready: number
+    }
   }
 }
 
@@ -259,8 +267,29 @@ export async function buildCityOverviewData(
       sources: fieldReportCount > 0
         ? [...sourceList, { name: "Family reports", type: "field_report", confidence: 85, updatedAt: latestUpdate, url: null, reportCount: fieldReportCount }]
         : sourceList,
+      coverageByType: countByType(dataSources),
     },
   }
+}
+
+function countByType(
+  rows: Array<{ source_type: string }>,
+): { public_api: number; field_report: number; admin_manual: number; seed_estimate: number; paid_api_ready: number } {
+  const counts = {
+    public_api: 0,
+    field_report: 0,
+    admin_manual: 0,
+    seed_estimate: 0,
+    paid_api_ready: 0,
+  }
+  for (const r of rows) {
+    // accept both new and legacy names
+    const key = (r.source_type === "manual" ? "admin_manual"
+      : r.source_type === "estimated" ? "seed_estimate"
+      : r.source_type) as keyof typeof counts
+    if (key in counts) counts[key]++
+  }
+  return counts
 }
 
 // ============================================================

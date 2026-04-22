@@ -181,6 +181,9 @@ export default function CalculatorPage() {
           <p className="text-[10px] text-[var(--text-secondary)] mt-4">
             Rough estimates. Actual costs vary by neighbourhood, lifestyle, and season. Living expenses include food, transport, activities, and healthcare.
           </p>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+            Per-person living costs are a heuristic (€400/person with kids, €200/person without). Per-city rates will activate when Numbeo data is live.
+          </p>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { Family } from "@/lib/database.types"
+import SignalBadge from "@/components/ui/SignalBadge"
 
 type FamilyProfile = Pick<Family, "id" | "family_name" | "country_code" | "kids_ages" | "travel_style" | "education_approach">
 
@@ -80,13 +81,19 @@ export default function FamiliesHere({
               <p className="text-2xl font-mono font-bold text-[var(--accent-warm)] pulse-live">
                 {totalHere}
               </p>
-              <p className="text-xs text-[var(--text-secondary)]">here now</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs text-[var(--text-secondary)]">here now</p>
+                <SignalBadge sourceType={familiesNow.length > 0 ? "public_api" : "admin_manual"} compact />
+              </div>
             </div>
           )}
           {(loaded && totalBeen > 0) && (
             <div>
               <p className="text-2xl font-mono font-bold">{totalBeen}</p>
-              <p className="text-xs text-[var(--text-secondary)]">have been here</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs text-[var(--text-secondary)]">have been here</p>
+                <SignalBadge sourceType={familiesBeen.length > 0 ? "public_api" : "admin_manual"} compact />
+              </div>
             </div>
           )}
         </div>
@@ -131,8 +138,9 @@ export default function FamiliesHere({
         </p>
       )}
       {!loaded && familiesNow.length === 0 && fallbackCount > 0 && (
-        <p className="text-sm text-[var(--text-secondary)]">
-          {fallbackCount} families estimated
+        <p className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <span>{fallbackCount} families</span>
+          <SignalBadge sourceType="seed_estimate" />
         </p>
       )}
       {!loaded && familiesNow.length === 0 && fallbackCount === 0 && (

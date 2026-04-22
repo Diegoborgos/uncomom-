@@ -50,9 +50,15 @@ function rowToCity(row: Record<string, unknown>): City {
 
 /**
  * Get all cities. Falls back to static data if Supabase unavailable.
+ * Legacy shape; most callers should use getAllCitiesWithMeta to learn
+ * whether the result came from fallback (for banners/telemetry).
  */
 export async function getAllCities(): Promise<City[]> {
-  if (!isSupabaseConfigured) return staticCities
+  return (await getAllCitiesWithMeta()).data
+}
+
+export async function getAllCitiesWithMeta(): Promise<{ data: City[]; fromFallback: boolean }> {
+  if (!isSupabaseConfigured) return { data: staticCities, fromFallback: true }
 
   try {
     const { data, error } = await supabase
@@ -61,12 +67,12 @@ export async function getAllCities(): Promise<City[]> {
       .order("name")
 
     if (error || !data || data.length === 0) {
-      return staticCities
+      return { data: staticCities, fromFallback: true }
     }
 
-    return data.map(rowToCity)
+    return { data: data.map(rowToCity), fromFallback: false }
   } catch {
-    return staticCities
+    return { data: staticCities, fromFallback: true }
   }
 }
 
@@ -74,8 +80,12 @@ export async function getAllCities(): Promise<City[]> {
  * Get a single city by slug. Falls back to static data.
  */
 export async function getCityBySlug(slug: string): Promise<City | null> {
+  return (await getCityBySlugWithMeta(slug)).data
+}
+
+export async function getCityBySlugWithMeta(slug: string): Promise<{ data: City | null; fromFallback: boolean }> {
   if (!isSupabaseConfigured) {
-    return staticCities.find((c) => c.slug === slug) || null
+    return { data: staticCities.find((c) => c.slug === slug) || null, fromFallback: true }
   }
 
   try {
@@ -86,12 +96,12 @@ export async function getCityBySlug(slug: string): Promise<City | null> {
       .single()
 
     if (error || !data) {
-      return staticCities.find((c) => c.slug === slug) || null
+      return { data: staticCities.find((c) => c.slug === slug) || null, fromFallback: true }
     }
 
-    return rowToCity(data)
+    return { data: rowToCity(data), fromFallback: false }
   } catch {
-    return staticCities.find((c) => c.slug === slug) || null
+    return { data: staticCities.find((c) => c.slug === slug) || null, fromFallback: true }
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { City } from "@/lib/types"
 import { formatEuro } from "@/lib/scores"
+import SignalBadge from "@/components/ui/SignalBadge"
 
 export default function FamilyCostPanel({ city }: { city: City }) {
   const rows = [
@@ -13,7 +14,10 @@ export default function FamilyCostPanel({ city }: { city: City }) {
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
-      <h3 className="font-serif text-lg font-bold mb-4">Family of 4 — Monthly Cost</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-serif text-lg font-bold">Family of 4 — Monthly Cost</h3>
+        <SignalBadge sourceType="paid_api_ready" compact />
+      </div>
       <div className="space-y-3">
         {rows.map((row) => (
           <div key={row.label} className="flex justify-between text-sm">

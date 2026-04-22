@@ -55,8 +55,9 @@ export default function AdminCitiesPage() {
   const [saved, setSaved] = useState(false)
   const [changelog, setChangelog] = useState<CityRow[]>([])
   const [citySearch, setCitySearch] = useState("")
-  const [activeTab, setActiveTab] = useState<"editor" | "pipeline" | "changelog">("editor")
+  const [activeTab, setActiveTab] = useState<"editor" | "pipeline" | "coverage" | "changelog">("editor")
   const [cronRuns, setCronRuns] = useState<CronRunRow[]>([])
+  const [coverageRows, setCoverageRows] = useState<Array<{ signal_key: string; source_type: string; source_name: string; fetched_at: string; confidence: number }>>([])
 
   useEffect(() => {
     if (!loading && (!user || !ADMIN_EMAILS.includes(user.email || ""))) {
@@ -92,6 +93,11 @@ export default function AdminCitiesPage() {
       .select("*").eq("city_slug", selectedCity)
       .order("created_at", { ascending: false }).limit(20)
       .then(({ data }) => setChangelog(data || []))
+    supabase.from("city_data_sources")
+      .select("signal_key, source_type, source_name, fetched_at, confidence")
+      .eq("city_slug", selectedCity)
+      .order("signal_key")
+      .then(({ data }) => setCoverageRows(data || []))
   }, [selectedCity])
 
   const filteredCities = useMemo(() => {
@@ -226,7 +232,7 @@ export default function AdminCitiesPage() {
 
               {/* Tabs */}
               <div className="flex gap-1 mb-4 border-b border-[var(--border)]">
-                {(["editor", "pipeline", "changelog"] as const).map((tab) => (
+                {(["editor", "pipeline", "coverage", "changelog"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -236,7 +242,10 @@ export default function AdminCitiesPage() {
                         : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     }`}
                   >
-                    {tab === "editor" ? "Edit Data" : tab === "pipeline" ? "Pipeline" : "Changelog"}
+                    {tab === "editor" ? "Edit Data"
+                      : tab === "pipeline" ? "Pipeline"
+                      : tab === "coverage" ? "Data Coverage"
+                      : "Changelog"}
                   </button>
                 ))}
               </div>
@@ -487,6 +496,11 @@ export default function AdminCitiesPage() {
                 </div>
               )}
 
+              {/* Data Coverage tab */}
+              {activeTab === "coverage" && (
+                <CoveragePanel rows={coverageRows} />
+              )}
+
               {/* Changelog tab */}
               {activeTab === "changelog" && (
                 <div className="space-y-2">
@@ -636,4 +650,106 @@ function CronRunsPanel({ runs }: { runs: {
       </div>
     </div>
   )
+}
+
+function CoveragePanel({ rows }: { rows: Array<{
+  signal_key: string; source_type: string; source_name: string; fetched_at: string; confidence: number
+}> }) {
+  const counts = {
+    public_api: 0,
+    field_report: 0,
+    admin_manual: 0,
+    seed_estimate: 0,
+    paid_api_ready: 0,
+  }
+  for (const r of rows) {
+    const key = (r.source_type === "manual" ? "admin_manual"
+      : r.source_type === "estimated" ? "seed_estimate"
+      : r.source_type) as keyof typeof counts
+    if (key in counts) counts[key]++
+  }
+  const total = rows.length
+  const paidApiReadyCount = counts.paid_api_ready
+
+  const bar = (value: number, tone: "green" | "warm", label: string) => {
+    const pct = total === 0 ? 0 : Math.round((value / total) * 100)
+    const color = tone === "green" ? "var(--accent-green)" : "var(--accent-warm)"
+    return (
+      <div className="flex items-center gap-3 text-xs">
+        <span className="w-28 text-[var(--text-secondary)]">{label}</span>
+        <div className="flex-1 h-2 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+        </div>
+        <span className="w-16 text-right font-mono">{value} · {pct}%</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium mb-3">
+          Signal coverage ({total} signals)
+        </p>
+        <div className="space-y-2">
+          {bar(counts.public_api, "green", "Live APIs")}
+          {bar(counts.field_report, "green", "Family reports")}
+          {bar(counts.admin_manual, "green", "Admin verified")}
+          {bar(counts.seed_estimate, "warm", "Estimated")}
+          {bar(counts.paid_api_ready, "warm", "Waiting on paid API")}
+        </div>
+      </div>
+
+      {paidApiReadyCount > 0 && (
+        <div className="rounded-xl border border-[rgb(var(--accent-warm-rgb)/0.3)] bg-[rgb(var(--accent-warm-rgb)/0.08)] p-4">
+          <p className="text-xs font-medium text-[var(--accent-warm)] mb-1">
+            {paidApiReadyCount} signal{paidApiReadyCount === 1 ? "" : "s"} ready to upgrade
+          </p>
+          <p className="text-xs text-[var(--text-secondary)]">
+            Activating Numbeo (~$30/mo) or Google Places (~$8/mo) in Vercel env vars will flip these from Estimated → Live on the next cron run. No code deploy required.
+          </p>
+        </div>
+      )}
+
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
+        <div className="px-4 py-2 border-b border-[var(--border)] text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-medium">
+          All signals
+        </div>
+        <div className="max-h-[500px] overflow-y-auto">
+          {rows.length === 0 ? (
+            <p className="text-sm text-[var(--text-secondary)] py-8 text-center">
+              No provenance rows yet. Run the provenance-backfill migration.
+            </p>
+          ) : rows.map((r) => (
+            <div key={r.signal_key} className="flex items-center gap-3 px-4 py-2 border-b border-[var(--border)] last:border-b-0 text-xs">
+              <span className="w-[200px] font-mono truncate text-[var(--text-primary)]">{r.signal_key}</span>
+              <span className="w-28 text-[var(--text-secondary)]">{r.source_name}</span>
+              <span className="w-12 text-right font-mono text-[var(--text-secondary)]">{r.confidence}%</span>
+              <span className="flex-1 text-right text-[var(--text-secondary)]">{timeAgo(r.fetched_at)}</span>
+              <span className={`w-24 text-right font-medium ${
+                r.source_type === "public_api" || r.source_type === "field_report" || r.source_type === "admin_manual" || r.source_type === "manual"
+                  ? "text-[var(--accent-green)]"
+                  : "text-[var(--accent-warm)]"
+              }`}>
+                {labelForType(r.source_type)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function labelForType(t: string): string {
+  switch (t) {
+    case "public_api": return "Live"
+    case "field_report": return "Family reports"
+    case "admin_manual":
+    case "manual": return "Verified"
+    case "paid_api_ready": return "Paid API ready"
+    case "seed_estimate":
+    case "estimated":
+    default: return "Estimated"
+  }
 }

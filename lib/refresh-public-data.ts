@@ -11,6 +11,10 @@ import {
   fetchGdelt,
   fetchWikidata,
 } from "@/lib/api-integrations"
+import {
+  fetchNumbeoCostOfLiving,
+  fetchGooglePlacesSchools,
+} from "@/lib/paid-integrations"
 
 type RefreshResult = {
   source: string
@@ -386,6 +390,56 @@ export async function runRefreshPublicData(
     } catch (err) {
       console.error(`[refresh][${city.slug}] Wikidata FAILED:`, String(err))
       results.push({ source: "Wikidata", signal: "metadata", value: null, error: String(err) })
+    }
+
+    // Paid APIs — dormant unless NUMBEO_API_KEY / GOOGLE_PLACES_API_KEY set.
+    // When active, each one writes public_api rows that automatically flip
+    // the corresponding UI badges from "Estimated" to "Live".
+    try {
+      const numbeoWrites = await fetchNumbeoCostOfLiving(city.name, city.country_code)
+      if (numbeoWrites) {
+        for (const w of numbeoWrites) {
+          const [section, field] = w.signal_key.split(".")
+          if (section && field) signalUpdates[w.signal_key] = Number(w.signal_value) || w.signal_value
+          results.push({ source: w.source_name, signal: w.signal_key, value: w.signal_value })
+          await supabase.from("city_data_sources").upsert({
+            city_slug: city.slug,
+            signal_key: w.signal_key,
+            signal_value: w.signal_value,
+            source_name: w.source_name,
+            source_url: w.source_url,
+            source_type: "public_api",
+            fetched_at: new Date().toISOString(),
+            valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            confidence: w.confidence,
+          }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+        }
+      }
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] Numbeo FAILED:`, String(err))
+    }
+
+    try {
+      const gpsWrites = await fetchGooglePlacesSchools(city.name, city.lat, city.lng)
+      if (gpsWrites) {
+        for (const w of gpsWrites) {
+          signalUpdates[w.signal_key] = Number(w.signal_value) || w.signal_value
+          results.push({ source: w.source_name, signal: w.signal_key, value: w.signal_value })
+          await supabase.from("city_data_sources").upsert({
+            city_slug: city.slug,
+            signal_key: w.signal_key,
+            signal_value: w.signal_value,
+            source_name: w.source_name,
+            source_url: w.source_url,
+            source_type: "public_api",
+            fetched_at: new Date().toISOString(),
+            valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            confidence: w.confidence,
+          }, { onConflict: "city_slug,signal_key", ignoreDuplicates: false })
+        }
+      }
+    } catch (err) {
+      console.error(`[refresh][${city.slug}] Google Places FAILED:`, String(err))
     }
 
     if (Object.keys(signalUpdates).length > 0) {
