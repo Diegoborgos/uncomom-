@@ -47,6 +47,7 @@ export default function ResearchCityPage() {
   const [parseError, setParseError] = useState<string | null>(null)
   const [skipSet, setSkipSet] = useState<Set<string>>(new Set())
   const [applying, setApplying] = useState(false)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [result, setResult] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -143,46 +144,68 @@ export default function ResearchCityPage() {
 
   const apply = async () => {
     if (!parsed || !city) return
+    const allSignals = Object.entries(parsed)
+      .filter(([k, v]) => !skipSet.has(k) && v.value !== null && typeof v.source_url === "string")
+      .map(([k, v]) => ({
+        signal_key: k,
+        value: v.value,
+        source_url: v.source_url,
+        source_name: v.source_name,
+        source_date: v.source_date,
+        confidence: v.confidence,
+        notes: v.notes,
+      }))
+    if (allSignals.length === 0) {
+      setResult("Nothing to apply.")
+      return
+    }
+
     setApplying(true)
     setResult(null)
-    const payload = {
-      citySlug: city.slug,
-      signals: Object.entries(parsed)
-        .filter(([k, v]) => !skipSet.has(k) && v.value !== null && typeof v.source_url === "string")
-        .map(([k, v]) => ({
-          signal_key: k,
-          value: v.value,
-          source_url: v.source_url,
-          source_name: v.source_name,
-          source_date: v.source_date,
-          confidence: v.confidence,
-          notes: v.notes,
-        })),
-    }
+    setProgress({ done: 0, total: allSignals.length })
+
     const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch("/api/admin/research/apply", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session?.access_token || ""}`,
-      },
-      body: JSON.stringify(payload),
-    })
-    const j = await res.json()
-    setApplying(false)
-    if (!res.ok) {
-      setResult(`Error: ${j.error || "unknown"}`)
-    } else {
-      setResult(`Applied ${j.applied} · Failed ${j.failed}`)
-      // Reload signals
-      const { data: ds } = await supabase
-        .from("city_data_sources")
-        .select("signal_key, signal_value, source_type, source_name, source_url, fetched_at")
-        .eq("city_slug", city.slug)
-        .order("signal_key")
-      setRows((ds as DataSourceRow[]) || [])
-      setPastedJson("")
+    const CHUNK = 5
+    let applied = 0
+    let failed = 0
+    let fatalError: string | null = null
+
+    for (let i = 0; i < allSignals.length; i += CHUNK) {
+      const batch = allSignals.slice(i, i + CHUNK)
+      const res = await fetch("/api/admin/research/apply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ""}`,
+        },
+        body: JSON.stringify({ citySlug: city.slug, signals: batch }),
+      })
+      const j = await res.json()
+      if (!res.ok) {
+        fatalError = j.error || "unknown"
+        break
+      }
+      applied += j.applied ?? 0
+      failed += j.failed ?? 0
+      setProgress({ done: Math.min(i + CHUNK, allSignals.length), total: allSignals.length })
     }
+
+    setApplying(false)
+    setProgress(null)
+    if (fatalError) {
+      setResult(`Error: ${fatalError} (applied ${applied} before failing)`)
+      return
+    }
+    setResult(`Applied ${applied} · Failed ${failed}`)
+
+    // Reload signals
+    const { data: ds } = await supabase
+      .from("city_data_sources")
+      .select("signal_key, signal_value, source_type, source_name, source_url, fetched_at")
+      .eq("city_slug", city.slug)
+      .order("signal_key")
+    setRows((ds as DataSourceRow[]) || [])
+    setPastedJson("")
   }
 
   if (loading) return <div className="p-8 text-[var(--text-secondary)]">Loading...</div>
@@ -278,11 +301,23 @@ export default function ResearchCityPage() {
             <button
               onClick={apply}
               disabled={applying}
-              className="px-5 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium text-xs hover:opacity-90 disabled:opacity-50"
+              className="px-5 py-2 rounded-lg bg-[var(--accent-green)] text-[var(--bg)] font-medium text-xs hover:opacity-90 disabled:opacity-50 min-w-[180px] text-center"
             >
-              {applying ? "Applying..." : "Apply"}
+              {applying && progress
+                ? `Applying ${progress.done}/${progress.total} · ${Math.round((progress.done / Math.max(1, progress.total)) * 100)}%`
+                : applying
+                  ? "Applying..."
+                  : "Apply"}
             </button>
           </div>
+          {applying && progress && (
+            <div className="h-1 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
+              <div
+                className="h-full bg-[var(--accent-green)] transition-all duration-200"
+                style={{ width: `${Math.round((progress.done / Math.max(1, progress.total)) * 100)}%` }}
+              />
+            </div>
+          )}
           {result && (
             <p className="text-xs text-[var(--accent-green)]">{result}</p>
           )}
