@@ -165,30 +165,47 @@ export default function ResearchCityPage() {
     setProgress({ done: 0, total: allSignals.length })
 
     const { data: { session } } = await supabase.auth.getSession()
-    const CHUNK = 5
+    const token = session?.access_token || ""
+
+    // Each request applies ONE signal so progress updates smoothly, with a
+    // concurrency cap of 3 so we finish a 220-signal city in ~30-40s.
+    const CONCURRENCY = 3
+    let done = 0
     let applied = 0
     let failed = 0
     let fatalError: string | null = null
+    let cursor = 0
 
-    for (let i = 0; i < allSignals.length; i += CHUNK) {
-      const batch = allSignals.slice(i, i + CHUNK)
-      const res = await fetch("/api/admin/research/apply", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ""}`,
-        },
-        body: JSON.stringify({ citySlug: city.slug, signals: batch }),
-      })
-      const j = await res.json()
-      if (!res.ok) {
-        fatalError = j.error || "unknown"
-        break
+    async function worker() {
+      while (cursor < allSignals.length && !fatalError) {
+        const index = cursor++
+        const signal = allSignals[index]
+        try {
+          const res = await fetch("/api/admin/research/apply", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ citySlug: city!.slug, signals: [signal] }),
+          })
+          const text = await res.text()
+          let j: { applied?: number; failed?: number; error?: string } = {}
+          try { j = JSON.parse(text) } catch { /* non-JSON body */ }
+          if (!res.ok) {
+            fatalError = j.error || `HTTP ${res.status}: ${text.slice(0, 120)}`
+            return
+          }
+          applied += j.applied ?? 0
+          failed += j.failed ?? 0
+        } catch (err) {
+          fatalError = String((err as Error).message ?? err)
+          return
+        } finally {
+          done++
+          setProgress({ done, total: allSignals.length })
+        }
       }
-      applied += j.applied ?? 0
-      failed += j.failed ?? 0
-      setProgress({ done: Math.min(i + CHUNK, allSignals.length), total: allSignals.length })
     }
+
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
 
     setApplying(false)
     setProgress(null)
