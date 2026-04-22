@@ -6,7 +6,7 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
-import { Family, Trip } from "@/lib/database.types"
+import { Family, Trip, FamilyAdult, FamilyPet } from "@/lib/database.types"
 import { cities } from "@/data/cities"
 import { countryCodeToFlag } from "@/lib/scores"
 
@@ -29,6 +29,8 @@ export default function PublicProfilePage() {
   const { user, family: myFamily } = useAuth()
 
   const [family, setFamily] = useState<Family | null>(null)
+  const [adults, setAdults] = useState<FamilyAdult[]>([])
+  const [pets, setPets] = useState<FamilyPet[]>([])
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [followerCount, setFollowerCount] = useState(0)
@@ -45,12 +47,16 @@ export default function PublicProfilePage() {
         const isUUID = handle.includes("-") && handle.length > 30
         const { data: fam } = await supabase
           .from("families")
-          .select("*")
+          .select("*, family_adults(*), family_pets(*)")
           .eq(isUUID ? "id" : "username", handle)
+          .order("sort_order", { foreignTable: "family_adults", ascending: true })
+          .order("sort_order", { foreignTable: "family_pets", ascending: true })
           .maybeSingle()
 
         if (!fam) { setLoading(false); return }
         setFamily(fam as Family)
+        setAdults(((fam as unknown as { family_adults?: FamilyAdult[] }).family_adults) || [])
+        setPets(((fam as unknown as { family_pets?: FamilyPet[] }).family_pets) || [])
 
         // Trips
         const { data: t } = await supabase
@@ -172,11 +178,12 @@ export default function PublicProfilePage() {
   })
   const mostTime = Object.entries(daysPerCity).sort((a, b) => b[1] - a[1])
 
-  const tags: string[] = []
-  if (family.travel_style) tags.push(family.travel_style)
-  if (family.education_approach) tags.push(family.education_approach)
-  if (family.parent_work_type) tags.push(family.parent_work_type)
-  if (family.interests?.length) tags.push(...family.interests.map(i => i.charAt(0).toUpperCase() + i.slice(1)))
+  const householdTags: string[] = []
+  if (family.travel_style) householdTags.push(family.travel_style)
+  if (family.education_approach) householdTags.push(family.education_approach)
+
+  const kidsInterests = (family as unknown as { kids_interests?: string[] }).kids_interests || []
+  const hasPeopleSection = adults.length > 0 || family.kids_ages?.length > 0 || pets.length > 0
 
   return (
     <div>
@@ -245,14 +252,27 @@ export default function PublicProfilePage() {
           <Stat value={memberSince} label="Member since" />
         </div>
 
-        {tags.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1.5 mb-8">
-            {tags.map(tag => (
+        {householdTags.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-1.5 mb-6">
+            {householdTags.map(tag => (
               <span key={tag} className="text-xs px-3 py-1.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--text-secondary)]">
                 {tag}
               </span>
             ))}
           </div>
+        )}
+
+        {hasPeopleSection && (
+          <section className="mb-8">
+            <SectionTitle>The {family.family_name || "family"}</SectionTitle>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {adults.map((a) => <AdultCard key={a.id} adult={a} />)}
+              {family.kids_ages?.length > 0 && (
+                <KidsCard ages={family.kids_ages} interests={kidsInterests} />
+              )}
+              {pets.length > 0 && <PetsCard pets={pets} />}
+            </div>
+          </section>
         )}
 
         {trips.length > 0 && (
@@ -375,6 +395,75 @@ export default function PublicProfilePage() {
             </section>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function AdultCard({ adult }: { adult: FamilyAdult }) {
+  const name = adult.display_name || (adult.role === "partner" ? "Partner" : adult.role === "guardian" ? "Guardian" : "Parent")
+  const initials = (adult.display_name || adult.role || "?").slice(0, 2).toUpperCase()
+  const subtitle = [adult.occupation, adult.work_type].filter(Boolean).join(" · ")
+  const tags = [...(adult.interests || []), ...(adult.hobbies || [])]
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-full bg-[rgb(var(--accent-green-rgb)/0.15)] text-[var(--accent-green)] flex items-center justify-center text-sm font-bold border border-[rgb(var(--accent-green-rgb)/0.25)]">
+          {initials}
+        </div>
+        <div>
+          <p className="font-serif font-bold text-sm">{name}</p>
+          {subtitle && <p className="text-[11px] text-[var(--text-secondary)]">{subtitle}</p>}
+        </div>
+      </div>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((t) => (
+            <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-[var(--text-secondary)]">
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function KidsCard({ ages, interests }: { ages: number[]; interests: string[] }) {
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-full bg-[var(--surface-elevated)] text-[var(--text-secondary)] flex items-center justify-center text-sm font-bold border border-[var(--border)]">
+          K
+        </div>
+        <div>
+          <p className="font-serif font-bold text-sm">Kids</p>
+          <p className="text-[11px] text-[var(--text-secondary)]">ages {ages.join(", ")}</p>
+        </div>
+      </div>
+      {interests.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {interests.map((t) => (
+            <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-[var(--text-secondary)]">
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PetsCard({ pets }: { pets: FamilyPet[] }) {
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider mb-2">Pets</p>
+      <div className="flex flex-wrap gap-1.5">
+        {pets.map((p) => (
+          <span key={p.id} className="text-xs px-3 py-1.5 rounded-full bg-[rgb(var(--accent-green-rgb)/0.1)] text-[var(--accent-green)] border border-[rgb(var(--accent-green-rgb)/0.2)]">
+            {p.name ? `${p.kind.charAt(0).toUpperCase() + p.kind.slice(1)} — ${p.name}` : p.kind.charAt(0).toUpperCase() + p.kind.slice(1)}
+          </span>
+        ))}
       </div>
     </div>
   )

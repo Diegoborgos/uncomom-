@@ -34,12 +34,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const targetFamilyId = body.familyId
 
-  // Get families to process
+  // Get families to process (with adults + pets so the briefing can reason per-person)
+  const familySelect = "*, family_adults(*), family_pets(kind, name)"
   let families
   if (targetFamilyId) {
     const { data } = await supabase
       .from("families")
-      .select("*")
+      .select(familySelect)
       .eq("id", targetFamilyId)
       .single()
     families = data ? [data] : []
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     if (uniqueFamilyIds.length > 0) {
       const { data } = await supabase
         .from("families")
-        .select("*")
+        .select(familySelect)
         .in("id", uniqueFamilyIds)
       families = data || []
     } else {
@@ -104,14 +105,37 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // Build family context for LLM
+      // Build family context for LLM — per-adult detail so the briefing can be specific
+      type AdultRow = { display_name?: string | null; role?: string | null; occupation?: string | null; work_type?: string | null; interests?: string[] | null; hobbies?: string[] | null; sort_order?: number | null }
+      type PetRow = { kind: string; name?: string | null }
+      const adults = ((family.family_adults as AdultRow[] | null) || []).slice().sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      const pets = (family.family_pets as PetRow[] | null) || []
+
+      const adultsLines = adults.length > 0
+        ? adults.map((a) => {
+            const label = a.display_name || a.role || "Adult"
+            const job = [a.occupation, a.work_type].filter(Boolean).join(", ") || "work not specified"
+            const tags = [...(a.interests || []), ...(a.hobbies || [])]
+            return `  - ${label} (${job}): ${tags.join(", ") || "no interests listed"}`
+          }).join("\n")
+        : `  - (legacy) ${family.parent_work_type || "work not specified"}: ${(family.interests || []).join(", ") || "no interests listed"}`
+
+      const petsLine = pets.length > 0
+        ? pets.map(p => p.name ? `${p.kind} (${p.name})` : p.kind).join(", ")
+        : "none"
+
+      const kidsInterestsList = (family.kids_interests || []).join(", ")
+
       const familyContext = [
         `Family: ${family.family_name}`,
         `Passports: ${family.passport_tier || "unknown"} (country: ${family.home_country})`,
-        `Kids ages: ${(family.kids_ages || []).join(", ")}`,
+        `Adults:`,
+        adultsLines,
+        `Kids ages: ${(family.kids_ages || []).join(", ") || "none"}`,
+        `Kids interests: ${kidsInterestsList || "not specified"}`,
+        `Pets: ${petsLine}`,
         `Education: ${family.education_approach || "not specified"}`,
         `Travel style: ${family.travel_style || "not specified"}`,
-        `Interests: ${(family.interests || []).join(", ")}`,
         `Budget: ${family.real_budget_min ? `€${family.real_budget_min}-€${family.real_budget_max}/mo` : "not specified"}`,
         `Top priorities: ${(family.top_priorities || []).join(", ")}`,
         `Deal breakers: ${(family.deal_breakers || []).join(", ")}`,

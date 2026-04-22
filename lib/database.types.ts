@@ -9,12 +9,15 @@ export type Database = {
           home_country: string
           country_code: string
           kids_ages: number[]
+          kids_interests: string[]
           travel_style: string
           bio: string
           avatar_url: string | null
+          /** @deprecated use family_adults.work_type — kept for legacy readers during migration */
           parent_work_type: string
           education_approach: string
           languages: string[]
+          /** @deprecated use family_adults.interests + families.kids_interests — kept for legacy readers during migration */
           interests: string[]
           current_city: string
           membership_tier: "free" | "paid"
@@ -48,6 +51,7 @@ export type Database = {
           home_country?: string
           country_code?: string
           kids_ages?: number[]
+          kids_interests?: string[]
           travel_style?: string
           bio?: string
           avatar_url?: string | null
@@ -85,6 +89,7 @@ export type Database = {
           home_country?: string
           country_code?: string
           kids_ages?: number[]
+          kids_interests?: string[]
           travel_style?: string
           bio?: string
           avatar_url?: string | null
@@ -182,6 +187,70 @@ export type Database = {
           updated_at?: string
         }
       }
+      family_adults: {
+        Row: {
+          id: string
+          family_id: string
+          display_name: string
+          role: "parent" | "guardian" | "partner"
+          occupation: string
+          work_type: string
+          interests: string[]
+          hobbies: string[]
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          display_name?: string
+          role?: "parent" | "guardian" | "partner"
+          occupation?: string
+          work_type?: string
+          interests?: string[]
+          hobbies?: string[]
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          display_name?: string
+          role?: "parent" | "guardian" | "partner"
+          occupation?: string
+          work_type?: string
+          interests?: string[]
+          hobbies?: string[]
+          sort_order?: number
+          updated_at?: string
+        }
+      }
+      family_pets: {
+        Row: {
+          id: string
+          family_id: string
+          kind: string
+          name: string
+          notes: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          kind: string
+          name?: string
+          notes?: string
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          kind?: string
+          name?: string
+          notes?: string
+          sort_order?: number
+        }
+      }
     }
   }
 }
@@ -189,3 +258,5 @@ export type Database = {
 export type Family = Database["public"]["Tables"]["families"]["Row"]
 export type Trip = Database["public"]["Tables"]["trips"]["Row"]
 export type Review = Database["public"]["Tables"]["reviews"]["Row"]
+export type FamilyAdult = Database["public"]["Tables"]["family_adults"]["Row"]
+export type FamilyPet = Database["public"]["Tables"]["family_pets"]["Row"]
