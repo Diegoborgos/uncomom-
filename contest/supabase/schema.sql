@@ -101,6 +101,7 @@ as $$
   select count(*)::int from ins where inserted;
 $$;
 revoke all on function contest_upsert_entries(jsonb) from public, anon, authenticated;
+grant execute on function contest_upsert_entries(jsonb) to service_role;
 
 -- Private storage bucket for the copied videos and images
 insert into storage.buckets (id, name, public)
