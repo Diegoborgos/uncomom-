@@ -59,32 +59,31 @@ What this means in practice:
 
 ## Part 2: Put the app online (Supabase + Vercel)
 
-### 1. Supabase: create the tables
-Supabase dashboard → your project → **SQL Editor** → **New query** → paste everything in [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
+### 1. Supabase: create the tables ✅ already done
+The **Contest Gallery** Supabase project already has the tables, the private `contest-media` storage bucket and the hourly job.
+(For a fresh project: SQL Editor → run [`supabase/schema.sql`](supabase/schema.sql), then [`supabase/cron.sql`](supabase/cron.sql).)
 
-This creates three private tables and a private storage bucket named `contest-media`. Nothing is publicly readable; only the app's server can access it. You can safely run it again.
-
-Then copy two values from **Project Settings → API**: the **Project URL** and the **service_role** key (secret; keep it private).
+The one thing to copy from it: Supabase → **Contest Gallery** → **Project Settings → API Keys** → the **secret / service_role** key. Keep it private.
 
 ### 2. Vercel: create a second project
 - vercel.com → **Add New… → Project** → import this same GitHub repository.
+- **Project name:** `contest-gallery`.
 - **Root Directory:** click **Edit** and choose `contest`. This is what makes it a separate app.
 - Under **Environment Variables** add:
 
 | Name | Value |
 |---|---|
-| `SUPABASE_URL` | Supabase Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role key |
+| `SUPABASE_URL` | `https://oeqgynufmrgkjhqzbvfr.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | the secret key from step 1 |
 | `META_APP_ID` | from Part 1, step 5 |
 | `META_APP_SECRET` | from Part 1, step 5 |
 | `APP_PASSWORD` | your login password. For a teammate, add a second one after a comma: `myPass,teammatePass` |
-| `CRON_SECRET` | any long random string (e.g. 40 random letters and numbers) |
+| `CRON_SECRET` | the value Claude gave you in chat (it must match the one in the Supabase hourly job) |
 
 - Click **Deploy**. When it's done you get an address like `contest-gallery.vercel.app`.
 
-### 3. Turn on the hourly fetch
-Vercel's free plan only allows once-a-day scheduled jobs, so Supabase does the hourly scheduling.
-Open [`supabase/cron.sql`](supabase/cron.sql), replace `YOUR-APP-URL` and `YOUR-CRON-SECRET`, and run it in the Supabase SQL Editor. (A once-a-day Vercel backup job is already set up in `vercel.json`.)
+### 3. Hourly fetch ✅ automatic
+Vercel's free plan only allows once-a-day scheduled jobs, so Supabase calls the app every hour. The app tells Supabase its address the first time it runs, so there's nothing to set up. (A once-a-day Vercel backup job is also built in.)
 
 ---
 

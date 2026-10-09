@@ -1,4 +1,4 @@
-import { BUCKET, db, getSettings, MediaItem, saveSettings, Settings } from "./db"
+import { BUCKET, db, getSettings, MediaItem, registerAppUrl, saveSettings, Settings } from "./db"
 import { graph, graphPages, MetaError, refreshUserTokenIfNeeded, withToken } from "./meta"
 
 // Vercel Hobby functions stop at 60s. Stop starting new work after this.
@@ -136,6 +136,7 @@ export async function collect(): Promise<CollectResult> {
   const { data: log } = await db().from("contest_fetch_log").insert({}).select("id").single()
 
   const s = await getSettings()
+  await registerAppUrl(s)
   if (!s.ig_user_id) {
     notes.push("Instagram is not connected yet (Settings → Connect Instagram).")
     ok = false

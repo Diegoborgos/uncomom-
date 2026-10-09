@@ -13,6 +13,7 @@ create table if not exists contest_settings (
   page_token text,                   -- does not expire (derived from a long-lived user token)
   user_token text,                   -- long-lived, ~60 days
   user_token_expires_at timestamptz,
+  app_url text,                      -- set by the app itself; used by the hourly job
   updated_at timestamptz not null default now()
 );
 insert into contest_settings (id) values (1) on conflict do nothing;

@@ -1,7 +1,9 @@
--- Hourly fetch. Run AFTER the app is deployed.
--- Replace the two placeholders below, then run this in the Supabase SQL editor.
---   YOUR-APP-URL   e.g. contest-gallery.vercel.app
---   YOUR-CRON-SECRET   the same value as CRON_SECRET in Vercel
+-- Hourly fetch. Run once in the Supabase SQL editor (already done for the
+-- Contest Gallery project). Replace YOUR-CRON-SECRET with the CRON_SECRET
+-- value from Vercel.
+--
+-- The app stores its own address in contest_settings.app_url the first time
+-- it runs on Vercel, so this job starts working by itself after deployment.
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
@@ -14,9 +16,11 @@ select cron.schedule(
   '7 * * * *',  -- every hour, at minute 7
   $$
   select net.http_get(
-    url := 'https://YOUR-APP-URL/api/cron/fetch',
+    url := app_url || '/api/cron/fetch',
     headers := jsonb_build_object('Authorization', 'Bearer YOUR-CRON-SECRET'),
     timeout_milliseconds := 60000
-  );
+  )
+  from public.contest_settings
+  where id = 1 and app_url is not null;
   $$
 );

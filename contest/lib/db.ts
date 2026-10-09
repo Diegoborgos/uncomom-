@@ -46,6 +46,7 @@ export type Entry = {
 export type Settings = {
   hashtags: string[]
   hashtag_ids: Record<string, string>
+  app_url: string | null
   contest_start: string | null
   ig_user_id: string | null
   ig_username: string | null
@@ -59,6 +60,17 @@ export async function getSettings(): Promise<Settings> {
   const { data, error } = await db().from("contest_settings").select("*").eq("id", 1).single()
   if (error) throw new Error(`Could not read settings: ${error.message}`)
   return data as Settings
+}
+
+/**
+ * Remember this app's public address so the Supabase hourly job knows what to call.
+ * VERCEL_PROJECT_PRODUCTION_URL is set by Vercel automatically.
+ */
+export async function registerAppUrl(s: Settings) {
+  const host = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  if (!host || process.env.VERCEL_ENV !== "production") return
+  const url = `https://${host}`
+  if (s.app_url !== url) await saveSettings({ app_url: url })
 }
 
 export async function saveSettings(patch: Partial<Settings>) {
