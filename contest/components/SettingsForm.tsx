@@ -38,14 +38,13 @@ export default function SettingsForm(props: {
 
   async function saveContest(e: React.FormEvent) {
     e.preventDefault()
-    const added = hashtags
-      .split(/[\s,]+/)
-      .map((t) => t.replace(/^#/, "").toLowerCase())
-      .filter((t) => t && !props.hashtags.includes(t))
+    // Only the first hashtag is looked up on Instagram, so only changing it costs a lookup
+    const first = hashtags.split(/[\s,]+/).map((t) => t.replace(/^#/, "").toLowerCase()).find(Boolean)
     if (
-      added.length &&
+      first &&
       props.hashtags.length &&
-      !confirm(`Each new hashtag uses one of your 30 hashtag lookups for this week (adding: #${added.join(", #")}). Continue?`)
+      first !== props.hashtags[0] &&
+      !confirm(`Searching for #${first} uses one of your 30 hashtag lookups for this week. Continue?`)
     )
       return
     setBusy(true)
@@ -97,7 +96,10 @@ export default function SettingsForm(props: {
       <form onSubmit={saveContest} className={card}>
         <h2 className="font-semibold">Contest</h2>
         <label className="block space-y-1">
-          <span className="text-sm">Hashtags (separate with spaces)</span>
+          <span className="text-sm">
+            Hashtags, separated by spaces. A post must use <strong>all</strong> of them to count. Put your most
+            unique hashtag first: only that one is searched on Instagram.
+          </span>
           <input
             value={hashtags}
             onChange={(e) => setHashtags(e.target.value)}

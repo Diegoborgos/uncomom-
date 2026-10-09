@@ -258,7 +258,6 @@ function Viewer({
             <span>{formatDate(entry.posted_at)}</span>
             <span>♥ {entry.like_count ?? "hidden"}</span>
             <span>💬 {entry.comments_count ?? 0}</span>
-            {entry.hashtags.length > 0 && <span className="text-pink-600">{entry.hashtags.map((t) => `#${t}`).join(" ")}</span>}
             <span>via {entry.sources.join(", ")}</span>
           </div>
 
@@ -303,7 +302,6 @@ export default function Gallery({
   const [filter, setFilter] = useState<Filter>("all")
   const [sort, setSort] = useState<Sort>("newest")
   const [query, setQuery] = useState("")
-  const [tagFilter, setTagFilter] = useState("")
   const [openId, setOpenId] = useState<string | null>(null)
   // Freeze the order while the viewer is open, so marking an entry doesn't make it vanish mid-review.
   const [navIds, setNavIds] = useState<string[]>([])
@@ -321,14 +319,13 @@ export default function Gallery({
     const list = entries.filter(
       (e) =>
         (filter === "all" || e.status === filter) &&
-        (!tagFilter || e.hashtags.includes(tagFilter)) &&
         (!q || e.caption?.toLowerCase().includes(q) || e.username?.toLowerCase().includes(q) || e.notes?.toLowerCase().includes(q)),
     )
     const time = (e: Entry) => (e.posted_at ? new Date(e.posted_at).getTime() : 0)
     return list.sort((a, b) =>
       sort === "engagement" ? engagement(b) - engagement(a) : sort === "oldest" ? time(a) - time(b) : time(b) - time(a),
     )
-  }, [entries, filter, sort, query, tagFilter])
+  }, [entries, filter, sort, query])
 
   const update = useCallback(async (id: string, patch: Partial<Entry>) => {
     let before: Entry | undefined
@@ -435,21 +432,6 @@ export default function Gallery({
             placeholder="Search caption, creator, notes"
             className="min-w-0 flex-1 rounded-lg border border-neutral-300 bg-transparent px-3 py-2 text-base dark:border-neutral-700"
           />
-          {hashtags.length > 1 && (
-            <select
-              value={tagFilter}
-              onChange={(e) => setTagFilter(e.target.value)}
-              aria-label="Filter by hashtag"
-              className="w-24 rounded-lg border border-neutral-300 bg-transparent px-2 py-2 text-sm dark:border-neutral-700 sm:w-auto"
-            >
-              <option value="">All tags</option>
-              {hashtags.map((t) => (
-                <option key={t} value={t}>
-                  #{t}
-                </option>
-              ))}
-            </select>
-          )}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
@@ -483,9 +465,6 @@ export default function Gallery({
                   <p className="truncate text-sm font-medium">{e.username ? `@${e.username}` : "creator unknown"}</p>
                   <p className="text-xs text-neutral-500">{formatDate(e.posted_at)}</p>
                 </div>
-                {hashtags.length > 1 && e.hashtags.length > 0 && (
-                  <p className="truncate text-xs font-medium text-pink-600">{e.hashtags.map((t) => `#${t}`).join(" ")}</p>
-                )}
                 <p className="line-clamp-2 min-h-[2.5em] text-xs text-neutral-600 dark:text-neutral-400">{e.caption}</p>
                 <div className="flex items-center justify-between text-xs text-neutral-500">
                   <span>

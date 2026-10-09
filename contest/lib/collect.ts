@@ -142,26 +142,39 @@ export async function collect(): Promise<CollectResult> {
   } else {
     const since = s.contest_start ? new Date(s.contest_start).getTime() : 0
 
-    // top_media includes popular posts of any age, so everything is filtered by the contest start.
-    const inContest = (m: IgMedia) => !since || (m.timestamp && new Date(m.timestamp).getTime() >= since)
+    // A post only counts if its caption uses EVERY contest hashtag, and was posted after the
+    // contest start (top_media includes popular posts of any age).
+    let skipped = 0
+    const isEntry = (m: IgMedia) => {
+      const ok =
+        (!since || (m.timestamp && new Date(m.timestamp).getTime() >= since)) &&
+        hashtagsIn(m.caption, s.hashtags).length === s.hashtags.length
+      if (!ok) skipped++
+      return ok
+    }
 
-    for (const tag of s.hashtags) {
+    // Only the first (priority, most unique) hashtag is searched on Instagram; the others are
+    // checked in the caption. This avoids pulling in a busy hashtag's whole feed.
+    const searchTag = s.hashtags[0]
+    if (searchTag) {
+      const tag = searchTag
       try {
         await withToken(s, async (token) => {
           const id = await hashtagId(s, tag, token)
           const extra = { user_id: s.ig_user_id! }
           // recent_media only covers the last 24 hours, hence the hourly schedule.
           const recent = await fetchMedia(`${id}/recent_media`, HASHTAG_FIELDS, CORE_FIELDS, extra, token, 6, deadline)
-          rows.push(...recent.filter(inContest).map((m) => toRow(m, "recent", [tag])))
+          rows.push(...recent.filter(isEntry).map((m) => toRow(m, "recent", s.hashtags)))
           const top = await fetchMedia(`${id}/top_media`, HASHTAG_FIELDS, CORE_FIELDS, extra, token, 2, deadline)
-          rows.push(...top.filter(inContest).map((m) => toRow(m, "top", [tag])))
+          rows.push(...top.filter(isEntry).map((m) => toRow(m, "top", s.hashtags)))
         })
       } catch (e) {
         ok = false
         notes.push(`#${tag}: ${(e as Error).message}`)
       }
+    } else {
+      notes.push("No hashtags set yet (Settings).")
     }
-    if (s.hashtags.length === 0) notes.push("No hashtags set yet (Settings).")
 
     try {
       await withToken(s, async (token) => {
@@ -175,11 +188,16 @@ export async function collect(): Promise<CollectResult> {
           since ? 10 : 2,
           deadline,
         )
-        rows.push(...tagged.filter(inContest).map((m) => toRow(m, "tagged", hashtagsIn(m.caption, s.hashtags))))
+        rows.push(...tagged.filter(isEntry).map((m) => toRow(m, "tagged", s.hashtags)))
       })
     } catch (e) {
       ok = false
       notes.push(`Tagged posts: ${(e as Error).message}`)
+    }
+    if (skipped && s.hashtags.length > 1) {
+      notes.push(`Ignored ${skipped} posts without all of: ${s.hashtags.map((t) => `#${t}`).join(" ")} (or from before the contest start).`)
+    } else if (skipped) {
+      notes.push(`Ignored ${skipped} posts from before the contest start or without the hashtag.`)
     }
   }
 
