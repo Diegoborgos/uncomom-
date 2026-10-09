@@ -4,8 +4,8 @@
 
 create table if not exists contest_settings (
   id int primary key default 1 check (id = 1),
-  hashtag text,                      -- without "#", lowercase
-  hashtag_id text,                   -- Instagram's ID for the hashtag
+  hashtags text[] not null default '{}',     -- without "#", lowercase
+  hashtag_ids jsonb not null default '{}',   -- { "hashtag": "<Instagram hashtag ID>" }
   contest_start timestamptz,         -- tagged posts older than this are ignored
   ig_user_id text,
   ig_username text,
@@ -19,7 +19,7 @@ insert into contest_settings (id) values (1) on conflict do nothing;
 
 create table if not exists contest_entries (
   id text primary key,               -- Instagram media ID (dedupe key)
-  hashtag text,
+  hashtags text[] not null default '{}', -- which contest hashtags this post used
   sources text[] not null default '{}', -- 'recent', 'top', 'tagged'
   username text,
   caption text,
@@ -70,7 +70,7 @@ set search_path = public
 as $$
   with incoming as (
     select * from jsonb_to_recordset(items) as x(
-      id text, hashtag text, sources text[], username text, caption text,
+      id text, hashtags text[], sources text[], username text, caption text,
       media_type text, media_product_type text, permalink text,
       posted_at timestamptz, like_count int, comments_count int,
       media jsonb, thumb_url text
@@ -78,14 +78,15 @@ as $$
   ),
   ins as (
     insert into contest_entries as e (
-      id, hashtag, sources, username, caption, media_type, media_product_type,
+      id, hashtags, sources, username, caption, media_type, media_product_type,
       permalink, posted_at, like_count, comments_count, media, thumb_url
     )
-    select id, hashtag, sources, username, caption, media_type, media_product_type,
+    select id, coalesce(hashtags, '{}'), sources, username, caption, media_type, media_product_type,
            permalink, posted_at, like_count, comments_count, coalesce(media, '[]'), thumb_url
     from incoming
     on conflict (id) do update set
       sources = (select array(select distinct unnest(e.sources || excluded.sources))),
+      hashtags = (select array(select distinct unnest(e.hashtags || excluded.hashtags))),
       username = coalesce(e.username, excluded.username),
       caption = coalesce(excluded.caption, e.caption),
       media_product_type = coalesce(excluded.media_product_type, e.media_product_type),

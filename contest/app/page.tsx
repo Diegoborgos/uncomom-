@@ -13,7 +13,7 @@ export default async function Home() {
   return (
     <Gallery
       entries={(entries.data ?? []) as Entry[]}
-      hashtag={settings.hashtag}
+      hashtags={settings.hashtags}
       connected={Boolean(settings.ig_user_id)}
       lastRun={lastRun.data}
     />

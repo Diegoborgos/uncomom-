@@ -1,10 +1,10 @@
 # Contest Gallery
 
-A private web app that collects every Instagram post or Reel that uses your contest hashtag, keeps a permanent copy of each video, and lets you review, shortlist and pick winners without opening Instagram.
+A private web app that collects every Instagram post or Reel that uses your contest hashtags (e.g. `#worldofnicvonrupp` and `#worldpackers`), keeps a permanent copy of each video, and lets you review, shortlist and pick winners without opening Instagram.
 
 It is a separate app from the main Uncomom site. It lives in this `contest/` folder and gets its own Vercel project.
 
-**How it works:** once an hour, Supabase pings the app. The app asks Instagram for new posts with your hashtag plus posts where your account is tagged, saves them to the database, and copies each video and image into Supabase Storage. Instagram's links expire, so the copy is what you watch later.
+**How it works:** once an hour, Supabase pings the app. The app asks Instagram for new posts with each of your hashtags plus posts where your account is tagged, saves them to the database, and copies each video and image into Supabase Storage. Instagram's links expire, so the copy is what you watch later.
 
 ---
 
@@ -92,8 +92,8 @@ Open [`supabase/cron.sql`](supabase/cron.sql), replace `YOUR-APP-URL` and `YOUR-
 
 1. Open your app address, log in with `APP_PASSWORD`.
 2. Go to **Settings**:
-   - **Hashtag:** start with a hashtag you know has fresh public posts, e.g. one you just posted yourself. Remember each new hashtag uses 1 of your 30 weekly lookups.
-   - **Contest start:** leave it empty for the test, or set today.
+   - **Hashtags:** type them separated by spaces, e.g. `#worldofnicvonrupp #worldpackers`. Each new hashtag uses 1 of your 30 weekly lookups.
+   - **Contest start:** posts from before this date are ignored. Without it, Instagram's "top posts" would pull in popular posts of any age, which matters for a busy hashtag like `#worldpackers`. For a first test you can set it a few days back.
 3. Paste the token from Part 1, step 6 into **Instagram connection** → **Connect**. You should see "Connected to @yourname".
 4. Go back to the gallery and press **Fetch now**. After up to a minute you'll see how many posts were found and saved.
 5. Check **Settings → Recent fetches** for messages. ✅ means everything worked; ⚠️ shows what Meta said.
@@ -102,20 +102,20 @@ Open [`supabase/cron.sql`](supabase/cron.sql), replace `YOUR-APP-URL` and `YOUR-
 
 ## Part 4: How to run a contest
 
-1. **Pick the hashtag.** Make it unique (e.g. `#brandsummer26`, not `#summer`) so only entries use it. It can't contain spaces or punctuation.
-2. **Set it in the app at least a day before launch.** Put the hashtag and **Contest start** (launch date) in Settings, then press **Fetch now** once to confirm it works. Instagram only returns hashtag posts from the **last 24 hours**, so the hourly job has to be running before entries arrive or some will be missed.
+1. **Pick the hashtags.** A unique one (like `#worldofnicvonrupp`) catches only entries. A broad one (like `#worldpackers`) also brings in everyday posts that aren't entries, which you can **Reject**, and it fills storage faster.
+2. **Set them in the app at least a day before launch.** Put the hashtags and **Contest start** (launch date) in Settings, then press **Fetch now** once to confirm it works. Instagram only returns hashtag posts from the **last 24 hours**, so the hourly job has to be running before entries arrive or some will be missed.
 3. **Tell creators the rules:** use the hashtag **and tag your account**. Tagging gives you their username and is a second way to catch their post.
 4. **During the contest:** the app collects new entries every hour. Check **Settings → Recent fetches** every few days for ⚠️ warnings.
-5. **Review:** open the gallery on your phone. Filter **Not reviewed**, tap an entry to watch it, and use **★ Shortlist / 🏆 Winner / ✕ Reject**. Tap a button again to undo. Use **Notes** for comments; your teammate sees them too. **← Prev / Next →** move through the list. When a creator shows as "unknown", tap **Open original post** and type their name into **Creator**.
+5. **Review:** open the gallery on your phone. Filter **Not reviewed** (and pick one hashtag from the tag menu if you like), tap an entry to watch it, and use **★ Shortlist / 🏆 Winner / ✕ Reject**. Tap a button again to undo. Use **Notes** for comments; your teammate sees them too. **← Prev / Next →** move through the list. When a creator shows as "unknown", tap **Open original post** and type their name into **Creator**.
 6. **Pick winners:** filter **Shortlisted**, sort by **Most engagement** if you like, and mark the winners.
 7. **Export:** the **Export CSV** button downloads winners and shortlisted entries (username, profile link, post link, date, likes, comments, caption, notes). It opens in Excel, Numbers or Google Sheets.
-8. **After the contest:** clear the hashtag in Settings to stop collecting. Videos stay in storage until you delete them.
+8. **After the contest:** clear the hashtags in Settings to stop collecting. Videos stay in storage until you delete them.
 
 ---
 
 ## Good to know (limits)
 
-- **30 hashtags per 7 days.** Meta lets one Instagram account look up at most 30 different hashtags in a rolling week. The app looks the hashtag up once and remembers it, so normal running uses just 1.
+- **30 hashtags per 7 days.** Meta lets one Instagram account look up at most 30 different hashtags in a rolling week. The app looks each hashtag up once and remembers it, so two hashtags use 2.
 - **Hashtag results never include the creator's username.** That's Meta's rule. Tagged posts include it, and you can type it in yourself.
 - **Likes can be hidden.** If a creator hides likes, the app shows "hidden" and sorts that post as 0 likes.
 - **Some posts can't be copied.** Instagram withholds the video link for some posts (often ones with copyrighted music). Those show a "Watch on Instagram" button instead.

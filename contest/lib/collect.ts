@@ -28,7 +28,7 @@ type IgMedia = {
 
 type Row = {
   id: string
-  hashtag: string | null
+  hashtags: string[]
   sources: string[]
   username: string | null
   caption: string | null
@@ -42,13 +42,13 @@ type Row = {
   thumb_url: string | null
 }
 
-function toRow(m: IgMedia, source: string, hashtag: string | null): Row {
+function toRow(m: IgMedia, source: string, hashtags: string[]): Row {
   const media: MediaItem[] = m.children?.data?.length
     ? m.children.data.map((c) => ({ type: c.media_type ?? "IMAGE", url: c.media_url ?? null, path: null }))
     : [{ type: m.media_type ?? "IMAGE", url: m.media_url ?? null, path: null }]
   return {
     id: m.id,
-    hashtag,
+    hashtags,
     sources: [source],
     username: m.username ?? null,
     caption: m.caption ?? null,
@@ -75,6 +75,7 @@ function mergeRows(rows: Row[]): Row[] {
     byId.set(r.id, {
       ...prev,
       sources: Array.from(new Set([...prev.sources, ...r.sources])),
+      hashtags: Array.from(new Set([...prev.hashtags, ...r.hashtags])),
       username: prev.username ?? r.username,
       thumb_url: prev.thumb_url ?? r.thumb_url,
     })
@@ -100,18 +101,21 @@ async function fetchMedia(
   }
 }
 
-async function hashtagId(s: Settings, token: string): Promise<string> {
-  if (s.hashtag_id) return s.hashtag_id
+async function hashtagId(s: Settings, tag: string, token: string): Promise<string> {
+  if (s.hashtag_ids[tag]) return s.hashtag_ids[tag]
   // Each new hashtag counts toward Meta's limit of 30 unique hashtags per 7 days.
-  const res = await graph<{ data: { id: string }[] }>(
-    "ig_hashtag_search",
-    { user_id: s.ig_user_id!, q: s.hashtag! },
-    token,
-  )
+  const res = await graph<{ data: { id: string }[] }>("ig_hashtag_search", { user_id: s.ig_user_id!, q: tag }, token)
   const id = res.data[0]?.id
-  if (!id) throw new MetaError(`Instagram has no hashtag #${s.hashtag} yet`)
-  await saveSettings({ hashtag_id: id })
+  if (!id) throw new MetaError(`Instagram has no hashtag #${tag} yet`)
+  s.hashtag_ids = { ...s.hashtag_ids, [tag]: id }
+  await saveSettings({ hashtag_ids: s.hashtag_ids })
   return id
+}
+
+/** Which contest hashtags appear in a caption (for tagged posts). */
+function hashtagsIn(caption: string | undefined, tags: string[]): string[] {
+  const found = new Set((caption ?? "").toLowerCase().match(/#[^\s#!-/:-@[-^`{-~]+/g)?.map((t) => t.slice(1)) ?? [])
+  return tags.filter((t) => found.has(t))
 }
 
 export type CollectResult = {
@@ -138,24 +142,26 @@ export async function collect(): Promise<CollectResult> {
   } else {
     const since = s.contest_start ? new Date(s.contest_start).getTime() : 0
 
-    if (s.hashtag) {
+    // top_media includes popular posts of any age, so everything is filtered by the contest start.
+    const inContest = (m: IgMedia) => !since || (m.timestamp && new Date(m.timestamp).getTime() >= since)
+
+    for (const tag of s.hashtags) {
       try {
         await withToken(s, async (token) => {
-          const id = await hashtagId(s, token)
+          const id = await hashtagId(s, tag, token)
           const extra = { user_id: s.ig_user_id! }
           // recent_media only covers the last 24 hours, hence the hourly schedule.
-          const recent = await fetchMedia(`${id}/recent_media`, HASHTAG_FIELDS, CORE_FIELDS, extra, token, 10, deadline)
-          rows.push(...recent.map((m) => toRow(m, "recent", s.hashtag)))
+          const recent = await fetchMedia(`${id}/recent_media`, HASHTAG_FIELDS, CORE_FIELDS, extra, token, 6, deadline)
+          rows.push(...recent.filter(inContest).map((m) => toRow(m, "recent", [tag])))
           const top = await fetchMedia(`${id}/top_media`, HASHTAG_FIELDS, CORE_FIELDS, extra, token, 2, deadline)
-          rows.push(...top.map((m) => toRow(m, "top", s.hashtag)))
+          rows.push(...top.filter(inContest).map((m) => toRow(m, "top", [tag])))
         })
       } catch (e) {
         ok = false
-        notes.push(`Hashtag: ${(e as Error).message}`)
+        notes.push(`#${tag}: ${(e as Error).message}`)
       }
-    } else {
-      notes.push("No hashtag set yet (Settings).")
     }
+    if (s.hashtags.length === 0) notes.push("No hashtags set yet (Settings).")
 
     try {
       await withToken(s, async (token) => {
@@ -169,11 +175,7 @@ export async function collect(): Promise<CollectResult> {
           since ? 10 : 2,
           deadline,
         )
-        rows.push(
-          ...tagged
-            .filter((m) => !since || (m.timestamp && new Date(m.timestamp).getTime() >= since))
-            .map((m) => toRow(m, "tagged", s.hashtag)),
-        )
+        rows.push(...tagged.filter(inContest).map((m) => toRow(m, "tagged", hashtagsIn(m.caption, s.hashtags))))
       })
     } catch (e) {
       ok = false

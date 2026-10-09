@@ -22,7 +22,7 @@ export type MediaItem = { type: string; url: string | null; path: string | null 
 
 export type Entry = {
   id: string
-  hashtag: string | null
+  hashtags: string[]
   sources: string[]
   username: string | null
   caption: string | null
@@ -44,8 +44,8 @@ export type Entry = {
 }
 
 export type Settings = {
-  hashtag: string | null
-  hashtag_id: string | null
+  hashtags: string[]
+  hashtag_ids: Record<string, string>
   contest_start: string | null
   ig_user_id: string | null
   ig_username: string | null

@@ -21,7 +21,7 @@ function toLocalInput(iso: string | null) {
 }
 
 export default function SettingsForm(props: {
-  hashtag: string | null
+  hashtags: string[]
   contestStart: string | null
   igUsername: string | null
   connected: boolean
@@ -29,7 +29,7 @@ export default function SettingsForm(props: {
   userTokenExpiresAt: string | null
   runs: Run[]
 }) {
-  const [hashtag, setHashtag] = useState(props.hashtag ?? "")
+  const [hashtags, setHashtags] = useState(props.hashtags.map((t) => `#${t}`).join(" "))
   const [start, setStart] = useState(toLocalInput(props.contestStart))
   const [token, setToken] = useState("")
   const [msg, setMsg] = useState("")
@@ -38,17 +38,21 @@ export default function SettingsForm(props: {
 
   async function saveContest(e: React.FormEvent) {
     e.preventDefault()
+    const added = hashtags
+      .split(/[\s,]+/)
+      .map((t) => t.replace(/^#/, "").toLowerCase())
+      .filter((t) => t && !props.hashtags.includes(t))
     if (
-      props.hashtag &&
-      hashtag.replace(/^#/, "").toLowerCase() !== props.hashtag &&
-      !confirm("Changing the hashtag uses one of your 30 hashtag lookups for this week. Continue?")
+      added.length &&
+      props.hashtags.length &&
+      !confirm(`Each new hashtag uses one of your 30 hashtag lookups for this week (adding: #${added.join(", #")}). Continue?`)
     )
       return
     setBusy(true)
     const res = await fetch("/api/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hashtag, contest_start: start ? new Date(start).toISOString() : "" }),
+      body: JSON.stringify({ hashtags, contest_start: start ? new Date(start).toISOString() : "" }),
     })
     setBusy(false)
     setMsg(res.ok ? "Saved." : (await res.json().catch(() => ({}))).error ?? "Could not save")
@@ -93,19 +97,18 @@ export default function SettingsForm(props: {
       <form onSubmit={saveContest} className={card}>
         <h2 className="font-semibold">Contest</h2>
         <label className="block space-y-1">
-          <span className="text-sm">Hashtag</span>
-          <div className="flex items-center rounded-lg border border-neutral-300 px-3 dark:border-neutral-700">
-            <span className="text-neutral-400">#</span>
-            <input
-              value={hashtag}
-              onChange={(e) => setHashtag(e.target.value)}
-              placeholder="mycontest2026"
-              className="w-full bg-transparent py-2.5 pl-1 text-base outline-none"
-            />
-          </div>
+          <span className="text-sm">Hashtags (separate with spaces)</span>
+          <input
+            value={hashtags}
+            onChange={(e) => setHashtags(e.target.value)}
+            placeholder="#mycontest2026 #mybrand"
+            autoCapitalize="none"
+            autoCorrect="off"
+            className={input}
+          />
         </label>
         <label className="block space-y-1">
-          <span className="text-sm">Contest start (posts where you are tagged before this are ignored)</span>
+          <span className="text-sm">Contest start (posts from before this are ignored)</span>
           <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} className={input} />
         </label>
         <div className="flex items-center gap-3">

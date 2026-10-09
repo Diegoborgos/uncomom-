@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   ])
   return (
     <SettingsForm
-      hashtag={s.hashtag}
+      hashtags={s.hashtags}
       contestStart={s.contest_start}
       igUsername={s.ig_username}
       connected={Boolean(s.ig_user_id)}

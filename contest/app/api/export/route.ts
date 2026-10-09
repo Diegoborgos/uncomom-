@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     .order("posted_at", { ascending: false })
   if (error) return new Response(error.message, { status: 500 })
 
-  const header = ["status", "username", "profile_link", "post_link", "posted_at", "likes", "comments", "caption", "notes", "media_id", "found_via"]
+  const header = ["status", "username", "profile_link", "post_link", "posted_at", "likes", "comments", "hashtags", "caption", "notes", "media_id", "found_via"]
   const lines = (data as Entry[]).map((e) =>
     [
       e.status,
@@ -33,6 +33,7 @@ export async function GET(req: Request) {
       e.posted_at,
       e.like_count,
       e.comments_count,
+      e.hashtags.map((t) => `#${t}`).join(" "),
       e.caption,
       e.notes,
       e.id,
